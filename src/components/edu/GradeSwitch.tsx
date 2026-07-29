@@ -19,7 +19,9 @@ export function GradeSwitch({
       aria-label="Pilih jenjang"
       className={cn(
         "grid w-full grid-cols-2 gap-3",
-        compact ? "max-w-[15rem] gap-1 rounded-full border border-border bg-card p-1 backdrop-blur-md" : "max-w-xl",
+        compact
+          ? "max-w-[15rem] gap-1 rounded-full border border-border bg-card p-1 backdrop-blur-md"
+          : "max-w-xl",
         className,
       )}
     >

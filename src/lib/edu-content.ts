@@ -44,8 +44,7 @@ export const hero = {
 export const pastel = {
   eyebrow: "Dunia Kedua",
   title: "Serpihan Ilmu yang Melayang",
-  body:
-    "Setiap arus membawa pecahan pelajaran: buku, kompas, rumus, dan data. Gerakkan layar perlahan dan biarkan pengetahuan mengalir mendekat.",
+  body: "Setiap arus membawa pecahan pelajaran: buku, kompas, rumus, dan data. Gerakkan layar perlahan dan biarkan pengetahuan mengalir mendekat.",
   fragments: [
     { label: "Buku", note: "Bacaan terkurasi" },
     { label: "Kompas", note: "Arah belajar" },
@@ -98,8 +97,7 @@ export const worlds: {
 export const ai = {
   eyebrow: "Dunia Keempat",
   title: "AI Pendamping Belajar",
-  body:
-    "Ajukan pertanyaan, dan pendamping akan merangkai penjelasan bertahap. Demo ini berjalan sepenuhnya di perangkatmu — belum terhubung ke layanan AI eksternal.",
+  body: "Ajukan pertanyaan, dan pendamping akan merangkai penjelasan bertahap. Demo ini berjalan sepenuhnya di perangkatmu — belum terhubung ke layanan AI eksternal.",
   portraitCaption: "Kak Nadia — pendamping belajar EDU CHANCE",
   examples: [
     "Jelaskan fotosintesis dengan bahasa sederhana",
@@ -117,24 +115,30 @@ export const ai = {
 export const finalCta = {
   eyebrow: "Dunia Kelima",
   title: "Permukaan Baru Menantimu",
-  body:
-    "Pelayaran selesai, tetapi perjalanan belajarmu baru dimulai. Pilih jenjangmu dan mulai misi pertama hari ini.",
+  body: "Pelayaran selesai, tetapi perjalanan belajarmu baru dimulai. Pilih jenjangmu dan mulai misi pertama hari ini.",
   primary: "Mulai Perjalanan",
   secondary: "Lihat Petunjuk",
 };
 
-export const materiPanel: Record<
-  Grade,
-  { subject: string; topics: string[] }[]
-> = {
+export const materiPanel: Record<Grade, { subject: string; topics: string[] }[]> = {
   SMP: [
     {
       subject: "Matematika",
-      topics: ["Bilangan bulat & pecahan", "Aljabar dasar", "Bangun datar & ruang", "Statistika sederhana"],
+      topics: [
+        "Bilangan bulat & pecahan",
+        "Aljabar dasar",
+        "Bangun datar & ruang",
+        "Statistika sederhana",
+      ],
     },
     {
       subject: "IPA",
-      topics: ["Klasifikasi makhluk hidup", "Zat & perubahannya", "Energi dan usaha", "Sistem tubuh manusia"],
+      topics: [
+        "Klasifikasi makhluk hidup",
+        "Zat & perubahannya",
+        "Energi dan usaha",
+        "Sistem tubuh manusia",
+      ],
     },
     {
       subject: "Bahasa Indonesia",
@@ -142,13 +146,23 @@ export const materiPanel: Record<
     },
     {
       subject: "IPS",
-      topics: ["Interaksi sosial", "Kondisi geografis Indonesia", "Kegiatan ekonomi", "Sejarah kerajaan Nusantara"],
+      topics: [
+        "Interaksi sosial",
+        "Kondisi geografis Indonesia",
+        "Kegiatan ekonomi",
+        "Sejarah kerajaan Nusantara",
+      ],
     },
   ],
   SMA: [
     {
       subject: "Matematika",
-      topics: ["Fungsi & persamaan kuadrat", "Trigonometri", "Limit dan turunan", "Peluang & statistika"],
+      topics: [
+        "Fungsi & persamaan kuadrat",
+        "Trigonometri",
+        "Limit dan turunan",
+        "Peluang & statistika",
+      ],
     },
     {
       subject: "Fisika",

@@ -179,9 +179,7 @@ export function OceanScene() {
         if (s.y < -0.05) s.y = 1.05;
         const parallax = (p * 0.9 + 0.1) * s.depth;
         const x =
-          s.x * width +
-          Math.sin(time * 0.0003 + s.drift) * 22 * s.depth +
-          px * 26 * s.depth;
+          s.x * width + Math.sin(time * 0.0003 + s.drift) * 22 * s.depth + px * 26 * s.depth;
         const y = ((s.y + parallax) % 1.1) * height + py * 14 * s.depth;
         const alpha = 0.12 + s.depth * 0.32;
         ctx.beginPath();

@@ -46,7 +46,9 @@ export function PastelStage() {
 
       <motion.div style={{ y: textY }} className="relative mx-auto max-w-2xl text-center">
         <Reveal>
-          <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">{pastel.eyebrow}</p>
+          <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">
+            {pastel.eyebrow}
+          </p>
         </Reveal>
         <Reveal delay={0.1}>
           <h2 className="mt-6 text-balance font-display text-[clamp(2.2rem,6vw,4rem)] leading-[1.05]">

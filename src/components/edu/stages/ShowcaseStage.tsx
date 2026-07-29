@@ -27,11 +27,7 @@ export function ShowcaseStage() {
   const subjects = materiPanel[grade];
 
   return (
-    <section
-      id="showcase"
-      ref={ref}
-      className="relative min-h-[110svh] px-5 py-32 sm:px-8"
-    >
+    <section id="showcase" ref={ref} className="relative min-h-[110svh] px-5 py-32 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">Dunia Ketiga</p>
@@ -133,9 +129,7 @@ export function ShowcaseStage() {
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <OceanButton
                     className="w-full sm:w-auto"
-                    onClick={() =>
-                      selected === "ai" ? scrollTo("ai") : openPanel("materi")
-                    }
+                    onClick={() => (selected === "ai" ? scrollTo("ai") : openPanel("materi"))}
                   >
                     {selected === "ai" ? "Buka AI Pendamping" : "Buka Materi"}
                   </OceanButton>
