@@ -1,24 +1,47 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { EduProvider } from "@/components/edu/EduProvider";
+import { EduPanels } from "@/components/edu/EduPanels";
+import { OceanScene } from "@/components/edu/OceanScene";
+import { SiteNav } from "@/components/edu/SiteNav";
+import { SmoothScrollProvider } from "@/components/edu/SmoothScrollProvider";
+import { HeroStage } from "@/components/edu/stages/HeroStage";
+import { PastelStage } from "@/components/edu/stages/PastelStage";
+import { ShowcaseStage } from "@/components/edu/stages/ShowcaseStage";
+import { AiStage } from "@/components/edu/stages/AiStage";
+import { FinalStage } from "@/components/edu/stages/FinalStage";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+const title = "EDU CHANCE — Pelayaran Belajar SMP & SMA";
+const description =
+  "EDU CHANCE (PELUANG): pengalaman belajar sinematik bawah laut untuk siswa SMP dan SMA — materi, misi harian, tantangan, dan AI pendamping.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <EduProvider>
+      <SmoothScrollProvider />
+      <OceanScene />
+      <SiteNav />
+      <main className="relative z-10">
+        <HeroStage />
+        <PastelStage />
+        <ShowcaseStage />
+        <AiStage />
+        <FinalStage />
+      </main>
+      <EduPanels />
+    </EduProvider>
   );
 }
