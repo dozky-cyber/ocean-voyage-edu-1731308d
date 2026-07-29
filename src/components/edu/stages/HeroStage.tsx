@@ -49,12 +49,12 @@ export function HeroStage() {
 
         <Reveal delay={0.44}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <OceanButton className="w-full sm:w-auto" onClick={() => scrollTo("pastel")}>
+            <OceanButton className="w-full sm:w-56" onClick={() => scrollTo("pastel")}>
               {hero.primaryCta}
             </OceanButton>
             <OceanButton
               variant="secondary"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-56"
               onClick={() => openPanel("petunjuk")}
             >
               {hero.secondaryCta}

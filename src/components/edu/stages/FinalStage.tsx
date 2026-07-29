@@ -30,12 +30,12 @@ export function FinalStage() {
         </Reveal>
         <Reveal delay={0.3}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <OceanButton className="w-full sm:w-auto" onClick={() => openPanel("materi")}>
+            <OceanButton className="w-full sm:w-56" onClick={() => openPanel("materi")}>
               {finalCta.primary} · {grade}
             </OceanButton>
             <OceanButton
               variant="secondary"
-              className="w-full sm:w-auto"
+              className="w-full sm:w-56"
               onClick={() => openPanel("petunjuk")}
             >
               {finalCta.secondary}
