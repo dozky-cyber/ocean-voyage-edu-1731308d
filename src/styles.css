@@ -152,8 +152,64 @@
     border-color: var(--color-border);
   }
 
+  html {
+    scroll-behavior: auto;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--lagoon) 40%, transparent);
+  }
+
+  /* Slim, non-intrusive scrollbar so it never crosses the composition */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--lagoon) 28%, transparent);
+    border-radius: 999px;
   }
 }
+
+@utility font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+}
+
+@utility glass-panel {
+  background: color-mix(in oklab, var(--abyss) 55%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--foam) 12%, transparent);
+  box-shadow:
+    0 30px 80px -40px rgb(0 0 0 / 0.8),
+    inset 0 1px 0 color-mix(in oklab, var(--foam) 10%, transparent);
+}
+
+@utility text-glow {
+  text-shadow: 0 0 40px color-mix(in oklab, var(--lagoon) 30%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
