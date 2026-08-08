@@ -5,7 +5,7 @@ import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
 export function FinalStage() {
-  const { grade, openPanel, scrollTo } = useEdu();
+  const { openPanel, scrollTo } = useEdu();
 
   return (
     <section
@@ -31,12 +31,12 @@ export function FinalStage() {
         <Reveal delay={0.3}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <OceanButton className="w-full sm:w-56" onClick={() => openPanel("materi")}>
-              {finalCta.primary} · {grade}
+              {finalCta.primary}
             </OceanButton>
             <OceanButton
               variant="secondary"
               className="w-full sm:w-56"
-              onClick={() => openPanel("petunjuk")}
+              onClick={() => scrollTo("products")}
             >
               {finalCta.secondary}
             </OceanButton>
@@ -51,7 +51,7 @@ export function FinalStage() {
 
       <footer className="mt-24 flex w-full max-w-3xl flex-col items-center gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:justify-between">
         <p>
-          {brand.name} — {brand.tagline}
+          {brand.name} — {brand.motto}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button type="button" className="hover:text-foreground" onClick={() => scrollTo("hero")}>
@@ -60,16 +60,16 @@ export function FinalStage() {
           <button
             type="button"
             className="hover:text-foreground"
-            onClick={() => openPanel("materi")}
+            onClick={() => scrollTo("products")}
           >
-            Materi
+            Products
           </button>
           <button
             type="button"
             className="hover:text-foreground"
             onClick={() => openPanel("petunjuk")}
           >
-            Petunjuk
+            Process
           </button>
         </div>
       </footer>
