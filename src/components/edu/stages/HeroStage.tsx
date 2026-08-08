@@ -30,14 +30,14 @@ export function HeroStage() {
         </Reveal>
 
         <Reveal delay={0.12}>
-          <h1 className="mt-6 font-display text-[clamp(3.2rem,14vw,9rem)] font-semibold leading-[0.92] tracking-tight text-glow">
+          <h1 className="mt-6 font-display text-[clamp(2.6rem,9vw,6.5rem)] font-semibold leading-[0.98] tracking-tight text-glow">
             {hero.title}
           </h1>
         </Reveal>
 
         <Reveal delay={0.22}>
           <p className="mx-auto mt-3 text-xs uppercase tracking-[0.36em] text-muted-foreground">
-            {brand.name} — {brand.motto}
+            {brand.name} — {brand.tagline}
           </p>
         </Reveal>
 
@@ -49,13 +49,13 @@ export function HeroStage() {
 
         <Reveal delay={0.44}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <OceanButton className="w-full sm:w-56" onClick={() => scrollTo("pastel")}>
+            <OceanButton className="w-full sm:w-56" onClick={() => scrollTo("products")}>
               {hero.primaryCta}
             </OceanButton>
             <OceanButton
               variant="secondary"
               className="w-full sm:w-56"
-              onClick={() => openPanel("petunjuk")}
+              onClick={() => scrollTo("profile")}
             >
               {hero.secondaryCta}
             </OceanButton>

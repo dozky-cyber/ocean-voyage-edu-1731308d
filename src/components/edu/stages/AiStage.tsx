@@ -1,17 +1,17 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, type FormEvent } from "react";
-import { ArrowUp, Waves } from "lucide-react";
-import portrait from "@/assets/ai-mentor-portrait.jpg";
+import { ArrowUp, Bot, Sparkle, Workflow } from "lucide-react";
 import { ai, buildDemoAnswer } from "@/lib/edu-content";
 import { useEdu } from "../EduProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
+const cardIcons = [Bot, Workflow, Sparkle];
+
 export function AiStage() {
   const ref = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
-  const portraitY = useTransform(scrollYProgress, [0, 1], [60, -60]);
-  const glowScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1.05, 0.9]);
+  const cardsY = useTransform(scrollYProgress, [0, 1], [60, -60]);
 
   const { grade } = useEdu();
   const [question, setQuestion] = useState("");
@@ -32,34 +32,30 @@ export function AiStage() {
   return (
     <section id="ai" ref={ref} className="relative min-h-[110svh] px-5 py-32 sm:px-8">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
-        {/* Portrait — always visible, layered with glow and parallax */}
-        <motion.div style={{ y: portraitY }} className="relative mx-auto w-full max-w-md">
-          <motion.div
-            style={{ scale: glowScale }}
+        <motion.div style={{ y: cardsY }} className="relative mx-auto w-full max-w-md space-y-4">
+          <div
             aria-hidden="true"
             className="absolute -inset-10 rounded-full bg-[radial-gradient(circle_at_50%_40%,color-mix(in_oklab,var(--violet-deep)_55%,transparent),transparent_70%)] blur-2xl"
           />
-          <div className="relative overflow-hidden rounded-[2.5rem] glass-panel">
-            <img
-              src={portrait}
-              alt={ai.portraitCaption}
-              width={1024}
-              height={1280}
-              loading="lazy"
-              decoding="async"
-              className="aspect-[4/5] w-full object-cover object-[50%_25%]"
-            />
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--abyss)_85%,transparent),transparent_55%)]"
-            />
-            <div className="absolute inset-x-0 bottom-0 p-6">
-              <p className="text-sm font-medium">{ai.portraitCaption}</p>
-              <p className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-primary/90">
-                <Waves className="h-3.5 w-3.5" /> Demo lokal · jenjang {grade}
-              </p>
-            </div>
-          </div>
+          {ai.cards.map((c, i) => {
+            const Icon = cardIcons[i % cardIcons.length];
+            return (
+              <motion.div
+                key={c.title}
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 8 + i, repeat: Infinity, ease: "easeInOut" }}
+                className="relative flex items-start gap-4 rounded-[2rem] glass-panel p-5"
+              >
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/30">
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span>
+                  <span className="block font-display text-xl leading-tight">{c.title}</span>
+                  <span className="mt-1 block text-sm text-muted-foreground">{c.note}</span>
+                </span>
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         <div>
@@ -78,7 +74,7 @@ export function AiStage() {
           </Reveal>
 
           <Reveal delay={0.26}>
-            <ul className="mt-7 flex flex-wrap gap-2">
+            <ul className="mt-6 flex flex-wrap gap-2">
               {ai.benefits.map((b) => (
                 <li
                   key={b}
@@ -94,7 +90,7 @@ export function AiStage() {
             <form
               onSubmit={onSubmit}
               className="mt-8 rounded-[2rem] glass-panel p-4 sm:p-5"
-              aria-label="Tanya AI pendamping"
+              aria-label="Tanya asisten AI"
             >
               <label htmlFor="ai-question" className="sr-only">
                 Tulis pertanyaanmu
@@ -105,7 +101,7 @@ export function AiStage() {
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   rows={2}
-                  placeholder="Tulis pertanyaanmu, misalnya: jelaskan gaya gravitasi…"
+                  placeholder="Tulis pertanyaanmu, misalnya: bagaimana mengotomatiskan laporan mingguan…"
                   className="min-h-[4.5rem] w-full resize-none rounded-2xl bg-secondary/40 px-4 py-3 text-sm text-foreground outline-none ring-1 ring-border transition focus:ring-primary/60"
                 />
                 <OceanButton
