@@ -28,7 +28,7 @@ export function SiteNav() {
 
   const handle = (action: (typeof items)[number]["action"]) => {
     setOpen(false);
-    if (action === "materi" || action === "petunjuk") openPanel(action);
+    if (action === "petunjuk") openPanel(action);
     else scrollTo(action);
   };
 
