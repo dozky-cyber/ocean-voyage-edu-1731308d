@@ -1,16 +1,16 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
-import { Compass, Gamepad2, Layers, Sparkle } from "lucide-react";
-import { materiPanel, worlds, type WorldId } from "@/lib/edu-content";
+import { Bot, Database, Layers, Workflow } from "lucide-react";
+import { systems, worlds, type WorldId } from "@/lib/edu-content";
 import { useEdu } from "../EduProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
 const icons: Record<WorldId, typeof Layers> = {
-  materi: Layers,
-  misi: Compass,
-  tantangan: Gamepad2,
-  ai: Sparkle,
+  web: Layers,
+  automation: Workflow,
+  ai: Bot,
+  data: Database,
 };
 
 /** Spatial offsets so the objects float at different depths, not a flat grid. */
@@ -20,27 +20,27 @@ export function ShowcaseStage() {
   const ref = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const drift = useTransform(scrollYProgress, [0, 1], [70, -70]);
-  const [selected, setSelected] = useState<WorldId>("materi");
-  const { grade, openPanel, scrollTo } = useEdu();
+  const [selected, setSelected] = useState<WorldId>("web");
+  const { openPanel, scrollTo } = useEdu();
 
   const active = worlds.find((w) => w.id === selected)!;
-  const subjects = materiPanel[grade];
 
   return (
     <section id="showcase" ref={ref} className="relative min-h-[110svh] px-5 py-32 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <Reveal>
-          <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">Dunia Ketiga</p>
+          <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">
+            {systems.eyebrow}
+          </p>
         </Reveal>
         <Reveal delay={0.1}>
           <h2 className="mt-6 max-w-3xl text-balance font-display text-[clamp(2.2rem,6vw,4rem)] leading-[1.05]">
-            Empat Kedalaman Belajar
+            {systems.title}
           </h2>
         </Reveal>
         <Reveal delay={0.18}>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">
-            Pilih satu objek di kedalaman untuk melihat isinya. Semua menyesuaikan jenjang{" "}
-            <span className="text-primary">{grade}</span>.
+            {systems.body}
           </p>
         </Reveal>
 
@@ -78,14 +78,14 @@ export function ShowcaseStage() {
           <div className="mt-12 rounded-[2rem] glass-panel p-6 sm:p-9">
             <AnimatePresence mode="wait">
               <motion.div
-                key={selected + grade}
+                key={selected}
                 initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: -12, filter: "blur(8px)" }}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
                 <p className="text-[11px] uppercase tracking-[0.3em] text-primary/90">
-                  {active.subtitle} · {grade}
+                  {active.subtitle}
                 </p>
                 <h3 className="mt-3 font-display text-3xl">{active.title}</h3>
                 <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -93,29 +93,7 @@ export function ShowcaseStage() {
                 </p>
 
                 <ul className="mt-7 grid gap-3 sm:grid-cols-2">
-                  {(selected === "materi"
-                    ? subjects.map((s) => `${s.subject}: ${s.topics[0]}`)
-                    : selected === "misi"
-                      ? [
-                          "15 menit membaca ringkasan harian",
-                          "1 latihan soal terarah setiap hari",
-                          "Refleksi singkat sebelum tidur",
-                          "Rekap kemajuan setiap akhir pekan",
-                        ]
-                      : selected === "tantangan"
-                        ? [
-                            "Kuis cepat 10 soal",
-                            "Teka-teki logika harian",
-                            "Duel materi bersama teman",
-                            "Koleksi lencana harta karun",
-                          ]
-                        : [
-                            "Penjelasan ulang materi sulit",
-                            "Contoh soal bertahap",
-                            "Rencana belajar mingguan",
-                            "Tanya jawab bahasa sederhana",
-                          ]
-                  ).map((line) => (
+                  {active.points.map((line) => (
                     <li
                       key={line}
                       className="flex items-start gap-3 rounded-2xl bg-secondary/40 px-4 py-3 text-sm"
@@ -127,18 +105,15 @@ export function ShowcaseStage() {
                 </ul>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <OceanButton
-                    className="w-full sm:w-auto"
-                    onClick={() => (selected === "ai" ? scrollTo("ai") : openPanel("materi"))}
-                  >
-                    {selected === "ai" ? "Buka AI Pendamping" : "Buka Materi"}
+                  <OceanButton className="w-full sm:w-auto" onClick={() => scrollTo("products")}>
+                    Lihat Produk
                   </OceanButton>
                   <OceanButton
                     variant="secondary"
                     className="w-full sm:w-auto"
                     onClick={() => openPanel("petunjuk")}
                   >
-                    Lihat Petunjuk
+                    Cara Saya Membangun
                   </OceanButton>
                 </div>
               </motion.div>
