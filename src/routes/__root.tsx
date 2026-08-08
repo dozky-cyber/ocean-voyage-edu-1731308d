@@ -77,12 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "EDU CHANCE — PELUANG" },
+      { title: "KERJAKU.SPACE — Work, made your way." },
       {
         name: "description",
-        content: "Pengalaman belajar sinematik bawah laut untuk siswa SMP dan SMA.",
+        content:
+          "Portofolio digital: aplikasi, sistem kerja, AI, dan automation yang saya bangun.",
       },
-      { name: "author", content: "EDU CHANCE" },
+      { name: "author", content: "KERJAKU.SPACE" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],

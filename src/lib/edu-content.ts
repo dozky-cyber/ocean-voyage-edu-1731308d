@@ -1,15 +1,15 @@
 /**
- * Centralized content for the EDU CHANCE experience.
- * All copy/data lives here so legacy EDU CHANCE text and assets can be
- * swapped in without touching layout or animation code.
+ * Centralized content for the KERJAKU.SPACE experience.
+ * All copy/data lives here so text and assets can be swapped in
+ * without touching layout or animation code.
  */
 
-export type Grade = "SMP" | "SMA";
+export type Grade = "Products" | "Experiments";
 
 export const brand = {
-  name: "EDU CHANCE",
-  tagline: "PELUANG",
-  motto: "Pelayaran belajar tanpa batas",
+  name: "KERJAKU.SPACE",
+  tagline: "DIGITAL PRODUCT JOURNEY",
+  motto: "Work, made your way.",
 };
 
 export const grades: {
@@ -19,43 +19,42 @@ export const grades: {
   description: string;
 }[] = [
   {
-    id: "SMP",
-    label: "SMP",
-    full: "Sekolah Menengah Pertama",
-    description: "Dasar kuat, rasa ingin tahu tumbuh. Materi kelas 7 sampai 9.",
+    id: "Products",
+    label: "Products",
+    full: "Shipped & Live",
+    description: "Produk digital yang sudah berjalan dan dipakai dalam pekerjaan nyata.",
   },
   {
-    id: "SMA",
-    label: "SMA",
-    full: "Sekolah Menengah Atas",
-    description: "Pendalaman dan arah masa depan. Materi kelas 10 sampai 12.",
+    id: "Experiments",
+    label: "Experiments",
+    full: "In The Lab",
+    description: "Eksperimen AI, automation, dan tools kecil yang sedang saya uji.",
   },
 ];
 
 export const hero = {
-  eyebrow: "Ekspedisi Belajar Interaktif",
-  title: "PELUANG",
+  eyebrow: "Digital Product Journey",
+  title: "Work, made your way.",
   subtitle:
-    "Selami samudra pengetahuan bersama EDU CHANCE. Satu pelayaran sinematik yang membawamu dari permukaan menuju harta karun ilmu di dasar laut.",
-  primaryCta: "Mulai Menjelajah",
-  secondaryCta: "Pelajari Cara Kerja",
+    "Ruang untuk merancang ide, membangun sistem, dan menciptakan produk digital yang membantu menyelesaikan masalah nyata.",
+  primaryCta: "Explore My Work",
+  secondaryCta: "About Me",
 };
 
 export const pastel = {
-  eyebrow: "Dunia Kedua",
-  title: "Serpihan Ilmu yang Melayang",
-  body: "Setiap arus membawa pecahan pelajaran: buku, kompas, rumus, dan data. Gerakkan layar perlahan dan biarkan pengetahuan mengalir mendekat.",
+  eyebrow: "Section 01",
+  title: "Ideas Behind The Build",
+  subtitle: "Every product starts with a problem worth solving.",
+  body: "Setiap produk dimulai dari memahami masalah, kebutuhan pengguna, dan mencari solusi yang tepat.",
   fragments: [
-    { label: "Buku", note: "Bacaan terkurasi" },
-    { label: "Kompas", note: "Arah belajar" },
-    { label: "Rumus", note: "Logika & pola" },
-    { label: "Data", note: "Jejak kemajuan" },
-    { label: "Peta", note: "Rute materi" },
-    { label: "Cahaya", note: "Motivasi harian" },
+    { label: "Problem Discovery", note: "Menemukan akar masalah" },
+    { label: "Research", note: "Data & konteks kerja" },
+    { label: "User Needs", note: "Kebutuhan pengguna" },
+    { label: "Ideas", note: "Solusi yang mungkin" },
   ],
 };
 
-export type WorldId = "materi" | "misi" | "tantangan" | "ai";
+export type WorldId = "web" | "automation" | "ai" | "data";
 
 export const worlds: {
   id: WorldId;
@@ -63,142 +62,236 @@ export const worlds: {
   subtitle: string;
   body: string;
   depth: string;
+  points: string[];
 }[] = [
   {
-    id: "materi",
-    title: "Jelajah Materi",
-    subtitle: "Palung Pengetahuan",
-    body: "Rangkuman tiap mata pelajaran yang disusun bertahap, dari permukaan hingga konsep terdalam.",
+    id: "web",
+    title: "Web Application",
+    subtitle: "Antarmuka Kerja",
+    body: "Aplikasi web yang ringan, cepat, dan nyaman dipakai setiap hari di lapangan maupun kantor.",
     depth: "-120 m",
+    points: [
+      "Dashboard dan form kerja harian",
+      "Responsif untuk mobile dan desktop",
+      "Autentikasi dan hak akses pengguna",
+      "Integrasi dengan data yang sudah ada",
+    ],
   },
   {
-    id: "misi",
-    title: "Misi Pembelajaran",
-    subtitle: "Pelayaran Harian",
-    body: "Target kecil setiap hari agar kapal belajarmu terus bergerak tanpa kehabisan tenaga.",
+    id: "automation",
+    title: "Automation",
+    subtitle: "Alur Otomatis",
+    body: "Menghapus pekerjaan berulang dengan alur kerja otomatis yang berjalan di belakang layar.",
     depth: "-260 m",
-  },
-  {
-    id: "tantangan",
-    title: "Tantangan & Permainan",
-    subtitle: "Harta Karun",
-    body: "Kuis, teka-teki, dan permainan cepat untuk menguji pemahaman sambil mengumpulkan pencapaian.",
-    depth: "-410 m",
+    points: [
+      "Laporan otomatis terjadwal",
+      "Notifikasi dan follow-up",
+      "Sinkronisasi antar sistem",
+      "Template dokumen instan",
+    ],
   },
   {
     id: "ai",
-    title: "AI Pendamping",
-    subtitle: "Lumba-lumba Pemandu",
-    body: "Teman belajar yang menjelaskan ulang materi sulit dengan bahasa yang lebih sederhana.",
+    title: "AI Integration",
+    subtitle: "Lapisan Cerdas",
+    body: "Menambahkan lapisan AI untuk merangkum, menganalisis, dan memberi rekomendasi kerja.",
+    depth: "-410 m",
+    points: [
+      "Ringkasan aktivitas otomatis",
+      "Insight dari catatan lapangan",
+      "Asisten tanya jawab internal",
+      "Klasifikasi dan pelabelan data",
+    ],
+  },
+  {
+    id: "data",
+    title: "Data System",
+    subtitle: "Fondasi Data",
+    body: "Struktur data yang rapi agar setiap keputusan berdiri di atas informasi yang bisa dipercaya.",
     depth: "-560 m",
+    points: [
+      "Skema database yang terstruktur",
+      "Riwayat dan jejak perubahan",
+      "Visualisasi kemajuan pekerjaan",
+      "Ekspor data untuk pelaporan",
+    ],
   },
 ];
 
+export const systems = {
+  eyebrow: "Section 02",
+  title: "Systems & Solutions",
+  body: "Mengubah ide menjadi sistem digital yang dapat digunakan dalam pekerjaan dan kehidupan sehari-hari.",
+};
+
+export const products = {
+  eyebrow: "Section 03",
+  title: "Products I Build",
+  body: "Beberapa produk digital yang sedang dan telah saya kembangkan.",
+};
+
+export type Project = {
+  name: string;
+  category: string;
+  description: string;
+  status?: string;
+  focus?: string[];
+};
+
+export const projects: Record<Grade, Project[]> = {
+  Products: [
+    {
+      name: "RO MEMORY",
+      category: "Field Activity Intelligence System",
+      description:
+        "Sistem digital untuk mengelola workshop, aktivitas visit, laporan, follow-up, dan insight kerja dengan bantuan AI.",
+      status: "LIVE",
+    },
+    {
+      name: "MATERIAL ESTIMATOR",
+      category: "Furniture & Interior Material Planning",
+      description:
+        "Aplikasi untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan, sehingga proses perencanaan bahan menjadi lebih cepat, akurat, dan terstruktur.",
+      focus: [
+        "Material calculation",
+        "Furniture planning",
+        "Quantity estimation",
+        "Material requirement planning",
+      ],
+    },
+    {
+      name: "DOMPET GUE",
+      category: "Personal Finance Workspace",
+      description:
+        "Aplikasi pengelolaan keuangan pribadi untuk membantu pencatatan, monitoring, dan memahami kondisi finansial.",
+    },
+  ],
+  Experiments: [
+    {
+      name: "AI ASSISTANT",
+      category: "Conversational Work Helper",
+      description:
+        "Eksperimen asisten yang merangkum catatan kerja dan menyusun langkah tindak lanjut secara bertahap.",
+    },
+    {
+      name: "WORKFLOW AUTOMATION",
+      category: "Background Process Lab",
+      description:
+        "Uji coba alur otomatis untuk laporan terjadwal, pengingat, dan sinkronisasi data antar aplikasi.",
+    },
+    {
+      name: "SMART TOOLS",
+      category: "Micro Utilities",
+      description:
+        "Kumpulan tool kecil yang menyelesaikan satu masalah spesifik dengan cepat dan tanpa konfigurasi rumit.",
+    },
+  ],
+};
+
+export const profile = {
+  eyebrow: "Profile",
+  title: "Digital Product Builder",
+  body: "Membangun aplikasi, sistem kerja, dan pengalaman digital melalui web technology, AI, dan automation.",
+  caption: "KERJAKU.SPACE — Digital Product Builder",
+  uploadLabel: "Ganti foto profil",
+  skills: ["Web Technology", "AI", "Automation", "Data & Systems"],
+};
+
 export const ai = {
-  eyebrow: "Dunia Keempat",
-  title: "AI Pendamping Belajar",
-  body: "Ajukan pertanyaan, dan pendamping akan merangkai penjelasan bertahap. Demo ini berjalan sepenuhnya di perangkatmu — belum terhubung ke layanan AI eksternal.",
-  portraitCaption: "Kak Nadia — pendamping belajar EDU CHANCE",
+  eyebrow: "Section 04",
+  title: "AI & Automation",
+  body: "Mengeksplorasi bagaimana teknologi AI dapat membantu manusia bekerja lebih cepat, sederhana, dan efektif.",
+  portraitCaption: "KERJAKU.SPACE — Digital Product Builder",
+  cards: [
+    { title: "AI Assistant", note: "Pendamping kerja yang menjawab dan merangkum." },
+    { title: "Workflow Automation", note: "Proses berulang berjalan sendiri." },
+    { title: "Smart Tools", note: "Tool kecil, dampak besar." },
+  ],
   examples: [
-    "Jelaskan fotosintesis dengan bahasa sederhana",
-    "Bagaimana cara menghitung luas trapesium?",
-    "Buat rencana belajar 7 hari untuk ujian",
-    "Apa perbedaan teks eksposisi dan persuasi?",
+    "Bagaimana AI membantu laporan lapangan?",
+    "Otomatiskan follow-up pekerjaan mingguan",
+    "Rancang sistem estimasi material",
+    "Ide fitur untuk aplikasi keuangan pribadi",
   ],
   benefits: [
-    "Penjelasan bertahap sesuai jenjang",
-    "Contoh soal dan pembahasan singkat",
-    "Rencana belajar yang realistis",
+    "Proses kerja lebih cepat",
+    "Keputusan berbasis data",
+    "Lebih sedikit pekerjaan manual",
   ],
 };
 
 export const finalCta = {
-  eyebrow: "Dunia Kelima",
-  title: "Permukaan Baru Menantimu",
-  body: "Pelayaran selesai, tetapi perjalanan belajarmu baru dimulai. Pilih jenjangmu dan mulai misi pertama hari ini.",
-  primary: "Mulai Perjalanan",
-  secondary: "Lihat Petunjuk",
+  eyebrow: "Section 05",
+  title: "Keep Building",
+  body: "Setiap ide memiliki kesempatan untuk menjadi sesuatu yang berguna.",
+  primary: "Let's Connect",
+  secondary: "Explore My Work",
 };
 
-export const materiPanel: Record<Grade, { subject: string; topics: string[] }[]> = {
-  SMP: [
+export const workPanel: Record<Grade, { subject: string; topics: string[] }[]> = {
+  Products: [
     {
-      subject: "Matematika",
+      subject: "RO MEMORY",
+      topics: ["Workshop & visit", "Laporan lapangan", "Follow-up otomatis", "AI insight kerja"],
+    },
+    {
+      subject: "MATERIAL ESTIMATOR",
       topics: [
-        "Bilangan bulat & pecahan",
-        "Aljabar dasar",
-        "Bangun datar & ruang",
-        "Statistika sederhana",
+        "Material calculation",
+        "Furniture planning",
+        "Quantity estimation",
+        "Material requirement planning",
       ],
     },
     {
-      subject: "IPA",
-      topics: [
-        "Klasifikasi makhluk hidup",
-        "Zat & perubahannya",
-        "Energi dan usaha",
-        "Sistem tubuh manusia",
-      ],
+      subject: "DOMPET GUE",
+      topics: ["Pencatatan harian", "Monitoring arus kas", "Kategori pengeluaran", "Ringkasan bulanan"],
     },
     {
-      subject: "Bahasa Indonesia",
-      topics: ["Teks deskripsi", "Teks prosedur", "Teks laporan observasi", "Puisi rakyat"],
-    },
-    {
-      subject: "IPS",
-      topics: [
-        "Interaksi sosial",
-        "Kondisi geografis Indonesia",
-        "Kegiatan ekonomi",
-        "Sejarah kerajaan Nusantara",
-      ],
+      subject: "Fondasi Teknis",
+      topics: ["Web application", "Automation", "AI integration", "Data system"],
     },
   ],
-  SMA: [
+  Experiments: [
     {
-      subject: "Matematika",
-      topics: [
-        "Fungsi & persamaan kuadrat",
-        "Trigonometri",
-        "Limit dan turunan",
-        "Peluang & statistika",
-      ],
+      subject: "AI Assistant",
+      topics: ["Ringkasan catatan", "Tanya jawab internal", "Saran tindak lanjut", "Bahasa sederhana"],
     },
     {
-      subject: "Fisika",
-      topics: ["Kinematika", "Hukum Newton", "Termodinamika", "Gelombang dan optik"],
+      subject: "Workflow Automation",
+      topics: ["Laporan terjadwal", "Pengingat pekerjaan", "Sinkronisasi data", "Template instan"],
     },
     {
-      subject: "Biologi",
-      topics: ["Sel dan jaringan", "Genetika", "Evolusi", "Ekosistem dan lingkungan"],
+      subject: "Smart Tools",
+      topics: ["Kalkulator cepat", "Konversi data", "Checklist kerja", "Pencatat ide"],
     },
     {
-      subject: "Ekonomi",
-      topics: ["Permintaan & penawaran", "Pasar dan harga", "Akuntansi dasar", "Kebijakan fiskal"],
+      subject: "Next Up",
+      topics: ["Mobile companion", "Offline mode", "Analitik lanjutan", "Integrasi pihak ketiga"],
     },
   ],
 };
 
-export const petunjukSteps = [
+export const processSteps = [
   {
-    title: "1. Pilih jenjang",
-    body: "Tentukan SMP atau SMA. Semua materi, misi, dan tantangan akan menyesuaikan jenjang yang kamu pilih.",
+    title: "1. Pahami masalahnya",
+    body: "Mulai dari masalah nyata di pekerjaan: apa yang lambat, berulang, atau mudah salah.",
   },
   {
-    title: "2. Gulir untuk menyelam",
-    body: "Gerakan gulir mengendalikan seluruh pelayaran. Gulir ke bawah untuk menyelam lebih dalam, gulir ke atas untuk kembali ke permukaan.",
+    title: "2. Riset & kebutuhan pengguna",
+    body: "Kumpulkan konteks, data, dan cara kerja pengguna sebelum menulis satu baris kode.",
   },
   {
-    title: "3. Jelajahi dunia belajar",
-    body: "Setiap objek di kedalaman mewakili satu cara belajar: materi, misi harian, tantangan, dan AI pendamping.",
+    title: "3. Rancang sistemnya",
+    body: "Susun alur, struktur data, dan antarmuka yang paling sederhana untuk menyelesaikan masalah.",
   },
   {
-    title: "4. Tanya AI pendamping",
-    body: "Tuliskan pertanyaanmu pada kolom AI. Demo lokal akan menyusun kerangka jawaban bertahap sebagai contoh.",
+    title: "4. Bangun & otomatisasi",
+    body: "Kembangkan aplikasi, tambahkan automation dan lapisan AI di titik yang benar-benar membantu.",
   },
   {
-    title: "5. Ulangi dan konsisten",
-    body: "Kembali setiap hari, selesaikan satu misi kecil, dan pantau kemajuan pelayaran belajarmu.",
+    title: "5. Pakai, ukur, perbaiki",
+    body: "Gunakan produknya di pekerjaan sehari-hari, ukur hasilnya, lalu perbaiki secara bertahap.",
   },
 ];
 
@@ -207,10 +300,10 @@ export function buildDemoAnswer(question: string, grade: Grade): string[] {
   const q = question.trim().replace(/\s+/g, " ");
   const topic = q.replace(/[?.!]+$/, "");
   return [
-    `Ringkasan untuk jenjang ${grade}: "${topic}" bisa dipahami lewat tiga lapisan, dari gambaran umum sampai penerapan.`,
-    `Lapisan 1 — Permukaan: kenali istilah kuncinya dan tuliskan ulang dengan kalimatmu sendiri, maksimal dua kalimat.`,
-    `Lapisan 2 — Tengah: cari satu contoh nyata di sekitarmu, lalu hubungkan dengan konsep utamanya.`,
-    `Lapisan 3 — Dasar: kerjakan dua soal latihan, lalu jelaskan langkahmu seolah sedang mengajari teman.`,
-    `Catatan: jawaban ini adalah demo lokal EDU CHANCE, bukan hasil dari layanan AI eksternal.`,
+    `Konteks ${grade}: "${topic}" bisa didekati lewat tiga lapisan, dari masalah sampai produk yang berjalan.`,
+    `Lapisan 1 — Permukaan: rumuskan masalahnya dalam satu kalimat dan tentukan siapa penggunanya.`,
+    `Lapisan 2 — Sistem: petakan alur kerja dan data yang dibutuhkan, lalu cari bagian yang bisa diotomatiskan.`,
+    `Lapisan 3 — Produk: bangun versi terkecil yang bisa dipakai, ukur hasilnya, lalu iterasi.`,
+    `Catatan: jawaban ini adalah demo lokal KERJAKU.SPACE, bukan hasil dari layanan AI eksternal.`,
   ];
 }

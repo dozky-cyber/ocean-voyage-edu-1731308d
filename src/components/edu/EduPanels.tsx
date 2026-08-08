@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useEffect } from "react";
-import { materiPanel, petunjukSteps } from "@/lib/edu-content";
+import { workPanel, processSteps } from "@/lib/edu-content";
 import { useEdu } from "./EduProvider";
 import { GradeSwitch } from "./GradeSwitch";
 import { OceanButton } from "./OceanButton";
@@ -41,7 +41,7 @@ export function EduPanels() {
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label={panel === "materi" ? "Panel materi" : "Panel petunjuk"}
+            aria-label={panel === "materi" ? "Panel karya" : "Panel proses"}
             initial={{ y: 40, opacity: 0, filter: "blur(10px)" }}
             animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
             exit={{ y: 30, opacity: 0, filter: "blur(10px)" }}
@@ -51,10 +51,10 @@ export function EduPanels() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-[11px] uppercase tracking-[0.32em] text-primary/90">
-                  {panel === "materi" ? `Materi ${grade}` : "Petunjuk penggunaan"}
+                  {panel === "materi" ? `Work · ${grade}` : "Build process"}
                 </p>
                 <h2 className="mt-3 font-display text-3xl leading-tight">
-                  {panel === "materi" ? "Peta Materi Belajar" : "Cara Menjelajah"}
+                  {panel === "materi" ? "Peta Karya Digital" : "Cara Saya Membangun"}
                 </h2>
               </div>
               <OceanButton
@@ -72,7 +72,7 @@ export function EduPanels() {
               <div className="mt-7">
                 <GradeSwitch compact />
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {materiPanel[grade].map((s) => (
+                  {workPanel[grade].map((s) => (
                     <div key={s.subject} className="rounded-2xl bg-secondary/40 p-5">
                       <h3 className="font-display text-xl">{s.subject}</h3>
                       <ul className="mt-3 space-y-2">
@@ -92,7 +92,7 @@ export function EduPanels() {
               </div>
             ) : (
               <ol className="mt-7 space-y-4">
-                {petunjukSteps.map((s) => (
+                {processSteps.map((s) => (
                   <li key={s.title} className="rounded-2xl bg-secondary/40 p-5">
                     <h3 className="font-display text-lg">{s.title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
@@ -103,7 +103,7 @@ export function EduPanels() {
 
             <div className="mt-8">
               <OceanButton variant="secondary" onClick={closePanel} className="w-full sm:w-auto">
-                Kembali ke pelayaran
+                Kembali menjelajah
               </OceanButton>
             </div>
           </motion.div>

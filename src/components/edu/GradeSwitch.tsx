@@ -16,7 +16,7 @@ export function GradeSwitch({
   return (
     <div
       role="group"
-      aria-label="Pilih jenjang"
+      aria-label="Pilih jenis karya"
       className={cn(
         "grid w-full grid-cols-2 gap-3",
         compact

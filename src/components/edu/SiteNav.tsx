@@ -7,10 +7,11 @@ import { GradeSwitch } from "./GradeSwitch";
 import { OceanButton } from "./OceanButton";
 
 const items = [
-  { label: "Materi", action: "materi" as const },
-  { label: "Petunjuk", action: "petunjuk" as const },
-  { label: "Dunia", action: "showcase" as const },
+  { label: "Systems", action: "showcase" as const },
+  { label: "Products", action: "products" as const },
+  { label: "About", action: "profile" as const },
   { label: "AI", action: "ai" as const },
+  { label: "Process", action: "petunjuk" as const },
 ];
 
 export function SiteNav() {
@@ -27,7 +28,7 @@ export function SiteNav() {
 
   const handle = (action: (typeof items)[number]["action"]) => {
     setOpen(false);
-    if (action === "materi" || action === "petunjuk") openPanel(action);
+    if (action === "petunjuk") openPanel(action);
     else scrollTo(action);
   };
 

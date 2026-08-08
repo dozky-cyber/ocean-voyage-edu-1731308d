@@ -15,7 +15,7 @@ type EduState = {
 const EduContext = createContext<EduState | null>(null);
 
 export function EduProvider({ children }: { children: ReactNode }) {
-  const [grade, setGrade] = useState<Grade>("SMP");
+  const [grade, setGrade] = useState<Grade>("Products");
   const [panel, setPanel] = useState<PanelId>(null);
 
   const value = useMemo<EduState>(

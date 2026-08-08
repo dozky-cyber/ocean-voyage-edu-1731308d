@@ -7,12 +7,14 @@ import { SmoothScrollProvider } from "@/components/edu/SmoothScrollProvider";
 import { HeroStage } from "@/components/edu/stages/HeroStage";
 import { PastelStage } from "@/components/edu/stages/PastelStage";
 import { ShowcaseStage } from "@/components/edu/stages/ShowcaseStage";
+import { ProductsStage } from "@/components/edu/stages/ProductsStage";
+import { ProfileStage } from "@/components/edu/stages/ProfileStage";
 import { AiStage } from "@/components/edu/stages/AiStage";
 import { FinalStage } from "@/components/edu/stages/FinalStage";
 
-const title = "EDU CHANCE — Pelayaran Belajar SMP & SMA";
+const title = "KERJAKU.SPACE — Work, made your way.";
 const description =
-  "EDU CHANCE (PELUANG): pengalaman belajar sinematik bawah laut untuk siswa SMP dan SMA — materi, misi harian, tantangan, dan AI pendamping.";
+  "Portofolio digital KERJAKU.SPACE: aplikasi, sistem kerja, eksperimen AI, dan produk digital seperti RO Memory, Material Estimator, dan Dompet Gue.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -38,6 +40,8 @@ function Index() {
         <HeroStage />
         <PastelStage />
         <ShowcaseStage />
+        <ProductsStage />
+        <ProfileStage />
         <AiStage />
         <FinalStage />
       </main>
