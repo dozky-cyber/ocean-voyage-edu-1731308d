@@ -26,26 +26,29 @@ export function HeroStage() {
         className="relative mx-auto w-full max-w-4xl text-center"
       >
         <Reveal>
-          <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">{hero.eyebrow}</p>
-        </Reveal>
-
-        <Reveal delay={0.12}>
-          <h1 className="mt-6 font-display text-[clamp(2.6rem,9vw,6.5rem)] font-semibold leading-[0.98] tracking-tight text-glow">
-            {hero.title}
+          <h1
+            className="hero-wordmark mx-auto leading-[0.92]"
+            style={{ fontSize: "clamp(3.6rem, 16.5vw, 8rem)" }}
+          >
+            {brand.name}
           </h1>
         </Reveal>
 
-        <Reveal delay={0.22}>
-          <p className="mx-auto mt-3 text-xs uppercase tracking-[0.36em] text-muted-foreground">
-            {brand.name} — {brand.tagline}
+        <Reveal delay={0.12}>
+          <p
+            className="mt-3 whitespace-nowrap font-display font-medium leading-[1.1] tracking-[-0.01em] text-foreground text-glow"
+            style={{ fontSize: "clamp(1.35rem, 6.4vw, 3.2rem)" }}
+          >
+            {hero.title}
           </p>
         </Reveal>
 
-        <Reveal delay={0.32}>
-          <p className="mx-auto mt-8 max-w-2xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
+        <Reveal delay={0.24}>
+          <p className="mx-auto mt-5 max-w-xl text-balance text-sm leading-relaxed text-muted-foreground sm:text-base">
             {hero.subtitle}
           </p>
         </Reveal>
+
 
         <Reveal delay={0.44}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
