@@ -22,6 +22,7 @@
   --font-sans:
     "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
+  --font-tagline: "Cormorant Garamond", "Cormorant", ui-serif, Georgia, serif;
   --font-wordmark: "Bodoni Moda", "Didot", "Bodoni MT", ui-serif, Georgia, serif;
   --color-abyss: var(--abyss);
   --color-tide: var(--tide);
