@@ -82,9 +82,12 @@ export function OceanScene() {
     let height = 0;
     let dpr = 1;
     let particles: Particle[] = [];
+    let bubbles: Bubble[] = [];
     let raf = 0;
     let running = true;
     let time = 0;
+
+    const bubbleCount = reduced ? 8 : isSmall ? 14 : 26;
 
     const seedParticles = () => {
       particles = Array.from({ length: count }, () => ({
@@ -95,6 +98,16 @@ export function OceanScene() {
         depth: 0.25 + Math.random() * 0.75,
         drift: Math.random() * Math.PI * 2,
         seed: Math.random() * 1000,
+      }));
+      bubbles = Array.from({ length: bubbleCount }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: 2 + Math.random() * 9,
+        speed: 0.00006 + Math.random() * 0.00022,
+        wobble: Math.random() * Math.PI * 2,
+        wobbleAmp: 6 + Math.random() * 22,
+        blur: Math.random(),
+        alpha: 0.16 + Math.random() * 0.3,
       }));
     };
 
