@@ -253,3 +253,13 @@
     background-position: 100% 50%;
   }
 }
+
+/* Elegant serif tagline — soft, cinematic, single line on mobile. */
+.hero-tagline {
+  font-family: var(--font-tagline);
+  font-weight: 500;
+  font-style: normal;
+  letter-spacing: -0.005em;
+  color: color-mix(in oklab, var(--foam) 96%, white);
+  text-shadow: 0 0 46px color-mix(in oklab, var(--lagoon) 26%, transparent);
+}
