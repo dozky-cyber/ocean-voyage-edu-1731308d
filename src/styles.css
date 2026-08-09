@@ -22,7 +22,6 @@
   --font-sans:
     "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-tagline: "Cormorant Garamond", "Cormorant", ui-serif, Georgia, serif;
   --font-wordmark: "Bodoni Moda", "Didot", "Bodoni MT", ui-serif, Georgia, serif;
   --color-abyss: var(--abyss);
   --color-tide: var(--tide);
@@ -252,14 +251,4 @@
   50% {
     background-position: 100% 50%;
   }
-}
-
-/* Elegant serif tagline — soft, cinematic, single line on mobile. */
-.hero-tagline {
-  font-family: var(--font-tagline);
-  font-weight: 500;
-  font-style: normal;
-  letter-spacing: -0.005em;
-  color: color-mix(in oklab, var(--foam) 96%, white);
-  text-shadow: 0 0 46px color-mix(in oklab, var(--lagoon) 26%, transparent);
 }

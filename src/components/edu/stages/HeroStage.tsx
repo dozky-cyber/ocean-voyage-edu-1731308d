@@ -36,8 +36,8 @@ export function HeroStage() {
 
         <Reveal delay={0.12}>
           <p
-            className="hero-tagline mt-3 whitespace-nowrap leading-[1.15]"
-            style={{ fontSize: "clamp(1.5rem, 7.4vw, 3.6rem)" }}
+            className="mt-3 whitespace-nowrap font-display font-medium leading-[1.1] tracking-[-0.01em] text-foreground text-glow"
+            style={{ fontSize: "clamp(1.35rem, 6.4vw, 3.2rem)" }}
           >
             {hero.title}
           </p>
