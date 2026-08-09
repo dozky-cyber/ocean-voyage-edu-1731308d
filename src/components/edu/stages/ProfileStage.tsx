@@ -40,7 +40,7 @@ export function ProfileStage() {
             <div className="absolute inset-x-0 bottom-0 p-6">
               <p className="text-sm font-medium">{profile.name}</p>
               <p className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-primary/90">
-                <Waves className="h-3.5 w-3.5" /> {profile.title}
+                <Waves className="h-3.5 w-3.5" /> KERJAKU · Digital Product Journey
               </p>
             </div>
           </div>
