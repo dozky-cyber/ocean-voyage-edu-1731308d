@@ -275,7 +275,37 @@ export function OceanScene() {
       }
       ctx.restore();
 
-      // Floating plankton / bubbles with parallax depth
+      // Caustic refraction cells drifting through the upper water column
+      const causticStrength = Math.max(0, 0.9 - p * 1.1);
+      if (causticStrength > 0.02) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        if (!reduced) ctx.filter = `blur(${isSmall ? 4 : 7}px)`;
+        const cells = isSmall ? 10 : 20;
+        for (let i = 0; i < cells; i++) {
+          const t = time * 0.00006;
+          const cx =
+            (Math.sin(i * 12.9898 + t) * 0.5 + 0.5) * width +
+            Math.sin(time * 0.00018 + i) * 28;
+          const cy =
+            (Math.sin(i * 78.233) * 0.5 + 0.5) * height * 0.55 +
+            Math.sin(time * 0.00011 + i * 1.7) * 22;
+          const r = 26 + ((i * 29) % 60);
+          const a = 0.035 * causticStrength * (0.5 + 0.5 * Math.sin(time * 0.0004 + i));
+          const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          gr.addColorStop(0, rgb(pal.glow, a));
+          gr.addColorStop(0.6, rgb(pal.glow, a * 0.4));
+          gr.addColorStop(1, rgb(pal.glow, 0));
+          ctx.fillStyle = gr;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, r, r * 0.42, Math.sin(i) * 0.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.filter = "none";
+        ctx.restore();
+      }
+
+      // Floating plankton / dust with parallax depth
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       for (const s of particles) {
@@ -293,7 +323,111 @@ export function OceanScene() {
       }
       ctx.restore();
 
-      // Vignette for cinematic depth of field
+      // Real gas bubbles: rim-lit, varied sizes, slow rise with lateral wobble
+      ctx.save();
+      for (const b of bubbles) {
+        if (!reduced) b.y -= b.speed * dt;
+        if (b.y < -0.06) {
+          b.y = 1.06;
+          b.x = Math.random();
+        }
+        const bx = b.x * width + Math.sin(time * 0.0002 + b.wobble) * b.wobbleAmp + px * 18;
+        const by = b.y * height + py * 10;
+        const blurPx = b.blur * (isSmall ? 2.5 : 4);
+        if (!reduced && blurPx > 0.6) ctx.filter = `blur(${blurPx.toFixed(1)}px)`;
+        else ctx.filter = "none";
+
+        // Body
+        const body = ctx.createRadialGradient(
+          bx - b.r * 0.3,
+          by - b.r * 0.3,
+          b.r * 0.1,
+          bx,
+          by,
+          b.r,
+        );
+        body.addColorStop(0, rgb(pal.glow, b.alpha * 0.55));
+        body.addColorStop(0.7, rgb(pal.glow, b.alpha * 0.1));
+        body.addColorStop(1, rgb(pal.glow, 0));
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.arc(bx, by, b.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Rim highlight
+        ctx.beginPath();
+        ctx.arc(bx, by, b.r * 0.92, 0, Math.PI * 2);
+        ctx.strokeStyle = rgb(pal.glow, b.alpha * 0.65);
+        ctx.lineWidth = Math.max(0.6, b.r * 0.09);
+        ctx.stroke();
+
+        // Specular dot
+        ctx.beginPath();
+        ctx.arc(bx - b.r * 0.34, by - b.r * 0.36, Math.max(0.5, b.r * 0.16), 0, Math.PI * 2);
+        ctx.fillStyle = rgb(pal.glow, b.alpha * 0.9);
+        ctx.fill();
+      }
+      ctx.filter = "none";
+      ctx.restore();
+
+      // Deep-sea floor: coral silhouettes emerging only in the final descent
+      const seabed = Math.max(0, (p - 0.8) / 0.2);
+      if (seabed > 0.001) {
+        const ease = seabed * seabed * (3 - 2 * seabed);
+        ctx.save();
+        const floorTop = height * (1.06 - 0.3 * ease);
+        // Silt haze above the floor
+        const haze = ctx.createLinearGradient(0, floorTop - height * 0.18, 0, height);
+        haze.addColorStop(0, rgb(pal.bottom, 0));
+        haze.addColorStop(1, rgb(pal.bottom, 0.85 * ease));
+        ctx.fillStyle = haze;
+        ctx.fillRect(0, floorTop - height * 0.18, width, height);
+
+        const silhouette = `rgba(2, 8, 16, ${0.92 * ease})`;
+        ctx.fillStyle = silhouette;
+        // Rocky ridge
+        ctx.beginPath();
+        ctx.moveTo(-20, height + 20);
+        for (let x = -20; x <= width + 20; x += 18) {
+          const y =
+            floorTop +
+            Math.sin(x * 0.006 + 1.2) * 16 +
+            Math.sin(x * 0.017 + 0.4) * 8 +
+            Math.sin(x * 0.0032) * 22;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(width + 20, height + 20);
+        ctx.closePath();
+        ctx.fill();
+
+        // Coral fans / branches rooted in the ridge
+        const corals = isSmall ? 7 : 14;
+        ctx.strokeStyle = silhouette;
+        ctx.lineCap = "round";
+        for (let i = 0; i < corals; i++) {
+          const cx = ((i + 0.5) / corals) * width + Math.sin(i * 41.7) * 18;
+          const rootY = floorTop + Math.sin(cx * 0.006 + 1.2) * 16 - 4;
+          const h = (26 + ((i * 53) % 62)) * ease;
+          const sway = Math.sin(time * 0.00035 + i) * 4;
+          const branches = 3 + (i % 3);
+          for (let b2 = 0; b2 < branches; b2++) {
+            const spread = (b2 - (branches - 1) / 2) * (7 + (i % 4));
+            ctx.lineWidth = 3 + (i % 3);
+            ctx.beginPath();
+            ctx.moveTo(cx, rootY + 6);
+            ctx.quadraticCurveTo(
+              cx + spread * 0.6 + sway,
+              rootY - h * 0.55,
+              cx + spread * 1.6 + sway * 1.6,
+              rootY - h,
+            );
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
+
+
       const vg = ctx.createRadialGradient(
         width / 2,
         height / 2,
