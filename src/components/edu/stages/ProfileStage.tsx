@@ -1,34 +1,18 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Camera, Waves } from "lucide-react";
-import defaultPortrait from "@/assets/profile-portrait.jpg";
+import { useRef } from "react";
+import { Waves } from "lucide-react";
+import portraitAsset from "@/assets/adji-taufiq-portrait.png.asset.json";
 import { profile } from "@/lib/edu-content";
-import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
 export function ProfileStage() {
   const ref = useRef<HTMLElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const portraitY = useTransform(scrollYProgress, [0, 1], [60, -60]);
   const glowScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1.05, 0.9]);
 
-  const [photo, setPhoto] = useState<string>(defaultPortrait);
 
-  useEffect(() => {
-    return () => {
-      if (photo.startsWith("blob:")) URL.revokeObjectURL(photo);
-    };
-  }, [photo]);
 
-  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhoto((prev) => {
-      if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
-  };
 
   return (
     <section id="profile" ref={ref} className="relative min-h-[100svh] px-5 py-32 sm:px-8">
@@ -41,8 +25,8 @@ export function ProfileStage() {
           />
           <div className="relative overflow-hidden rounded-[2.5rem] glass-panel">
             <img
-              src={photo}
-              alt={profile.caption}
+              src={portraitAsset.url}
+              alt={`${profile.name} — ${profile.title}`}
               width={1024}
               height={1280}
               loading="lazy"
@@ -54,31 +38,13 @@ export function ProfileStage() {
               className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_top,color-mix(in_oklab,var(--abyss)_85%,transparent),transparent_55%)]"
             />
             <div className="absolute inset-x-0 bottom-0 p-6">
-              <p className="text-sm font-medium">{profile.caption}</p>
+              <p className="text-sm font-medium">{profile.name}</p>
               <p className="mt-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-primary/90">
-                <Waves className="h-3.5 w-3.5" /> {profile.title}
+                <Waves className="h-3.5 w-3.5" /> KERJAKU · Digital Product Journey
               </p>
             </div>
           </div>
 
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            onChange={onPick}
-            className="sr-only"
-            aria-label={profile.uploadLabel}
-          />
-          <div className="mt-5 flex justify-center">
-            <OceanButton
-              variant="secondary"
-              size="sm"
-              onClick={() => inputRef.current?.click()}
-              className="gap-2"
-            >
-              <Camera className="h-4 w-4" /> {profile.uploadLabel}
-            </OceanButton>
-          </div>
         </motion.div>
 
         <div>

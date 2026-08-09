@@ -12,9 +12,9 @@ import { ProfileStage } from "@/components/edu/stages/ProfileStage";
 import { AiStage } from "@/components/edu/stages/AiStage";
 import { FinalStage } from "@/components/edu/stages/FinalStage";
 
-const title = "KERJAKU.SPACE — Work, made your way.";
+const title = "KERJAKU — Work, made your way.";
 const description =
-  "Portofolio digital KERJAKU.SPACE: aplikasi, sistem kerja, eksperimen AI, dan produk digital seperti RO Memory, Material Estimator, dan Dompet Gue.";
+  "Portofolio digital KERJAKU: aplikasi, sistem kerja, eksperimen AI, dan produk digital seperti RO Memory, Material Estimator, dan Dompet Gue.";
 
 export const Route = createFileRoute("/")({
   head: () => ({

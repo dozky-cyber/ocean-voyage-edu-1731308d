@@ -114,15 +114,51 @@ export function OceanScene() {
       const px = journey.pointerX;
       const py = journey.pointerY;
 
+      // Living sea surface: slow ripples + refraction seen from below
+      const surfaceH = height * (0.16 - p * 0.10);
+      if (surfaceH > 4) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        const sky = ctx.createLinearGradient(0, 0, 0, surfaceH);
+        sky.addColorStop(0, rgb(pal.glow, 0.2 * (1 - p)));
+        sky.addColorStop(1, rgb(pal.glow, 0));
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, width, surfaceH);
+
+        const lines = isSmall ? 5 : 8;
+        for (let i = 0; i < lines; i++) {
+          const yBase = surfaceH * (0.12 + (i / lines) * 0.88);
+          ctx.beginPath();
+          for (let x = -30; x <= width + 30; x += 18) {
+            const y =
+              yBase +
+              Math.sin(x * 0.009 + time * 0.00022 + i * 0.9) * (3 + i * 0.9) +
+              Math.sin(x * 0.021 - time * 0.00013 + i) * 2.2;
+            if (x === -30) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = rgb(pal.glow, (0.09 - i * 0.008) * (1 - p * 0.8));
+          ctx.lineWidth = 1 + (lines - i) * 0.18;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // Slow surface refraction factor feeding the shafts below
+      const refraction = Math.sin(time * 0.00009) * 0.5 + 0.5;
+
       // Volumetric light shafts from the surface
       const shafts = isSmall ? 3 : 6;
-      const shaftAlpha = 0.16 * (1 - p * 0.55);
+      const shaftAlpha = 0.16 * (1 - p * 0.55) * (0.85 + refraction * 0.3);
       if (shaftAlpha > 0.01) {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
         for (let i = 0; i < shafts; i++) {
           const base = ((i + 0.5) / shafts) * width;
-          const sway = Math.sin(time * 0.00016 + i) * 60 + px * 30;
+          const sway =
+            Math.sin(time * 0.00016 + i) * 60 +
+            Math.sin(time * 0.00007 + i * 2.1) * 18 +
+            px * 30;
           const w = width * (0.06 + (i % 3) * 0.02);
           const grad = ctx.createLinearGradient(0, 0, 0, height * 0.95);
           grad.addColorStop(0, rgb(pal.glow, shaftAlpha));

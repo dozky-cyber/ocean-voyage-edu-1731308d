@@ -1,5 +1,5 @@
 /**
- * Centralized content for the KERJAKU.SPACE experience.
+ * Centralized content for the KERJAKU experience.
  * All copy/data lives here so text and assets can be swapped in
  * without touching layout or animation code.
  */
@@ -7,7 +7,7 @@
 export type Grade = "Products" | "Experiments";
 
 export const brand = {
-  name: "KERJAKU.SPACE",
+  name: "KERJAKU",
   tagline: "DIGITAL PRODUCT JOURNEY",
   motto: "Work, made your way.",
 };
@@ -42,7 +42,7 @@ export const hero = {
 };
 
 export const pastel = {
-  eyebrow: "Section 01",
+  eyebrow: "Ideas",
   title: "Ideas Behind The Build",
   subtitle: "Every product starts with a problem worth solving.",
   body: "Setiap produk dimulai dari memahami masalah, kebutuhan pengguna, dan mencari solusi yang tepat.",
@@ -119,13 +119,13 @@ export const worlds: {
 ];
 
 export const systems = {
-  eyebrow: "Section 02",
+  eyebrow: "Systems",
   title: "Systems & Solutions",
   body: "Mengubah ide menjadi sistem digital yang dapat digunakan dalam pekerjaan dan kehidupan sehari-hari.",
 };
 
 export const products = {
-  eyebrow: "Section 03",
+  eyebrow: "Products",
   title: "Products I Build",
   body: "Beberapa produk digital yang sedang dan telah saya kembangkan.",
 };
@@ -192,16 +192,16 @@ export const profile = {
   eyebrow: "Profile",
   title: "Digital Product Builder",
   body: "Membangun aplikasi, sistem kerja, dan pengalaman digital melalui web technology, AI, dan automation.",
-  caption: "KERJAKU.SPACE — Digital Product Builder",
-  uploadLabel: "Ganti foto profil",
+  name: "Adji Taufiq",
+  caption: "Adji Taufiq",
   skills: ["Web Technology", "AI", "Automation", "Data & Systems"],
 };
 
 export const ai = {
-  eyebrow: "Section 04",
+  eyebrow: "Intelligence",
   title: "AI & Automation",
   body: "Mengeksplorasi bagaimana teknologi AI dapat membantu manusia bekerja lebih cepat, sederhana, dan efektif.",
-  portraitCaption: "KERJAKU.SPACE — Digital Product Builder",
+  portraitCaption: "Adji Taufiq — Digital Product Builder",
   cards: [
     { title: "AI Assistant", note: "Pendamping kerja yang menjawab dan merangkum." },
     { title: "Workflow Automation", note: "Proses berulang berjalan sendiri." },
@@ -221,7 +221,7 @@ export const ai = {
 };
 
 export const finalCta = {
-  eyebrow: "Section 05",
+  eyebrow: "Closing",
   title: "Keep Building",
   body: "Setiap ide memiliki kesempatan untuk menjadi sesuatu yang berguna.",
   primary: "Let's Connect",
@@ -304,6 +304,6 @@ export function buildDemoAnswer(question: string, grade: Grade): string[] {
     `Lapisan 1 — Permukaan: rumuskan masalahnya dalam satu kalimat dan tentukan siapa penggunanya.`,
     `Lapisan 2 — Sistem: petakan alur kerja dan data yang dibutuhkan, lalu cari bagian yang bisa diotomatiskan.`,
     `Lapisan 3 — Produk: bangun versi terkecil yang bisa dipakai, ukur hasilnya, lalu iterasi.`,
-    `Catatan: jawaban ini adalah demo lokal KERJAKU.SPACE, bukan hasil dari layanan AI eksternal.`,
+    `Catatan: jawaban ini adalah demo lokal KERJAKU, bukan hasil dari layanan AI eksternal.`,
   ];
 }
