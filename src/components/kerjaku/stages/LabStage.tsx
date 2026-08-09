@@ -1,19 +1,19 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState, type FormEvent } from "react";
 import { ArrowUp, Bot, Sparkle, Workflow } from "lucide-react";
-import { ai, buildDemoAnswer } from "@/lib/edu-content";
-import { useEdu } from "../EduProvider";
+import { lab, buildDemoAnswer } from "@/lib/site-content";
+import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
-const cardIcons = [Bot, Workflow, Sparkle];
+const cardIcons = [Sparkle, Workflow, Bot];
 
-export function AiStage() {
+export function LabStage() {
   const ref = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const cardsY = useTransform(scrollYProgress, [0, 1], [60, -60]);
 
-  const { grade } = useEdu();
+  const { mode } = useJourney();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string[] | null>(null);
 
@@ -21,7 +21,7 @@ export function AiStage() {
     const q = text.trim();
     if (!q) return;
     setQuestion(q);
-    setAnswer(buildDemoAnswer(q, grade));
+    setAnswer(buildDemoAnswer(q, mode));
   };
 
   const onSubmit = (e: FormEvent) => {
@@ -30,14 +30,14 @@ export function AiStage() {
   };
 
   return (
-    <section id="ai" ref={ref} className="relative min-h-[110svh] px-5 py-32 sm:px-8">
+    <section id="lab" ref={ref} className="relative px-5 py-28 sm:px-8">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
         <motion.div style={{ y: cardsY }} className="relative mx-auto w-full max-w-md space-y-4">
           <div
             aria-hidden="true"
             className="absolute -inset-10 rounded-full bg-[radial-gradient(circle_at_50%_40%,color-mix(in_oklab,var(--violet-deep)_55%,transparent),transparent_70%)] blur-2xl"
           />
-          {ai.cards.map((c, i) => {
+          {lab.cards.map((c, i) => {
             const Icon = cardIcons[i % cardIcons.length];
             return (
               <motion.div
@@ -60,44 +60,36 @@ export function AiStage() {
 
         <div>
           <Reveal>
-            <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">{ai.eyebrow}</p>
+            <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">{lab.eyebrow}</p>
           </Reveal>
           <Reveal delay={0.1}>
             <h2 className="mt-6 text-balance font-display text-[clamp(2.2rem,6vw,3.6rem)] leading-[1.05]">
-              {ai.title}
+              {lab.title}
             </h2>
+          </Reveal>
+          <Reveal delay={0.14}>
+            <p className="mt-3 text-sm uppercase tracking-[0.2em] text-primary/80">
+              {lab.subtitle}
+            </p>
           </Reveal>
           <Reveal delay={0.18}>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground">
-              {ai.body}
+              {lab.body}
             </p>
           </Reveal>
 
-          <Reveal delay={0.26}>
-            <ul className="mt-6 flex flex-wrap gap-2">
-              {ai.benefits.map((b) => (
-                <li
-                  key={b}
-                  className="rounded-full bg-secondary/50 px-4 py-2 text-xs text-muted-foreground"
-                >
-                  {b}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
-
-          <Reveal delay={0.34}>
+          <Reveal delay={0.28}>
             <form
               onSubmit={onSubmit}
               className="mt-8 rounded-[2rem] glass-panel p-4 sm:p-5"
-              aria-label="Tanya asisten AI"
+              aria-label="Tanya demo lokal"
             >
-              <label htmlFor="ai-question" className="sr-only">
+              <label htmlFor="lab-question" className="sr-only">
                 Tulis pertanyaanmu
               </label>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <textarea
-                  id="ai-question"
+                  id="lab-question"
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   rows={2}
@@ -115,7 +107,7 @@ export function AiStage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {ai.examples.map((ex) => (
+                {lab.examples.map((ex) => (
                   <button
                     key={ex}
                     type="button"

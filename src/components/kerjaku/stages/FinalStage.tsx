@@ -1,16 +1,15 @@
-import { finalCta, brand } from "@/lib/edu-content";
-import { useEdu } from "../EduProvider";
-import { GradeSwitch } from "../GradeSwitch";
+import { finalCta, brand } from "@/lib/site-content";
+import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
 export function FinalStage() {
-  const { openPanel, scrollTo } = useEdu();
+  const { openPanel, scrollTo } = useJourney();
 
   return (
     <section
       id="final"
-      className="relative flex min-h-[100svh] flex-col items-center justify-center px-5 py-32 text-center sm:px-8"
+      className="relative flex min-h-[90svh] flex-col items-center justify-center px-5 py-28 text-center sm:px-8"
     >
       <div className="mx-auto max-w-3xl">
         <Reveal>
@@ -29,27 +28,20 @@ export function FinalStage() {
           </p>
         </Reveal>
         <Reveal delay={0.3}>
-          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <OceanButton className="w-full sm:w-56" onClick={() => openPanel("materi")}>
+          <div className="mt-10 flex justify-center">
+            <OceanButton
+              className="w-full sm:w-56"
+              onClick={() => {
+                window.location.href = `mailto:${brand.contactEmail}`;
+              }}
+            >
               {finalCta.primary}
             </OceanButton>
-            <OceanButton
-              variant="secondary"
-              className="w-full sm:w-56"
-              onClick={() => scrollTo("products")}
-            >
-              {finalCta.secondary}
-            </OceanButton>
-          </div>
-        </Reveal>
-        <Reveal delay={0.4}>
-          <div className="mt-12 flex justify-center">
-            <GradeSwitch compact />
           </div>
         </Reveal>
       </div>
 
-      <footer className="mt-24 flex w-full max-w-3xl flex-col items-center gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+      <footer className="mt-20 flex w-full max-w-3xl flex-col items-center gap-4 border-t border-border pt-8 text-xs text-muted-foreground sm:flex-row sm:justify-between">
         <p>
           {brand.name} — {brand.motto}
         </p>
@@ -67,7 +59,7 @@ export function FinalStage() {
           <button
             type="button"
             className="hover:text-foreground"
-            onClick={() => openPanel("petunjuk")}
+            onClick={() => openPanel("process")}
           >
             Process
           </button>

@@ -1,20 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { EduProvider } from "@/components/edu/EduProvider";
-import { EduPanels } from "@/components/edu/EduPanels";
-import { OceanScene } from "@/components/edu/OceanScene";
-import { SiteNav } from "@/components/edu/SiteNav";
-import { SmoothScrollProvider } from "@/components/edu/SmoothScrollProvider";
-import { HeroStage } from "@/components/edu/stages/HeroStage";
-import { PastelStage } from "@/components/edu/stages/PastelStage";
-import { ShowcaseStage } from "@/components/edu/stages/ShowcaseStage";
-import { ProductsStage } from "@/components/edu/stages/ProductsStage";
-import { ProfileStage } from "@/components/edu/stages/ProfileStage";
-import { AiStage } from "@/components/edu/stages/AiStage";
-import { FinalStage } from "@/components/edu/stages/FinalStage";
+import { JourneyProvider } from "@/components/kerjaku/JourneyProvider";
+import { JourneyPanels } from "@/components/kerjaku/JourneyPanels";
+import { OceanScene } from "@/components/kerjaku/OceanScene";
+import { SiteNav } from "@/components/kerjaku/SiteNav";
+import { SmoothScrollProvider } from "@/components/kerjaku/SmoothScrollProvider";
+import { HeroStage } from "@/components/kerjaku/stages/HeroStage";
+import { PastelStage } from "@/components/kerjaku/stages/PastelStage";
+import { ShowcaseStage } from "@/components/kerjaku/stages/ShowcaseStage";
+import { ProductsStage } from "@/components/kerjaku/stages/ProductsStage";
+import { ProfileStage } from "@/components/kerjaku/stages/ProfileStage";
+import { LabStage } from "@/components/kerjaku/stages/LabStage";
+import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
 const title = "KERJAKU — Work, made your way.";
 const description =
-  "Portofolio digital KERJAKU: aplikasi, sistem kerja, eksperimen AI, dan produk digital seperti RO Memory, Material Estimator, dan Dompet Gue.";
+  "Portofolio digital KERJAKU oleh Adji Taufiq: RO Memory, Dompet Gue, Material Estimator, serta eksperimen AI dan automation.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   return (
-    <EduProvider>
+    <JourneyProvider>
       <SmoothScrollProvider />
       <OceanScene />
       <SiteNav />
@@ -42,10 +42,10 @@ function Index() {
         <ShowcaseStage />
         <ProductsStage />
         <ProfileStage />
-        <AiStage />
+        <LabStage />
         <FinalStage />
       </main>
-      <EduPanels />
-    </EduProvider>
+      <JourneyPanels />
+    </JourneyProvider>
   );
 }

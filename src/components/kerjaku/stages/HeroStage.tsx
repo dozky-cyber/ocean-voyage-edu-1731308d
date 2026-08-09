@@ -1,9 +1,8 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { brand, hero } from "@/lib/edu-content";
-import { useEdu } from "../EduProvider";
-import { GradeSwitch } from "../GradeSwitch";
+import { brand, hero } from "@/lib/site-content";
+import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
@@ -13,7 +12,7 @@ export function HeroStage() {
   const y = useTransform(scrollYProgress, [0, 1], [0, -120]);
   const opacity = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
   const blur = useTransform(scrollYProgress, [0, 1], ["blur(0px)", "blur(10px)"]);
-  const { scrollTo, openPanel } = useEdu();
+  const { scrollTo } = useJourney();
 
   return (
     <section
@@ -49,8 +48,7 @@ export function HeroStage() {
           </p>
         </Reveal>
 
-
-        <Reveal delay={0.44}>
+        <Reveal delay={0.4}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <OceanButton className="w-full sm:w-56" onClick={() => scrollTo("products")}>
               {hero.primaryCta}
@@ -62,12 +60,6 @@ export function HeroStage() {
             >
               {hero.secondaryCta}
             </OceanButton>
-          </div>
-        </Reveal>
-
-        <Reveal delay={0.56}>
-          <div className="mt-14 flex justify-center">
-            <GradeSwitch />
           </div>
         </Reveal>
       </motion.div>
