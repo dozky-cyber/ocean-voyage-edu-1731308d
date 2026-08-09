@@ -62,15 +62,15 @@ export function ProductsStage() {
                 <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
                   {p.description}
                 </p>
-                {p.focus && (
-                  <ul className="mt-6 space-y-2">
-                    {p.focus.map((f) => (
-                      <li key={f} className="flex items-start gap-3 text-sm text-muted-foreground">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {p.url && (
+                  <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-primary/40 px-4 py-2 text-xs text-primary transition-colors hover:bg-primary/10"
+                  >
+                    Kunjungi produk
+                  </a>
                 )}
               </motion.article>
             ))}
