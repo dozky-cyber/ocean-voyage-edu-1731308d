@@ -4,16 +4,17 @@
  * without touching layout or animation code.
  */
 
-export type Grade = "Products" | "Experiments";
+export type ProjectMode = "Products" | "Experiments";
 
 export const brand = {
   name: "KERJAKU",
   tagline: "DIGITAL PRODUCT JOURNEY",
   motto: "Work, made your way.",
+  contactEmail: "cs@kerjaku.space",
 };
 
-export const grades: {
-  id: Grade;
+export const projectModes: {
+  id: ProjectMode;
   label: string;
   full: string;
   description: string;
@@ -33,7 +34,6 @@ export const grades: {
 ];
 
 export const hero = {
-  eyebrow: "Digital Product Journey",
   title: "Work, made your way.",
   subtitle:
     "Ruang untuk merancang ide, membangun sistem, dan menciptakan produk digital yang membantu menyelesaikan masalah nyata.",
@@ -42,19 +42,25 @@ export const hero = {
 };
 
 export const pastel = {
-  eyebrow: "Ideas",
+  eyebrow: "Permukaan",
   title: "Ideas Behind The Build",
   subtitle: "Every product starts with a problem worth solving.",
-  body: "Setiap produk dimulai dari memahami masalah, kebutuhan pengguna, dan mencari solusi yang tepat.",
+  body: "Setiap produk dimulai dari memahami masalah, kebutuhan pengguna, dan alur kerja yang sebenarnya sebelum menentukan solusi.",
   fragments: [
-    { label: "Problem Discovery", note: "Menemukan akar masalah" },
-    { label: "Research", note: "Data & konteks kerja" },
-    { label: "User Needs", note: "Kebutuhan pengguna" },
-    { label: "Ideas", note: "Solusi yang mungkin" },
+    { label: "Masalah Nyata", note: "Melihat apa yang benar-benar menghambat pekerjaan." },
+    {
+      label: "Memahami Alur",
+      note: "Mencari pola kerja dan informasi yang sebenarnya dibutuhkan.",
+    },
+    {
+      label: "Membangun Solusi",
+      note: "Mengubah kebutuhan menjadi sistem yang sederhana dan bisa digunakan.",
+    },
+    { label: "Dipakai & Diperbaiki", note: "Menguji langsung, melihat kekurangan, lalu memperbaikinya." },
   ],
 };
 
-export type WorldId = "web" | "automation" | "ai" | "data";
+export type WorldId = "web" | "data" | "ai";
 
 export const worlds: {
   id: WorldId;
@@ -66,146 +72,143 @@ export const worlds: {
 }[] = [
   {
     id: "web",
-    title: "Web Application",
+    title: "Web Applications",
     subtitle: "Antarmuka Kerja",
-    body: "Aplikasi web yang ringan, cepat, dan nyaman dipakai setiap hari di lapangan maupun kantor.",
+    body: "Sistem kerja yang dapat digunakan dari desktop maupun mobile.",
     depth: "-120 m",
     points: [
       "Dashboard dan form kerja harian",
       "Responsif untuk mobile dan desktop",
       "Autentikasi dan hak akses pengguna",
-      "Integrasi dengan data yang sudah ada",
-    ],
-  },
-  {
-    id: "automation",
-    title: "Automation",
-    subtitle: "Alur Otomatis",
-    body: "Menghapus pekerjaan berulang dengan alur kerja otomatis yang berjalan di belakang layar.",
-    depth: "-260 m",
-    points: [
-      "Laporan otomatis terjadwal",
-      "Notifikasi dan follow-up",
-      "Sinkronisasi antar sistem",
-      "Template dokumen instan",
-    ],
-  },
-  {
-    id: "ai",
-    title: "AI Integration",
-    subtitle: "Lapisan Cerdas",
-    body: "Menambahkan lapisan AI untuk merangkum, menganalisis, dan memberi rekomendasi kerja.",
-    depth: "-410 m",
-    points: [
-      "Ringkasan aktivitas otomatis",
-      "Insight dari catatan lapangan",
-      "Asisten tanya jawab internal",
-      "Klasifikasi dan pelabelan data",
     ],
   },
   {
     id: "data",
-    title: "Data System",
+    title: "Data & Workflow Systems",
     subtitle: "Fondasi Data",
-    body: "Struktur data yang rapi agar setiap keputusan berdiri di atas informasi yang bisa dipercaya.",
-    depth: "-560 m",
+    body: "Mengubah aktivitas operasional menjadi data yang lebih terstruktur, mudah dibaca, dan bisa digunakan kembali.",
+    depth: "-320 m",
     points: [
-      "Skema database yang terstruktur",
-      "Riwayat dan jejak perubahan",
-      "Visualisasi kemajuan pekerjaan",
-      "Ekspor data untuk pelaporan",
+      "Struktur data yang rapi dan konsisten",
+      "Riwayat dan jejak aktivitas",
+      "Ringkasan dan ekspor untuk pelaporan",
+    ],
+  },
+  {
+    id: "ai",
+    title: "AI & Automation",
+    subtitle: "Lapisan Cerdas",
+    body: "AI digunakan ketika memang membantu mempercepat pencatatan, pencarian informasi, dan pengambilan keputusan.",
+    depth: "-520 m",
+    points: [
+      "Ringkasan aktivitas otomatis",
+      "Pencarian informasi internal",
+      "Alur kerja yang berjalan sendiri",
     ],
   },
 ];
 
 export const systems = {
-  eyebrow: "Systems",
+  eyebrow: "Arus Tengah",
   title: "Systems & Solutions",
-  body: "Mengubah ide menjadi sistem digital yang dapat digunakan dalam pekerjaan dan kehidupan sehari-hari.",
+  body: "Tiga area kerja yang saya gunakan untuk mengubah ide menjadi sistem digital yang benar-benar dipakai.",
 };
 
 export const products = {
-  eyebrow: "Products",
+  eyebrow: "Palung",
   title: "Products I Build",
-  body: "Beberapa produk digital yang sedang dan telah saya kembangkan.",
+  body: "Produk digital yang sedang dan telah saya kembangkan.",
 };
 
 export type Project = {
   name: string;
   category: string;
   description: string;
-  status?: string;
-  focus?: string[];
+  status: "LIVE" | "IN DEVELOPMENT";
+  icon: "activity" | "wallet" | "ruler" | "bot" | "workflow" | "sparkle";
+  url?: string;
 };
 
-export const projects: Record<Grade, Project[]> = {
+export const projects: Record<ProjectMode, Project[]> = {
   Products: [
     {
       name: "RO MEMORY",
       category: "Field Activity Intelligence System",
       description:
-        "Sistem digital untuk mengelola workshop, aktivitas visit, laporan, follow-up, dan insight kerja dengan bantuan AI.",
+        "Sistem kerja untuk mencatat aktivitas kunjungan, mengelola workshop, membaca performa, dan membantu pekerjaan lapangan melalui AI dan Telegram.",
       status: "LIVE",
-    },
-    {
-      name: "MATERIAL ESTIMATOR",
-      category: "Furniture & Interior Material Planning",
-      description:
-        "Aplikasi untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan, sehingga proses perencanaan bahan menjadi lebih cepat, akurat, dan terstruktur.",
-      focus: [
-        "Material calculation",
-        "Furniture planning",
-        "Quantity estimation",
-        "Material requirement planning",
-      ],
+      icon: "activity",
+      url: "https://memory.kerjaku.space",
     },
     {
       name: "DOMPET GUE",
       category: "Personal Finance Workspace",
       description:
-        "Aplikasi pengelolaan keuangan pribadi untuk membantu pencatatan, monitoring, dan memahami kondisi finansial.",
+        "Aplikasi pencatatan keuangan pribadi untuk melihat aset, pemasukan, pengeluaran, hutang, cicilan, dan aktivitas keuangan dalam satu tempat.",
+      status: "LIVE",
+      icon: "wallet",
+      url: "https://dompetgue.kerjaku.space",
+    },
+    {
+      name: "MATERIAL ESTIMATOR",
+      category: "Furniture & Interior Material Planning",
+      description:
+        "Sistem untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan agar perencanaan bahan lebih cepat dan terstruktur.",
+      status: "IN DEVELOPMENT",
+      icon: "ruler",
     },
   ],
   Experiments: [
+    {
+      name: "AI HPL FINDER",
+      category: "Visual Material Recognition",
+      description:
+        "Eksperimen pencarian kode HPL dari foto material, untuk mempercepat pencocokan finishing di lapangan.",
+      status: "IN DEVELOPMENT",
+      icon: "sparkle",
+    },
+    {
+      name: "TELEGRAM WORKFLOW",
+      category: "Chat-based Automation",
+      description:
+        "Uji coba alur kerja lewat Telegram: pencatatan cepat, pengingat, dan laporan terjadwal tanpa membuka aplikasi.",
+      status: "IN DEVELOPMENT",
+      icon: "workflow",
+    },
     {
       name: "AI ASSISTANT",
       category: "Conversational Work Helper",
       description:
         "Eksperimen asisten yang merangkum catatan kerja dan menyusun langkah tindak lanjut secara bertahap.",
-    },
-    {
-      name: "WORKFLOW AUTOMATION",
-      category: "Background Process Lab",
-      description:
-        "Uji coba alur otomatis untuk laporan terjadwal, pengingat, dan sinkronisasi data antar aplikasi.",
-    },
-    {
-      name: "SMART TOOLS",
-      category: "Micro Utilities",
-      description:
-        "Kumpulan tool kecil yang menyelesaikan satu masalah spesifik dengan cepat dan tanpa konfigurasi rumit.",
+      status: "IN DEVELOPMENT",
+      icon: "bot",
     },
   ],
 };
 
 export const profile = {
-  eyebrow: "Profile",
+  eyebrow: "Dasar Laut",
   title: "Digital Product Builder",
-  body: "Membangun aplikasi, sistem kerja, dan pengalaman digital melalui web technology, AI, dan automation.",
+  body: "Saya membangun produk digital dari masalah yang saya temui dalam pekerjaan dan kehidupan sehari-hari, lalu mengubahnya menjadi sistem yang benar-benar bisa digunakan.",
   name: "Adji Taufiq",
   caption: "Adji Taufiq",
-  skills: ["Web Technology", "AI", "Automation", "Data & Systems"],
+  skills: [
+    "Problem-first",
+    "AI-assisted development",
+    "Operational systems",
+    "Product experimentation",
+  ],
 };
 
-export const ai = {
-  eyebrow: "Intelligence",
-  title: "AI & Automation",
-  body: "Mengeksplorasi bagaimana teknologi AI dapat membantu manusia bekerja lebih cepat, sederhana, dan efektif.",
-  portraitCaption: "Adji Taufiq — Digital Product Builder",
+export const lab = {
+  eyebrow: "Laboratorium",
+  title: "KERJAKU LAB",
+  subtitle: "Experiments, AI & Automation",
+  body: "Ruang uji coba: ide, prototipe, dan automation yang belum menjadi produk, tapi sedang saya jalankan dan pelajari.",
   cards: [
-    { title: "AI Assistant", note: "Pendamping kerja yang menjawab dan merangkum." },
-    { title: "Workflow Automation", note: "Proses berulang berjalan sendiri." },
-    { title: "Smart Tools", note: "Tool kecil, dampak besar." },
+    { title: "AI HPL Finder", note: "Mencari kode HPL dari foto material." },
+    { title: "Telegram Workflow", note: "Pencatatan dan pengingat lewat chat." },
+    { title: "AI Assistant", note: "Merangkum catatan kerja dan tindak lanjut." },
   ],
   examples: [
     "Bagaimana AI membantu laporan lapangan?",
@@ -213,26 +216,24 @@ export const ai = {
     "Rancang sistem estimasi material",
     "Ide fitur untuk aplikasi keuangan pribadi",
   ],
-  benefits: [
-    "Proses kerja lebih cepat",
-    "Keputusan berbasis data",
-    "Lebih sedikit pekerjaan manual",
-  ],
 };
 
 export const finalCta = {
-  eyebrow: "Closing",
+  eyebrow: "Penutup",
   title: "Keep Building",
   body: "Setiap ide memiliki kesempatan untuk menjadi sesuatu yang berguna.",
   primary: "Let's Connect",
-  secondary: "Explore My Work",
 };
 
-export const workPanel: Record<Grade, { subject: string; topics: string[] }[]> = {
+export const workPanel: Record<ProjectMode, { subject: string; topics: string[] }[]> = {
   Products: [
     {
       subject: "RO MEMORY",
-      topics: ["Workshop & visit", "Laporan lapangan", "Follow-up otomatis", "AI insight kerja"],
+      topics: ["Aktivitas kunjungan", "Workshop", "Performa kerja", "AI & Telegram"],
+    },
+    {
+      subject: "DOMPET GUE",
+      topics: ["Aset & arus kas", "Hutang dan cicilan", "Kategori pengeluaran", "Ringkasan bulanan"],
     },
     {
       subject: "MATERIAL ESTIMATOR",
@@ -243,31 +244,19 @@ export const workPanel: Record<Grade, { subject: string; topics: string[] }[]> =
         "Material requirement planning",
       ],
     },
-    {
-      subject: "DOMPET GUE",
-      topics: ["Pencatatan harian", "Monitoring arus kas", "Kategori pengeluaran", "Ringkasan bulanan"],
-    },
-    {
-      subject: "Fondasi Teknis",
-      topics: ["Web application", "Automation", "AI integration", "Data system"],
-    },
   ],
   Experiments: [
     {
+      subject: "AI HPL Finder",
+      topics: ["Foto material", "Pencocokan kode", "Uji akurasi", "Catatan lapangan"],
+    },
+    {
+      subject: "Telegram Workflow",
+      topics: ["Pencatatan cepat", "Pengingat pekerjaan", "Laporan terjadwal", "Sinkronisasi data"],
+    },
+    {
       subject: "AI Assistant",
       topics: ["Ringkasan catatan", "Tanya jawab internal", "Saran tindak lanjut", "Bahasa sederhana"],
-    },
-    {
-      subject: "Workflow Automation",
-      topics: ["Laporan terjadwal", "Pengingat pekerjaan", "Sinkronisasi data", "Template instan"],
-    },
-    {
-      subject: "Smart Tools",
-      topics: ["Kalkulator cepat", "Konversi data", "Checklist kerja", "Pencatat ide"],
-    },
-    {
-      subject: "Next Up",
-      topics: ["Mobile companion", "Offline mode", "Analitik lanjutan", "Integrasi pihak ketiga"],
     },
   ],
 };
@@ -278,7 +267,7 @@ export const processSteps = [
     body: "Mulai dari masalah nyata di pekerjaan: apa yang lambat, berulang, atau mudah salah.",
   },
   {
-    title: "2. Riset & kebutuhan pengguna",
+    title: "2. Pahami alurnya",
     body: "Kumpulkan konteks, data, dan cara kerja pengguna sebelum menulis satu baris kode.",
   },
   {
@@ -296,11 +285,11 @@ export const processSteps = [
 ];
 
 /** Deterministic local demo response — no external AI call is made. */
-export function buildDemoAnswer(question: string, grade: Grade): string[] {
+export function buildDemoAnswer(question: string, mode: ProjectMode): string[] {
   const q = question.trim().replace(/\s+/g, " ");
   const topic = q.replace(/[?.!]+$/, "");
   return [
-    `Konteks ${grade}: "${topic}" bisa didekati lewat tiga lapisan, dari masalah sampai produk yang berjalan.`,
+    `Konteks ${mode}: "${topic}" bisa didekati lewat tiga lapisan, dari masalah sampai produk yang berjalan.`,
     `Lapisan 1 — Permukaan: rumuskan masalahnya dalam satu kalimat dan tentukan siapa penggunanya.`,
     `Lapisan 2 — Sistem: petakan alur kerja dan data yang dibutuhkan, lalu cari bagian yang bisa diotomatiskan.`,
     `Lapisan 3 — Produk: bangun versi terkecil yang bisa dipakai, ukur hasilnya, lalu iterasi.`,
