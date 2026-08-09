@@ -5,7 +5,7 @@ type RGB = [number, number, number];
 
 /** Palette per journey stage: [top, mid, bottom] */
 const PALETTES: { top: RGB; mid: RGB; bottom: RGB; glow: RGB }[] = [
-  { top: [10, 20, 38], mid: [7, 14, 28], bottom: [3, 7, 16], glow: [92, 156, 214] }, // hero dusk
+  { top: [22, 62, 92], mid: [10, 32, 58], bottom: [4, 12, 26], glow: [128, 208, 236] }, // sea surface
   { top: [176, 214, 226], mid: [131, 180, 201], bottom: [70, 122, 154], glow: [235, 246, 250] }, // pastel
   { top: [23, 74, 96], mid: [11, 44, 66], bottom: [5, 21, 36], glow: [88, 200, 196] }, // organic
   { top: [42, 26, 96], mid: [26, 18, 66], bottom: [10, 8, 32], glow: [148, 118, 255] }, // ai
