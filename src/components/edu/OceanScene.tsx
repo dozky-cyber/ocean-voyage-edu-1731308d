@@ -48,6 +48,18 @@ type Particle = {
   seed: number;
 };
 
+/** Larger, rounder, rim-lit gas bubbles — visually distinct from plankton dust. */
+type Bubble = {
+  x: number;
+  y: number;
+  r: number;
+  speed: number;
+  wobble: number;
+  wobbleAmp: number;
+  blur: number;
+  alpha: number;
+};
+
 /**
  * Fixed, full-screen atmospheric ocean scene.
  * Canvas 2D keeps the experience GPU-light and gives a guaranteed static
