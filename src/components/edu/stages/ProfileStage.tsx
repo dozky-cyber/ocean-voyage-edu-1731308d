@@ -11,19 +11,8 @@ export function ProfileStage() {
   const portraitY = useTransform(scrollYProgress, [0, 1], [60, -60]);
   const glowScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1.05, 0.9]);
 
-  return () => {
-      if (photo.startsWith("blob:")) URL.revokeObjectURL(photo);
-    };
-  }, [photo]);
 
-  const onPick = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setPhoto((prev) => {
-      if (prev.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
-    });
-  };
+
 
   return (
     <section id="profile" ref={ref} className="relative min-h-[100svh] px-5 py-32 sm:px-8">
