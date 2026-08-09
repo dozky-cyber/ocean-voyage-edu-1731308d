@@ -22,7 +22,7 @@
   --font-sans:
     "Space Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: "Fraunces", ui-serif, Georgia, serif;
-  --font-wordmark: "Instrument Serif", ui-serif, Georgia, "Times New Roman", serif;
+  --font-wordmark: "Bodoni Moda", "Didot", "Bodoni MT", ui-serif, Georgia, serif;
   --color-abyss: var(--abyss);
   --color-tide: var(--tide);
   --color-foam: var(--foam);
@@ -220,15 +220,35 @@
   font-optical-sizing: auto;
 }
 
-/* Soft editorial wordmark: plain near-white with a gentle underwater glow. */
+/* Pearl-white underwater sheen for the hero wordmark. */
 .hero-wordmark {
   font-family: var(--font-wordmark);
   font-optical-sizing: auto;
-  font-weight: 400;
-  letter-spacing: 0.015em;
-  color: color-mix(in oklab, var(--foam) 96%, #ffffff);
-  text-shadow:
-    0 0 60px color-mix(in oklab, var(--lagoon) 22%, transparent),
-    0 2px 40px rgb(0 0 0 / 0.35);
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in oklab, var(--foam) 82%, transparent) 0%,
+    #ffffff 34%,
+    color-mix(in oklab, var(--lagoon) 30%, #ffffff) 47%,
+    #ffffff 60%,
+    color-mix(in oklab, var(--foam) 78%, transparent) 100%
+  );
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: hero-sheen 26s ease-in-out infinite;
+  filter: drop-shadow(0 0 34px color-mix(in oklab, var(--lagoon) 22%, transparent));
 }
 
+@keyframes hero-sheen {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
