@@ -139,64 +139,107 @@ export function OceanScene() {
       const px = journey.pointerX;
       const py = journey.pointerY;
 
-      // Living sea surface: slow ripples + refraction seen from below
-      const surfaceH = height * (0.16 - p * 0.10);
-      if (surfaceH > 4) {
+      // Slow surface refraction factor feeding the shafts below
+      const refraction = Math.sin(time * 0.00009) * 0.5 + 0.5;
+
+      // ---- Realistic moving sea surface seen from below --------------------
+      const surfaceH = height * (0.2 - p * 0.14);
+      const surfaceFade = Math.max(0, 1 - p * 1.25);
+      // Undulating waterline used both by the surface body and the light rays
+      const waveAt = (x: number) =>
+        surfaceH +
+        Math.sin(x * 0.0055 + time * 0.00021) * (10 + surfaceH * 0.06) +
+        Math.sin(x * 0.0131 - time * 0.00034) * 6 +
+        Math.sin(x * 0.027 + time * 0.00052) * 2.6;
+
+      if (surfaceH > 4 && surfaceFade > 0.01) {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
-        const sky = ctx.createLinearGradient(0, 0, 0, surfaceH);
-        sky.addColorStop(0, rgb(pal.glow, 0.2 * (1 - p)));
-        sky.addColorStop(1, rgb(pal.glow, 0));
-        ctx.fillStyle = sky;
-        ctx.fillRect(0, 0, width, surfaceH);
 
-        const lines = isSmall ? 5 : 8;
-        for (let i = 0; i < lines; i++) {
-          const yBase = surfaceH * (0.12 + (i / lines) * 0.88);
+        // Water body above the waterline: bright, refracting sky-light
+        ctx.beginPath();
+        ctx.moveTo(-40, -40);
+        ctx.lineTo(width + 40, -40);
+        for (let x = width + 40; x >= -40; x -= 14) ctx.lineTo(x, waveAt(x));
+        ctx.closePath();
+        const sky = ctx.createLinearGradient(0, -20, 0, surfaceH + 30);
+        sky.addColorStop(0, rgb(pal.glow, 0.42 * surfaceFade));
+        sky.addColorStop(0.55, rgb(pal.glow, 0.2 * surfaceFade));
+        sky.addColorStop(1, rgb(pal.glow, 0.03 * surfaceFade));
+        ctx.fillStyle = sky;
+        ctx.fill();
+
+        // Crest shimmer: bright irregular highlights riding the waterline
+        const crests = isSmall ? 34 : 64;
+        for (let i = 0; i < crests; i++) {
+          const cx =
+            ((i / crests) * width + Math.sin(time * 0.00012 + i * 1.7) * 26 + width) % width;
+          const cy = waveAt(cx) - 2 - Math.sin(time * 0.0004 + i) * 3;
+          const cw = 8 + ((i * 37) % 26);
+          const a =
+            (0.05 + 0.09 * (0.5 + 0.5 * Math.sin(time * 0.0006 + i * 2.3))) * surfaceFade;
+          const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, cw);
+          gr.addColorStop(0, rgb(pal.glow, a));
+          gr.addColorStop(1, rgb(pal.glow, 0));
+          ctx.fillStyle = gr;
           ctx.beginPath();
-          for (let x = -30; x <= width + 30; x += 18) {
+          ctx.ellipse(cx, cy, cw, cw * 0.34, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Refraction ripples sinking below the surface
+        const lines = isSmall ? 5 : 9;
+        for (let i = 0; i < lines; i++) {
+          const off = 6 + (i / lines) * surfaceH * 1.5;
+          ctx.beginPath();
+          for (let x = -30; x <= width + 30; x += 16) {
             const y =
-              yBase +
-              Math.sin(x * 0.009 + time * 0.00022 + i * 0.9) * (3 + i * 0.9) +
-              Math.sin(x * 0.021 - time * 0.00013 + i) * 2.2;
+              waveAt(x) +
+              off +
+              Math.sin(x * 0.014 + time * 0.00026 + i * 1.4) * (2.5 + i * 0.7);
             if (x === -30) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
-          ctx.strokeStyle = rgb(pal.glow, (0.09 - i * 0.008) * (1 - p * 0.8));
-          ctx.lineWidth = 1 + (lines - i) * 0.18;
+          ctx.strokeStyle = rgb(pal.glow, (0.075 - i * 0.006) * surfaceFade);
+          ctx.lineWidth = 1 + (lines - i) * 0.16;
           ctx.stroke();
         }
         ctx.restore();
       }
 
-      // Slow surface refraction factor feeding the shafts below
-      const refraction = Math.sin(time * 0.00009) * 0.5 + 0.5;
-
-      // Volumetric light shafts from the surface
-      const shafts = isSmall ? 3 : 6;
-      const shaftAlpha = 0.16 * (1 - p * 0.55) * (0.85 + refraction * 0.3);
+      // ---- Organic sunlight rays born at the moving waterline ---------------
+      const shafts = isSmall ? 5 : 9;
+      const shaftAlpha = 0.13 * (1 - p * 0.6) * (0.85 + refraction * 0.3);
       if (shaftAlpha > 0.01) {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
+        if (!reduced) ctx.filter = `blur(${isSmall ? 10 : 16}px)`;
         for (let i = 0; i < shafts; i++) {
-          const base = ((i + 0.5) / shafts) * width;
-          const sway =
-            Math.sin(time * 0.00016 + i) * 60 +
-            Math.sin(time * 0.00007 + i * 2.1) * 18 +
-            px * 30;
-          const w = width * (0.06 + (i % 3) * 0.02);
-          const grad = ctx.createLinearGradient(0, 0, 0, height * 0.95);
-          grad.addColorStop(0, rgb(pal.glow, shaftAlpha));
+          const phase = i * 1.618;
+          const base =
+            ((i + 0.5) / shafts) * width +
+            Math.sin(time * 0.000055 + phase) * 46 +
+            px * 26;
+          const wobble = 0.6 + 0.4 * Math.sin(time * 0.00009 + phase * 2.1);
+          const w = width * (0.022 + ((i * 13) % 7) * 0.006) * wobble;
+          const len = height * (0.6 + ((i * 7) % 5) * 0.09);
+          const a = shaftAlpha * (0.45 + 0.55 * (0.5 + 0.5 * Math.sin(time * 0.00013 + phase)));
+          const top = waveAt(base) - 6;
+          const grad = ctx.createLinearGradient(0, top, 0, top + len);
+          grad.addColorStop(0, rgb(pal.glow, a));
+          grad.addColorStop(0.35, rgb(pal.glow, a * 0.5));
           grad.addColorStop(1, rgb(pal.glow, 0));
           ctx.fillStyle = grad;
+          const drift = Math.sin(time * 0.00007 + phase) * 70;
           ctx.beginPath();
-          ctx.moveTo(base - w * 0.4 + sway * 0.2, -20);
-          ctx.lineTo(base + w * 0.4 + sway * 0.2, -20);
-          ctx.lineTo(base + w * 1.5 + sway, height);
-          ctx.lineTo(base - w * 1.5 + sway, height);
+          ctx.moveTo(base - w, top);
+          ctx.lineTo(base + w, top);
+          ctx.lineTo(base + w * 3.2 + drift, top + len);
+          ctx.lineTo(base - w * 2.6 + drift, top + len);
           ctx.closePath();
           ctx.fill();
         }
+        ctx.filter = "none";
         ctx.restore();
       }
 
