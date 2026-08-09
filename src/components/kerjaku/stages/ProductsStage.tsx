@@ -1,8 +1,8 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { products, projects } from "@/lib/edu-content";
-import { useEdu } from "../EduProvider";
-import { GradeSwitch } from "../GradeSwitch";
+import { products, projects } from "@/lib/site-content";
+import { useJourney } from "../JourneyProvider";
+import { ProjectModeSwitch } from "../ProjectModeSwitch";
 import { Reveal } from "../Reveal";
 
 const offsets = ["md:translate-y-0", "md:translate-y-12", "md:-translate-y-6"];
@@ -11,9 +11,9 @@ export function ProductsStage() {
   const ref = useRef<HTMLElement | null>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const drift = useTransform(scrollYProgress, [0, 1], [60, -60]);
-  const { grade } = useEdu();
+  const { mode } = useJourney();
 
-  const list = projects[grade];
+  const list = projects[mode];
 
   return (
     <section id="products" ref={ref} className="relative min-h-[110svh] px-5 py-32 sm:px-8">
@@ -35,7 +35,7 @@ export function ProductsStage() {
         </Reveal>
         <Reveal delay={0.24}>
           <div className="mt-8">
-            <GradeSwitch compact />
+            <ProjectModeSwitch compact />
           </div>
         </Reveal>
 
@@ -43,7 +43,7 @@ export function ProductsStage() {
           <AnimatePresence mode="wait">
             {list.map((p, i) => (
               <motion.article
-                key={grade + p.name}
+                key={mode + p.name}
                 initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: -14, filter: "blur(8px)" }}

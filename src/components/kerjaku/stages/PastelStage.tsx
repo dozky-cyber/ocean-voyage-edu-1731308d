@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
-import { pastel } from "@/lib/edu-content";
+import { pastel } from "@/lib/site-content";
 import { Reveal } from "../Reveal";
 
 const positions = [

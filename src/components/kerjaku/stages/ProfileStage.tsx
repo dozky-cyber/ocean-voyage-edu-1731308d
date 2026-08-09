@@ -2,7 +2,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Waves } from "lucide-react";
 import portraitAsset from "@/assets/adji-taufiq-portrait.png.asset.json";
-import { profile } from "@/lib/edu-content";
+import { profile } from "@/lib/site-content";
 import { Reveal } from "../Reveal";
 
 export function ProfileStage() {
