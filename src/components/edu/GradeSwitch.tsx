@@ -46,7 +46,7 @@ export function GradeSwitch({
                 layoutId={compact ? "grade-pill-compact" : "grade-pill"}
                 transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 className={cn(
-                  "absolute inset-0 -z-10 bg-primary/12 ring-1 ring-inset ring-primary/50 shadow-[0_0_32px_-8px_hsl(var(--primary)/0.55)] backdrop-blur-md",
+                  "absolute inset-0 -z-10 bg-primary/15 ring-1 ring-inset ring-primary/50 shadow-[0_0_34px_-10px_var(--primary)] backdrop-blur-md",
                   compact ? "rounded-full" : "rounded-3xl",
                 )}
               />
