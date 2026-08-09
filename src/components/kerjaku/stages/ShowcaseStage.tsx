@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
-import { Bot, Database, Layers, Workflow } from "lucide-react";
+import { Bot, Database, Layers } from "lucide-react";
 import { systems, worlds, type WorldId } from "@/lib/site-content";
 import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
@@ -8,9 +8,8 @@ import { Reveal } from "../Reveal";
 
 const icons: Record<WorldId, typeof Layers> = {
   web: Layers,
-  automation: Workflow,
-  ai: Bot,
   data: Database,
+  ai: Bot,
 };
 
 /** Spatial offsets so the objects float at different depths, not a flat grid. */
