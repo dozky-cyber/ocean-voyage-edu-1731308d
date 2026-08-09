@@ -466,6 +466,7 @@ export function OceanScene() {
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVisibility);
       particles = [];
+      bubbles = [];
     };
   }, []);
 
