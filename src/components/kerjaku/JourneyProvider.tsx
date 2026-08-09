@@ -1,45 +1,45 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import type { Grade } from "@/lib/edu-content";
+import type { ProjectMode } from "@/lib/site-content";
 
-type PanelId = "materi" | "petunjuk" | null;
+type PanelId = "work" | "process" | null;
 
-type EduState = {
-  grade: Grade;
-  setGrade: (g: Grade) => void;
+type JourneyState = {
+  mode: ProjectMode;
+  setMode: (m: ProjectMode) => void;
   panel: PanelId;
   openPanel: (p: Exclude<PanelId, null>) => void;
   closePanel: () => void;
   scrollTo: (id: string) => void;
 };
 
-const EduContext = createContext<EduState | null>(null);
+const JourneyContext = createContext<JourneyState | null>(null);
 
-export function EduProvider({ children }: { children: ReactNode }) {
-  const [grade, setGrade] = useState<Grade>("Products");
+export function JourneyProvider({ children }: { children: ReactNode }) {
+  const [mode, setMode] = useState<ProjectMode>("Products");
   const [panel, setPanel] = useState<PanelId>(null);
 
-  const value = useMemo<EduState>(
+  const value = useMemo<JourneyState>(
     () => ({
-      grade,
-      setGrade,
+      mode,
+      setMode,
       panel,
       openPanel: (p) => setPanel(p),
       closePanel: () => setPanel(null),
       scrollTo: (id) => {
         const el = document.getElementById(id);
         if (!el) return;
-        const top = el.getBoundingClientRect().top + window.scrollY - 8;
+        const top = el.getBoundingClientRect().top + window.scrollY - 88;
         window.scrollTo({ top, behavior: "smooth" });
       },
     }),
-    [grade, panel],
+    [mode, panel],
   );
 
-  return <EduContext.Provider value={value}>{children}</EduContext.Provider>;
+  return <JourneyContext.Provider value={value}>{children}</JourneyContext.Provider>;
 }
 
-export function useEdu() {
-  const ctx = useContext(EduContext);
-  if (!ctx) throw new Error("useEdu must be used inside EduProvider");
+export function useJourney() {
+  const ctx = useContext(JourneyContext);
+  if (!ctx) throw new Error("useJourney must be used inside JourneyProvider");
   return ctx;
 }
