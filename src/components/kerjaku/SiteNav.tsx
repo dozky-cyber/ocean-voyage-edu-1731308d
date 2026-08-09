@@ -1,21 +1,20 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { brand } from "@/lib/edu-content";
-import { useEdu } from "./EduProvider";
-import { GradeSwitch } from "./GradeSwitch";
+import { brand } from "@/lib/site-content";
+import { useJourney } from "./JourneyProvider";
 import { OceanButton } from "./OceanButton";
 
 const items = [
-  { label: "Systems", action: "showcase" as const },
-  { label: "Products", action: "products" as const },
-  { label: "About", action: "profile" as const },
-  { label: "AI", action: "ai" as const },
-  { label: "Process", action: "petunjuk" as const },
+  { label: "Home", target: "hero" },
+  { label: "About", target: "profile" },
+  { label: "Projects", target: "products" },
+  { label: "Lab", target: "lab" },
+  { label: "Contact", target: "final" },
 ];
 
 export function SiteNav() {
-  const { openPanel, scrollTo } = useEdu();
+  const { scrollTo } = useJourney();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -26,17 +25,29 @@ export function SiteNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handle = (action: (typeof items)[number]["action"]) => {
+  const handle = (target: string) => {
     setOpen(false);
-    if (action === "petunjuk") openPanel(action);
-    else scrollTo(action);
+    scrollTo(target);
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
+    <header className="fixed inset-x-0 top-0 z-[60]">
       <div
-        className={`mx-auto flex max-w-7xl items-center gap-4 px-5 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-8 ${
-          scrolled ? "py-3" : "py-6"
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-0 top-0 h-24 transition-opacity duration-500 ${
+          scrolled ? "opacity-100" : "opacity-0"
+        }`}
+        style={{
+          background:
+            "linear-gradient(to bottom, color-mix(in oklab, var(--abyss) 88%, transparent), transparent)",
+          backdropFilter: "blur(10px)",
+          maskImage: "linear-gradient(to bottom, #000 55%, transparent)",
+          WebkitMaskImage: "linear-gradient(to bottom, #000 55%, transparent)",
+        }}
+      />
+      <div
+        className={`relative mx-auto flex max-w-7xl items-center gap-4 px-5 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:px-8 ${
+          scrolled ? "py-3" : "py-5"
         }`}
       >
         <button
@@ -62,17 +73,13 @@ export function SiteNav() {
             <button
               key={item.label}
               type="button"
-              onClick={() => handle(item.action)}
+              onClick={() => handle(item.target)}
               className="rounded-full px-4 py-2 text-sm text-muted-foreground no-underline transition-colors duration-300 hover:bg-secondary/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {item.label}
             </button>
           ))}
         </nav>
-
-        <div className="ml-auto hidden md:ml-4 md:block">
-          <GradeSwitch compact />
-        </div>
 
         <OceanButton
           size="sm"
@@ -93,23 +100,20 @@ export function SiteNav() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-            className="mx-5 mb-4 rounded-3xl glass-panel p-5 md:hidden"
+            className="relative mx-5 mb-4 rounded-3xl glass-panel p-4 md:hidden"
           >
             <nav className="flex flex-col gap-1" aria-label="Navigasi seluler">
               {items.map((item) => (
                 <button
                   key={item.label}
                   type="button"
-                  onClick={() => handle(item.action)}
+                  onClick={() => handle(item.target)}
                   className="rounded-2xl px-4 py-3 text-left text-base text-foreground transition-colors hover:bg-secondary/60"
                 >
                   {item.label}
                 </button>
               ))}
             </nav>
-            <div className="mt-4">
-              <GradeSwitch compact className="max-w-none" />
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
