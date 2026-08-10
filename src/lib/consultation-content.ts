@@ -149,5 +149,29 @@ export const faqSection = {
       q: "Apakah website bisa dikembangkan setelah selesai?",
       a: "Ya, website dapat dikembangkan sesuai kebutuhan berikutnya.",
     },
+    {
+      q: "Berapa biaya pembuatan website di KERJAKU?",
+      a: "Biaya pembuatan website di KERJAKU menyesuaikan kebutuhan dan kompleksitas project. KERJAKU menyediakan solusi mulai dari website sederhana, website bisnis profesional, hingga aplikasi custom dengan fitur yang dapat disesuaikan dengan kebutuhan client. Konsultasikan project Anda untuk mendapatkan estimasi terbaik.",
+    },
+    {
+      q: "Apakah KERJAKU menerima pembuatan website custom?",
+      a: "Ya, KERJAKU menerima pembuatan website custom dan pengembangan sistem digital sesuai kebutuhan bisnis, organisasi, maupun personal. KERJAKU membantu mulai dari perencanaan konsep, desain tampilan, pengembangan fitur, hingga implementasi sistem.",
+    },
+    {
+      q: "Apakah domain dan hosting sudah termasuk?",
+      a: "KERJAKU dapat membantu kebutuhan domain dan hosting sesuai kebutuhan project. Client dapat menggunakan domain dan hosting yang sudah dimiliki, atau KERJAKU dapat membantu mencarikan dan memberikan rekomendasi pilihan terbaik agar website dapat berjalan dengan optimal.",
+    },
+    {
+      q: "Berapa lama proses pembuatan website?",
+      a: "Waktu pengerjaan website di KERJAKU bergantung pada tingkat kompleksitas project, jumlah fitur yang dibutuhkan, serta antrean project yang sedang berjalan. KERJAKU selalu berusaha menyelesaikan setiap project secara optimal dengan tetap menjaga kualitas hasil akhir.",
+    },
+    {
+      q: "Apakah website bisa dikembangkan di kemudian hari?",
+      a: "Ya, website yang dibuat bersama KERJAKU dapat terus dikembangkan sesuai kebutuhan bisnis. KERJAKU dapat membantu penambahan fitur baru, integrasi sistem, peningkatan performa, maupun pengembangan digital lanjutan.",
+    },
+    {
+      q: "Apakah KERJAKU menyediakan layanan maintenance dan support setelah website selesai?",
+      a: "Ya, KERJAKU dapat membantu layanan maintenance dan support setelah project selesai. Jika terdapat kendala, perbaikan, pembaruan fitur, atau kebutuhan pengembangan lanjutan, KERJAKU siap membantu agar website tetap berjalan dengan baik.",
+    },
   ],
 } as const;
