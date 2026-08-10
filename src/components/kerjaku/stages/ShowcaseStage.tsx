@@ -1,9 +1,7 @@
-import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef, useState } from "react";
 import { Bot, Database, Layers } from "lucide-react";
 import { systems, worlds, type WorldId } from "@/lib/site-content";
-import { useJourney } from "../JourneyProvider";
-import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
 const icons: Record<WorldId, typeof Layers> = {
@@ -20,12 +18,9 @@ export function ShowcaseStage() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
   const drift = useTransform(scrollYProgress, [0, 1], [70, -70]);
   const [selected, setSelected] = useState<WorldId>("web");
-  const { openPanel, scrollTo } = useJourney();
-
-  const active = worlds.find((w) => w.id === selected)!;
 
   return (
-    <section id="showcase" ref={ref} className="relative min-h-[110svh] px-5 py-32 sm:px-8">
+    <section id="showcase" ref={ref} className="relative min-h-[90svh] px-5 py-24 sm:px-8">
       <div className="mx-auto max-w-6xl">
         <Reveal>
           <p className="text-[11px] uppercase tracking-[0.42em] text-primary/90">
