@@ -308,7 +308,7 @@ export const servicePackages = {
           ],
         },
       ],
-      example: "RO Memory - Field Activity Intelligence System",
+      example: "Flagship Example: RO Memory - Enterprise Field Intelligence Platform",
     },
     {
       level: "SULTAN SYSTEM",
