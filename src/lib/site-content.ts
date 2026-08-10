@@ -204,12 +204,57 @@ export const lab = {
   eyebrow: "Laboratorium",
   title: "KERJAKU LAB",
   subtitle: "Experiments, AI & Automation",
-  body: "Ruang uji coba: ide, prototipe, dan automation yang belum menjadi produk, tapi sedang saya jalankan dan pelajari.",
+  body: "Eksperimen teknologi untuk mengubah data, aktivitas lapangan, dan kebutuhan kerja menjadi sistem yang lebih cepat, praktis, dan mudah dipahami.",
   cards: [
-    { title: "AI HPL Finder", note: "Mencari kode HPL dari foto material." },
-    { title: "Telegram Workflow", note: "Pencatatan dan pengingat lewat chat." },
-    { title: "AI Assistant", note: "Merangkum catatan kerja dan tindak lanjut." },
-  ],
+    {
+      title: "AI REPORTING",
+      subtitle: "Daily, Weekly & Monthly Reporting",
+      note: "AI membantu merangkum aktivitas, performa, dan insight menjadi laporan harian, mingguan, atau bulanan.",
+      icon: "report",
+    },
+    {
+      title: "AI DATA VISUALIZATION",
+      subtitle: "Automatic Charts & Presentation View",
+      note: "AI membantu mengubah data menjadi grafik otomatis yang relevan, mudah dibaca, dan siap digunakan untuk analisis maupun kebutuhan presentasi.",
+      icon: "chart",
+    },
+    {
+      title: "AI SMART NOTES",
+      subtitle: "Notes-to-Structured Visit",
+      note: "AI membantu merapikan catatan berdasarkan kategori serta mengolah catatan kunjungan menjadi data dan laporan visit yang lebih terstruktur untuk ditinjau sebelum disimpan.",
+      icon: "notes",
+    },
+    {
+      title: "VOICE TO DATA",
+      subtitle: "AI Voice-to-Structured Data",
+      note: "Ubah input suara menjadi data terstruktur untuk mempercepat pencatatan aktivitas tanpa banyak mengetik.",
+      icon: "voice",
+    },
+    {
+      title: "TELEGRAM FIELD ASSISTANT",
+      subtitle: "Conversational Work Assistant",
+      note: "Asisten Telegram untuk membaca data workshop, visit, toko, performa, mencatat Smart Notes, dan membantu pekerjaan lapangan lewat percakapan.",
+      icon: "chat",
+    },
+    {
+      title: "AI PJP RECOMMENDATION",
+      subtitle: "Smart Visit Planning",
+      note: "Rekomendasi prioritas kunjungan berdasarkan PJP, status visit, data workshop, dan konteks yang tersedia.",
+      icon: "route",
+    },
+    {
+      title: "SMART SHARE LOCATION",
+      subtitle: "Nearby Workshop Recommendation",
+      note: "Dari lokasi saat ini, sistem membantu menemukan workshop yang relevan dan terdekat untuk dikunjungi.",
+      icon: "location",
+    },
+    {
+      title: "AI HPL CODE FINDER",
+      subtitle: "Visual Material Recognition",
+      note: "AI membantu mencari kecocokan kode HPL dari foto material untuk membantu identifikasi dan pencocokan finishing di lapangan.",
+      icon: "scan",
+    },
+  ] as const,
   examples: [
     "Bagaimana AI membantu laporan lapangan?",
     "Otomatiskan follow-up pekerjaan mingguan",
@@ -221,7 +266,7 @@ export const lab = {
 export const finalCta = {
   eyebrow: "Penutup",
   title: "Keep Building",
-  body: "Setiap ide memiliki kesempatan untuk menjadi sesuatu yang berguna.",
+  body: "Setiap masalah bisa melahirkan ide yang memiliki kesempatan untuk menjadi sesuatu yang berguna.",
   primary: "Let's Connect",
 };
 
