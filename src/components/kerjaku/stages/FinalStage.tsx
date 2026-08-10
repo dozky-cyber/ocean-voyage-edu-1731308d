@@ -4,7 +4,7 @@ import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
 export function FinalStage() {
-  const { openPanel, scrollTo } = useJourney();
+  const { scrollTo } = useJourney();
 
   return (
     <section
@@ -47,21 +47,7 @@ export function FinalStage() {
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button type="button" className="hover:text-foreground" onClick={() => scrollTo("hero")}>
-            Kembali ke permukaan
-          </button>
-          <button
-            type="button"
-            className="hover:text-foreground"
-            onClick={() => scrollTo("products")}
-          >
-            Products
-          </button>
-          <button
-            type="button"
-            className="hover:text-foreground"
-            onClick={() => openPanel("process")}
-          >
-            Process
+            Kembali ke permukaan ↑
           </button>
         </div>
       </footer>
