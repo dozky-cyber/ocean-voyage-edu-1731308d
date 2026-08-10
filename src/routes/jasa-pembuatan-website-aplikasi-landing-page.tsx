@@ -36,7 +36,8 @@ export const Route = createFileRoute("/jasa-pembuatan-website-aplikasi-landing-p
           "@context": "https://schema.org",
           "@type": "Service",
           name: "Website, Web Application & Digital System Development",
-          serviceType: "Pembuatan website, landing page, web application, dashboard, dan automation",
+          serviceType:
+            "Pembuatan website, landing page, web application, dashboard, dan automation",
           description: serviceMeta.description,
           url: serviceMeta.url,
           areaServed: "ID",
