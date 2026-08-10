@@ -9,6 +9,7 @@ import { HeroStage } from "@/components/kerjaku/stages/HeroStage";
 import { PastelStage } from "@/components/kerjaku/stages/PastelStage";
 import { ShowcaseStage } from "@/components/kerjaku/stages/ShowcaseStage";
 import { ProductsStage } from "@/components/kerjaku/stages/ProductsStage";
+import { PortfolioCtaStage } from "@/components/kerjaku/stages/PortfolioCtaStage";
 import { ProfileStage } from "@/components/kerjaku/stages/ProfileStage";
 import { ServiceEntryStage } from "@/components/kerjaku/stages/ServiceEntryStage";
 
