@@ -59,7 +59,7 @@ export function SiteNav() {
             <span className="h-2.5 w-2.5 rounded-full bg-primary" />
           </span>
           <span className="min-w-0 text-left leading-tight">
-            <span className="block truncate text-sm font-semibold tracking-[0.22em]">
+            <span className="nav-wordmark block truncate text-sm tracking-[0.22em]">
               {brand.name}
             </span>
             <span className="block truncate text-[10px] uppercase tracking-[0.3em] text-muted-foreground">

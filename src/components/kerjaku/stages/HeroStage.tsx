@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { brand, hero } from "@/lib/site-content";
+import { hero } from "@/lib/site-content";
 import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
@@ -27,9 +27,9 @@ export function HeroStage() {
         <Reveal>
           <h1
             className="hero-wordmark mx-auto leading-[0.92]"
-            style={{ fontSize: "clamp(3.6rem, 16.5vw, 8rem)" }}
+            style={{ fontSize: "clamp(3.2rem, 15vw, 7.5rem)" }}
           >
-            {brand.name}
+            KERJ<span className="wordmark-a">A</span>KU
           </h1>
         </Reveal>
 
