@@ -155,3 +155,192 @@ export const faqSection = {
     },
   ],
 } as const;
+
+export const servicePackages = {
+  eyebrow: "Service Package",
+  title: "Service Package",
+  subtitle:
+    "Digital solutions designed to grow from simple online presence to advanced business transformation.",
+  note: "Setiap paket dapat disesuaikan berdasarkan kebutuhan bisnis Anda.",
+  packages: [
+    {
+      level: "BASIC SYSTEM",
+      title: "Digital Presence",
+      description:
+        "Solusi digital sederhana untuk individu dan usaha kecil yang membutuhkan kehadiran online profesional.",
+      target: [
+        "UMKM",
+        "Sales",
+        "Freelancer",
+        "Personal Brand",
+        "Blogger",
+        "Portfolio profesional",
+        "Landing page produk atau jasa",
+      ],
+      features: [
+        "Landing page website",
+        "Personal portfolio",
+        "Product/service introduction",
+        "Contact integration",
+        "Basic SEO setup",
+        "Responsive mobile design",
+      ],
+    },
+    {
+      level: "PROFESSIONAL SYSTEM",
+      title: "Business Website",
+      description:
+        "Website profesional untuk bisnis yang membutuhkan branding digital yang lebih lengkap.",
+      target: ["Profesional", "Agency", "Brand berkembang", "Bisnis jasa"],
+      features: [
+        "Semua fitur Basic System",
+        "Multi page website",
+        "Company branding",
+        "Service & product pages",
+        "Portfolio showcase",
+        "Blog/news section",
+        "SEO optimization",
+        "Customer inquiry system",
+      ],
+    },
+    {
+      level: "BUSINESS SYSTEM",
+      title: "Digital Workflow Solution",
+      description:
+        "Sistem digital untuk membantu bisnis mengelola proses kerja, data, dan operasional secara lebih efektif.",
+      target: [
+        "Bisnis berkembang",
+        "Toko",
+        "Restoran",
+        "Organisasi",
+        "Tim operasional",
+      ],
+      features: [
+        "Custom dashboard",
+        "Database management",
+        "Digital form system",
+        "Order management",
+        "Inventory/basic management",
+        "User management",
+        "Reporting dashboard",
+        "Workflow automation",
+      ],
+      example: "QResto - Smart Order Management System",
+    },
+    {
+      level: "ENTERPRISE SYSTEM",
+      title: "Custom Application + AI Automation",
+      description:
+        "Solusi aplikasi custom untuk bisnis yang membutuhkan sistem operasional kompleks, otomatisasi, dan intelligent assistant.",
+      target: [
+        "Bisnis berskala besar",
+        "Perusahaan dengan banyak cabang",
+        "Tim dengan alur kerja kompleks",
+      ],
+      featureGroups: [
+        {
+          name: "AI & Intelligent System",
+          items: [
+            "AI Assistant",
+            "AI Business Chatbot",
+            "Smart Notes",
+            "AI Summary Report",
+            "Voice to Text Reporting",
+            "AI Database Search",
+            "AI Recommendation",
+          ],
+        },
+        {
+          name: "Business Intelligence",
+          items: [
+            "Advanced Dashboard",
+            "Real-time Analytics",
+            "Business Performance Graphic",
+            "Trend Analysis",
+            "KPI Monitoring",
+            "Custom Reporting",
+          ],
+        },
+        {
+          name: "Data Management",
+          items: [
+            "Custom Database",
+            "Excel Backup & Restore",
+            "Spreadsheet Integration",
+            "Data Migration",
+            "Recycle Bin Delete & Restore",
+            "Activity History",
+            "Audit Log",
+          ],
+        },
+        {
+          name: "Automation",
+          items: [
+            "Telegram Assistant Bot",
+            "WhatsApp Integration",
+            "Notification Automation",
+            "Reminder System",
+            "Automated Report Delivery",
+            "API Integration",
+          ],
+        },
+        {
+          name: "Location Intelligence",
+          items: [
+            "Share Location Integration",
+            "Business Location Mapping",
+            "Nearby Search System",
+            "Radius Filtering",
+            "Interactive Map Dashboard",
+            "Geo Tagging Data",
+            "Area Coverage Monitoring",
+            "Route Planning Support",
+          ],
+        },
+      ],
+      example: "RO Memory - Field Activity Intelligence System",
+    },
+    {
+      level: "SULTAN SYSTEM",
+      title: "Enterprise Digital Transformation Platform",
+      description:
+        "Solusi digital tingkat tertinggi untuk membangun ekosistem teknologi khusus sesuai kebutuhan bisnis.",
+      target: [
+        "Perusahaan enterprise",
+        "Korporasi berskala besar",
+        "Bisnis yang membutuhkan ekosistem teknologi khusus",
+      ],
+      features: [
+        "Everything from Enterprise System",
+        "Full custom platform development",
+        "Multi branch management",
+        "Multi department system",
+        "Advanced AI Agent",
+        "AI Business Analyst",
+        "Predictive Analytics",
+        "Complex workflow engine",
+        "Enterprise database architecture",
+        "Custom mobile application",
+        "Custom web application",
+        "IoT integration",
+        "Multiple system integration",
+        "Real-time monitoring center",
+        "Long term system development",
+        "Continuous improvement support",
+      ],
+      useCases: [
+        "Sales Intelligence Platform",
+        "Field Operation System",
+        "Enterprise Management Platform",
+        "Custom SaaS Product",
+      ],
+    },
+  ],
+} as const;
+
+export const servicePackageCta = {
+  title: "Punya kebutuhan digital yang berbeda?",
+  body: "Setiap bisnis memiliki kebutuhan unik. KERJAKU dapat menyesuaikan fitur, kompleksitas sistem, dan teknologi sesuai kebutuhan project Anda.",
+  cta: "Konsultasikan Project Anda",
+} as const;
+
