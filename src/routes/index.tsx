@@ -11,7 +11,7 @@ import { ShowcaseStage } from "@/components/kerjaku/stages/ShowcaseStage";
 import { ProductsStage } from "@/components/kerjaku/stages/ProductsStage";
 import { ProfileStage } from "@/components/kerjaku/stages/ProfileStage";
 import { ServiceEntryStage } from "@/components/kerjaku/stages/ServiceEntryStage";
-import { LabStage } from "@/components/kerjaku/stages/LabStage";
+
 import { AboutStage } from "@/components/kerjaku/stages/AboutStage";
 import { ProcessStage } from "@/components/kerjaku/stages/ProcessStage";
 import { TrustCtaStage } from "@/components/kerjaku/stages/TrustCtaStage";
@@ -124,7 +124,7 @@ function Index() {
         <ProductsStage />
         <ProfileStage />
         <ServiceEntryStage />
-        <LabStage />
+        
         <AboutStage />
         <ServicesStage />
         <ProcessStage />

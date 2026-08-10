@@ -9,7 +9,6 @@ const items = [
   { label: "Home", target: "hero" },
   { label: "About", target: "profile" },
   { label: "Projects", target: "products" },
-  { label: "Lab", target: "lab" },
   { label: "Contact", target: "final" },
 ];
 
