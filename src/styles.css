@@ -223,8 +223,9 @@
 /* Geometric Outfit wordmark with a subtle underwater sheen. */
 .hero-wordmark {
   font-family: "Outfit", var(--font-sans);
-  font-weight: 800;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-indent: 0.15em;
   color: var(--foreground);
   text-shadow:
     0 0 34px color-mix(in oklab, var(--lagoon) 30%, transparent),
@@ -232,21 +233,14 @@
 }
 
 .wordmark-a {
-  position: relative;
   display: inline-block;
+  width: 0.53em;
+  height: 0.715em;
+  margin-right: 0.15em;
+  vertical-align: baseline;
+  overflow: visible;
 }
 
-.wordmark-a::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0.09em;
-  width: 0.115em;
-  height: 0.115em;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  background: var(--primary);
-}
 
 .nav-wordmark {
   font-family: "Outfit", var(--font-sans);
