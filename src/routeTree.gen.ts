@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as JasaPembuatanWebsiteAplikasiLandingPageRouteImport } from './routes/jasa-pembuatan-website-aplikasi-landing-page'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -29,22 +30,30 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
+  id: '/api/public/telegram/test',
+  path: '/api/public/telegram/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -52,19 +61,26 @@ export interface FileRouteTypes {
     | '/'
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
+    | '/api/public/telegram/test'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/jasa-pembuatan-website-aplikasi-landing-page' | '/sitemap.xml'
+  to:
+    | '/'
+    | '/jasa-pembuatan-website-aplikasi-landing-page'
+    | '/sitemap.xml'
+    | '/api/public/telegram/test'
   id:
     | '__root__'
     | '/'
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
+    | '/api/public/telegram/test'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   JasaPembuatanWebsiteAplikasiLandingPageRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -90,6 +106,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/telegram/test': {
+      id: '/api/public/telegram/test'
+      path: '/api/public/telegram/test'
+      fullPath: '/api/public/telegram/test'
+      preLoaderRoute: typeof ApiPublicTelegramTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -98,17 +121,8 @@ const rootRouteChildren: RootRouteChildren = {
   JasaPembuatanWebsiteAplikasiLandingPageRoute:
     JasaPembuatanWebsiteAplikasiLandingPageRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
