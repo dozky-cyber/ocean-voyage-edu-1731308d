@@ -177,6 +177,7 @@ export const servicePackages = {
         "Portfolio profesional",
         "Landing page produk atau jasa",
       ],
+      variant: "features" as const,
       features: [
         "Landing page website",
         "Personal portfolio",
@@ -192,6 +193,7 @@ export const servicePackages = {
       description:
         "Website profesional untuk bisnis yang membutuhkan branding digital yang lebih lengkap.",
       target: ["Profesional", "Agency", "Brand berkembang", "Bisnis jasa"],
+      variant: "features" as const,
       features: [
         "Semua fitur Basic System",
         "Multi page website",
@@ -215,6 +217,7 @@ export const servicePackages = {
         "Organisasi",
         "Tim operasional",
       ],
+      variant: "features" as const,
       features: [
         "Custom dashboard",
         "Database management",
@@ -237,6 +240,7 @@ export const servicePackages = {
         "Perusahaan dengan banyak cabang",
         "Tim dengan alur kerja kompleks",
       ],
+      variant: "groups" as const,
       featureGroups: [
         {
           name: "AI & Intelligent System",
@@ -310,6 +314,7 @@ export const servicePackages = {
         "Korporasi berskala besar",
         "Bisnis yang membutuhkan ekosistem teknologi khusus",
       ],
+      variant: "features" as const,
       features: [
         "Everything from Enterprise System",
         "Full custom platform development",
@@ -338,9 +343,34 @@ export const servicePackages = {
   ],
 } as const;
 
+export type ServicePackage =
+  | {
+      readonly level: string;
+      readonly title: string;
+      readonly description: string;
+      readonly target: readonly string[];
+      readonly variant: "features";
+      readonly features: readonly string[];
+      readonly example?: string;
+      readonly useCases?: readonly string[];
+    }
+  | {
+      readonly level: string;
+      readonly title: string;
+      readonly description: string;
+      readonly target: readonly string[];
+      readonly variant: "groups";
+      readonly featureGroups: readonly {
+        readonly name: string;
+        readonly items: readonly string[];
+      }[];
+      readonly example?: string;
+    };
+
 export const servicePackageCta = {
   title: "Punya kebutuhan digital yang berbeda?",
   body: "Setiap bisnis memiliki kebutuhan unik. KERJAKU dapat menyesuaikan fitur, kompleksitas sistem, dan teknologi sesuai kebutuhan project Anda.",
   cta: "Konsultasikan Project Anda",
 } as const;
+
 
