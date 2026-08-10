@@ -16,7 +16,17 @@ export const Route = createFileRoute("/api/public/telegram/test")({
 
         const { sendTelegramMessage, TEST_MESSAGE } = await import("@/lib/telegram.server");
         const result = await sendTelegramMessage(TEST_MESSAGE);
-        return Response.json(result, { status: result.ok ? 200 : 502 });
+        if (result.ok) {
+          return Response.json({ ok: true, status: "Connected Successfully" }, { status: 200 });
+        }
+        return Response.json(
+          {
+            ok: false,
+            error: result.error,
+            instructions: "Please confirm you have started @cs_kerjaku_bot in Telegram and that TELEGRAM_CHAT_ID is correct. The bot cannot send messages to a chat until the conversation has been initiated.",
+          },
+          { status: 502 }
+        );
       },
     },
   },
