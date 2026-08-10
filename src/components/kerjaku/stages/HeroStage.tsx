@@ -41,7 +41,7 @@ export function HeroStage() {
                 d="M4 100 L36 0 L68 100"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="10.5"
+                strokeWidth="12"
                 strokeLinecap="butt"
                 strokeLinejoin="miter"
               />
