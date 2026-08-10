@@ -31,6 +31,10 @@ const description =
 const keywords =
   "jasa pembuatan website, website development, custom web application, aplikasi custom, AI automation, business system, digital transformation, software development Indonesia, landing page, dashboard bisnis, workflow automation, jasa developer website";
 const ogImage = "https://kerjaku.space/og-image.png";
+const socialTitle =
+  "KERJAKU - Custom Digital Solutions, AI Automation & Business System Development";
+const socialDescription =
+  "KERJAKU membantu bisnis membangun website, custom application, AI automation, dan digital system sesuai kebutuhan operasional.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -41,18 +45,29 @@ export const Route = createFileRoute("/")({
       { name: "author", content: "Adji Taufiq — KERJAKU" },
       { name: "language", content: "id-ID" },
       { name: "robots", content: "index, follow" },
-      { property: "og:title", content: title },
-      { property: "og:description", content: description },
+      { property: "og:title", content: socialTitle },
+      { property: "og:description", content: socialDescription },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "KERJAKU" },
       { property: "og:locale", content: "id_ID" },
       { property: "og:url", content: "https://kerjaku.space/" },
       { property: "og:image", content: ogImage },
-      { property: "og:image:alt", content: "KERJAKU — Jasa pembuatan website & digital solution" },
+      { property: "og:image:secure_url", content: ogImage },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content: "KERJAKU — Custom digital solutions, AI automation & business system development",
+      },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: title },
-      { name: "twitter:description", content: description },
+      { name: "twitter:title", content: socialTitle },
+      { name: "twitter:description", content: socialDescription },
       { name: "twitter:image", content: ogImage },
+      {
+        name: "twitter:image:alt",
+        content: "KERJAKU — Custom digital solutions, AI automation & business system development",
+      },
     ],
     links: [{ rel: "canonical", href: "https://kerjaku.space/" }],
     scripts: [
