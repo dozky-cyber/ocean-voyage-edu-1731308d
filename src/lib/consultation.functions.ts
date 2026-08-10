@@ -9,9 +9,8 @@ import { consultationFormSchema } from "./consultation-schema";
 export const submitConsultationLead = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => consultationFormSchema.parse(data))
   .handler(async ({ data }) => {
-    const { storeConsultation, sendLeadEmail, formatLeadTelegram } = await import(
-      "./consultation.server"
-    );
+    const { storeConsultation, sendLeadEmail, formatLeadTelegram } =
+      await import("./consultation.server");
     const { sendTelegramMessage } = await import("./telegram.server");
 
     const row = await storeConsultation(data);

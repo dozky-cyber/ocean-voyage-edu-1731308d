@@ -29,10 +29,7 @@ export function FinalStage() {
         </Reveal>
         <Reveal delay={0.3}>
           <div className="mt-10 flex justify-center">
-            <OceanButton
-              className="w-full sm:w-56"
-              onClick={() => scrollTo("konsultasi")}
-            >
+            <OceanButton className="w-full sm:w-56" onClick={() => scrollTo("konsultasi")}>
               {finalCta.primary}
             </OceanButton>
           </div>
