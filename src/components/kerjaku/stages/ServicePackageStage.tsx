@@ -47,7 +47,7 @@ export function ServicePackageStage() {
                     ))}
                   </div>
 
-                  {"featureGroups" in pkg && pkg.featureGroups ? (
+                  {pkg.variant === "groups" ? (
                     <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                       {pkg.featureGroups.map((group) => (
                         <div key={group.name}>
@@ -81,6 +81,7 @@ export function ServicePackageStage() {
                       ))}
                     </ul>
                   )}
+
 
                   {"example" in pkg && pkg.example && (
                     <div className="mt-5 inline-flex items-center rounded-2xl bg-primary/10 px-4 py-3 text-sm text-primary/90">
