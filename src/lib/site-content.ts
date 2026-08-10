@@ -123,6 +123,11 @@ export const products = {
   body: "Produk digital yang sedang dan telah saya kembangkan.",
 };
 
+export type FeatureGroup = {
+  title: string;
+  items: string[];
+};
+
 export type Project = {
   name: string;
   category: string;
@@ -130,6 +135,7 @@ export type Project = {
   problem?: string;
   solution?: string;
   features?: string[];
+  featureGroups?: FeatureGroup[];
   status?: "LIVE" | "IN DEVELOPMENT";
   icon: "activity" | "wallet" | "ruler" | "bot" | "workflow" | "sparkle";
   url?: string;
