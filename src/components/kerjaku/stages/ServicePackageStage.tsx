@@ -70,7 +70,7 @@ export function ServicePackageStage() {
                     </div>
                   ) : (
                     <ul className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {(pkg as { features: string[] }).features.map((feature) => (
+                      {pkg.features.map((feature) => (
                         <li
                           key={feature}
                           className="flex items-start gap-2 text-sm text-muted-foreground"
