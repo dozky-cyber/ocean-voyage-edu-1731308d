@@ -115,7 +115,7 @@ export function OceanScene() {
       const py = journey.pointerY;
 
       // Living sea surface: slow ripples + refraction seen from below
-      const surfaceH = height * (0.16 - p * 0.10);
+      const surfaceH = height * (0.16 - p * 0.1);
       if (surfaceH > 4) {
         ctx.save();
         ctx.globalCompositeOperation = "lighter";
@@ -156,9 +156,7 @@ export function OceanScene() {
         for (let i = 0; i < shafts; i++) {
           const base = ((i + 0.5) / shafts) * width;
           const sway =
-            Math.sin(time * 0.00016 + i) * 60 +
-            Math.sin(time * 0.00007 + i * 2.1) * 18 +
-            px * 30;
+            Math.sin(time * 0.00016 + i) * 60 + Math.sin(time * 0.00007 + i * 2.1) * 18 + px * 30;
           const w = width * (0.06 + (i % 3) * 0.02);
           const grad = ctx.createLinearGradient(0, 0, 0, height * 0.95);
           grad.addColorStop(0, rgb(pal.glow, shaftAlpha));

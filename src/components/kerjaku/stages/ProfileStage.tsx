@@ -11,9 +11,6 @@ export function ProfileStage() {
   const portraitY = useTransform(scrollYProgress, [0, 1], [60, -60]);
   const glowScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1.05, 0.9]);
 
-
-
-
   return (
     <section id="profile" ref={ref} className="relative min-h-[100svh] px-5 py-32 sm:px-8">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
@@ -44,7 +41,6 @@ export function ProfileStage() {
               </p>
             </div>
           </div>
-
         </motion.div>
 
         <div>
