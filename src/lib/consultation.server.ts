@@ -148,6 +148,8 @@ export async function sendLeadEmail(data: ConsultationForm, createdAt: string) {
       return { sent: false, reason: "email_send_failed" as const };
     }
 
+    const accepted = (await response.json().catch(() => null)) as { id?: string } | null;
+    console.info(`[consultation] email accepted by provider, id=${accepted?.id ?? "unknown"}`);
     return { sent: true, reason: null };
   } catch (error) {
     console.error(
