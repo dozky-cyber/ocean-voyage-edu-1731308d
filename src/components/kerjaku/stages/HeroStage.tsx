@@ -43,7 +43,7 @@ export function HeroStage() {
               />
               <circle cx="36" cy="72" r="6.5" fill="#22d3ee" />
             </svg>
-            <span>KU</span>
+            <span aria-hidden="true">KU</span>
           </h1>
         </Reveal>
 
