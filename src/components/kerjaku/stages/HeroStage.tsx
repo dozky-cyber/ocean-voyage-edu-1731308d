@@ -26,8 +26,9 @@ export function HeroStage() {
       >
         <Reveal>
           <h1
+            aria-label="KERJAKU"
             className="hero-wordmark mx-auto leading-[0.92]"
-            style={{ fontSize: "clamp(3.2rem, 15vw, 7.5rem)" }}
+            style={{ fontSize: "clamp(3rem, 14vw, 7.2rem)" }}
           >
             <span>KERJ</span>
             <svg
