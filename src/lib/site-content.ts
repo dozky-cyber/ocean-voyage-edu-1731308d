@@ -127,6 +127,9 @@ export type Project = {
   name: string;
   category: string;
   description: string;
+  problem?: string;
+  solution?: string;
+  features?: string[];
   status?: "LIVE" | "IN DEVELOPMENT";
   icon: "activity" | "wallet" | "ruler" | "bot" | "workflow" | "sparkle";
   url?: string;
@@ -137,17 +140,38 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "RO MEMORY",
       category: "Field Activity Intelligence System",
+      problem:
+        "Tim lapangan kesulitan mencatat kunjungan, data workshop, dan performa kerja dalam satu tempat yang terstruktur.",
+      solution:
+        "Sistem operasional lapangan digital untuk mengelola kunjungan workshop, data pelanggan, performa kerja, dan pelaporan berbasis AI.",
       description:
-        "Sistem kerja untuk mencatat aktivitas kunjungan, mengelola workshop, membaca performa, dan membantu pekerjaan lapangan melalui AI dan Telegram.",
+        "Sistem operasional lapangan digital untuk mengelola kunjungan workshop, data pelanggan, performa kerja, dan pelaporan berbasis AI.",
+      features: [
+        "AI Assistant",
+        "Telegram integration",
+        "Dashboard monitoring",
+        "Field activity management",
+      ],
       status: "LIVE",
       icon: "activity",
       url: "https://memory.kerjaku.space",
     },
     {
       name: "QResto",
-      category: "SMART ORDER MANAGEMENT SYSTEM",
+      category: "Smart Order Management System",
+      problem:
+        "Cafe dan restoran membutuhkan cara lebih mulus untuk menghubungkan pelanggan, kasir, dan operasional dapur dalam satu alur pesanan.",
+      solution:
+        "Platform smart order management berbasis QR meja yang memungkinkan pelanggan memesan mandiri, sementara admin mengelola pesanan, transaksi, dan laporan real-time.",
       description:
-        "Platform smart order management untuk cafe dan restoran yang menghubungkan pelanggan, kasir, dan operasional bisnis melalui sistem QR meja. Pelanggan dapat melakukan pemesanan secara mandiri melalui perangkat mereka, sementara admin dapat mengelola pesanan, transaksi, pencetakan nota, serta memantau laporan penjualan secara real-time melalui satu dashboard terintegrasi.",
+        "Platform smart order management berbasis QR meja yang memungkinkan pelanggan memesan mandiri, sementara admin mengelola pesanan, transaksi, dan laporan real-time.",
+      features: [
+        "Customer QR ordering",
+        "Admin dashboard",
+        "Transaction management",
+        "Receipt printing",
+        "Real-time sales reporting",
+      ],
       status: "LIVE",
       icon: "workflow",
       url: "https://qresto.kerjaku.space/",
@@ -155,8 +179,18 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "DOMPET GUE",
       category: "Personal Finance Workspace",
+      problem:
+        "Pencatatan keuangan pribadi tersebar di catatan, aplikasi, dan spreadsheet sehingga sulit mendapatkan gambaran keuangan yang utuh.",
+      solution:
+        "Aplikasi keuangan pribadi untuk mencatat aset, pemasukan, pengeluaran, hutang, cicilan, dan aktivitas keuangan dalam satu tempat.",
       description:
-        "Aplikasi pencatatan keuangan pribadi untuk melihat aset, pemasukan, pengeluaran, hutang, cicilan, dan aktivitas keuangan dalam satu tempat.",
+        "Aplikasi keuangan pribadi untuk mencatat aset, pemasukan, pengeluaran, hutang, cicilan, dan aktivitas keuangan dalam satu tempat.",
+      features: [
+        "Asset tracking",
+        "Cash flow monitoring",
+        "Debt & installment tracking",
+        "Monthly summary",
+      ],
       status: "LIVE",
       icon: "wallet",
       url: "https://dompetgue.kerjaku.space",
@@ -164,8 +198,18 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "MATERIAL ESTIMATOR",
       category: "Furniture & Interior Material Planning",
+      problem:
+        "Perhitungan kebutuhan material furniture dan interior sering dilakukan manual sehingga rentan salah dan memakan waktu.",
+      solution:
+        "Sistem untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan agar perencanaan bahan lebih cepat dan terstruktur.",
       description:
         "Sistem untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan agar perencanaan bahan lebih cepat dan terstruktur.",
+      features: [
+        "Material calculation",
+        "Furniture planning",
+        "Quantity estimation",
+        "Material requirement planning",
+      ],
       status: "IN DEVELOPMENT",
       icon: "ruler",
     },
