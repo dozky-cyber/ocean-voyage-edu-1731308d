@@ -15,9 +15,11 @@ import { WhyStage } from "@/components/kerjaku/stages/WhyStage";
 import { ConsultationStage } from "@/components/kerjaku/stages/ConsultationStage";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
-const title = "KERJAKU — Website, Web App & Sistem Digital";
+const title = "KERJAKU | Jasa Pembuatan Website Profesional & Digital Solution";
 const description =
-  "KERJAKU membangun produk digital, website, web application, dashboard kerja, sistem pencatatan, AI dan automation berdasarkan kebutuhan nyata.";
+  "KERJAKU menyediakan jasa pembuatan website profesional, website bisnis, landing page, dan aplikasi custom dengan desain modern, cepat, dan sesuai kebutuhan bisnis.";
+const keywords =
+  "jasa pembuatan website, jasa website profesional, website bisnis, landing page, aplikasi custom, web application, dashboard, jasa developer website, digital solution, automation, AI";
 const ogImage = "https://kerjaku.space/og-image.png";
 
 export const Route = createFileRoute("/")({
@@ -25,15 +27,20 @@ export const Route = createFileRoute("/")({
     meta: [
       { title },
       { name: "description", content: description },
+      { name: "keywords", content: keywords },
+      { name: "author", content: "Adji Taufiq — KERJAKU" },
+      { name: "language", content: "id-ID" },
       { name: "robots", content: "index, follow" },
-      { property: "og:title", content: "KERJAKU — Work, made your way." },
+      { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "KERJAKU" },
+      { property: "og:locale", content: "id_ID" },
       { property: "og:url", content: "https://kerjaku.space/" },
       { property: "og:image", content: ogImage },
+      { property: "og:image:alt", content: "KERJAKU — Jasa pembuatan website & digital solution" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "KERJAKU — Work, made your way." },
+      { name: "twitter:title", content: title },
       { name: "twitter:description", content: description },
       { name: "twitter:image", content: ogImage },
     ],
@@ -59,6 +66,18 @@ export const Route = createFileRoute("/")({
               email: "cs@kerjaku.space",
               slogan: "Work, made your way.",
               description,
+              logo: "https://kerjaku.space/og-image.png",
+              areaServed: "ID",
+              knowsLanguage: "id-ID",
+              makesOffer: [
+                "Jasa pembuatan website profesional",
+                "Landing page bisnis",
+                "Web application & dashboard custom",
+                "AI & automation system",
+              ].map((name) => ({
+                "@type": "Offer",
+                itemOffered: { "@type": "Service", name, serviceType: name },
+              })),
               founder: { "@id": "https://kerjaku.space/#adji-taufiq" },
             },
             {
