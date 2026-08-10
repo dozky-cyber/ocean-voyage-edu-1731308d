@@ -27,9 +27,9 @@ export function HeroStage() {
         <Reveal>
           <h1
             className="hero-wordmark mx-auto leading-[0.92]"
-            style={{ fontSize: "clamp(3.6rem, 16.5vw, 8rem)" }}
+            style={{ fontSize: "clamp(3.2rem, 15vw, 7.5rem)" }}
           >
-            {brand.name}
+            KERJ<span className="wordmark-a">A</span>KU
           </h1>
         </Reveal>
 
