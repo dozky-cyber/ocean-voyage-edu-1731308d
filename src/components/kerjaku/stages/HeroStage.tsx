@@ -30,13 +30,9 @@ export function HeroStage() {
             className="hero-wordmark mx-auto leading-[0.92]"
             style={{ fontSize: "clamp(3rem, 14vw, 7.2rem)" }}
           >
-            <span>KERJ</span>
-            <svg
-              className="wordmark-a"
-              viewBox="0 0 72 100"
-              aria-hidden="true"
-              focusable="false"
-            >
+            <span className="sr-only">KERJAKU</span>
+            <span aria-hidden="true">KERJ</span>
+            <svg className="wordmark-a" viewBox="0 0 72 100" aria-hidden="true" focusable="false">
               <path
                 d="M4 100 L36 0 L68 100"
                 fill="none"
@@ -47,7 +43,7 @@ export function HeroStage() {
               />
               <circle cx="36" cy="72" r="6.5" fill="#22d3ee" />
             </svg>
-            <span>KU</span>
+            <span aria-hidden="true">KU</span>
           </h1>
         </Reveal>
 
