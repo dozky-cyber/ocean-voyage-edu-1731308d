@@ -31,10 +31,22 @@ export const Route = createFileRoute("/jasa-pembuatan-website-aplikasi-landing-p
       { property: "og:site_name", content: "KERJAKU" },
       { property: "og:url", content: serviceMeta.url },
       { property: "og:image", content: "https://kerjaku.space/og-image.png" },
+      { property: "og:image:secure_url", content: "https://kerjaku.space/og-image.png" },
+      { property: "og:image:type", content: "image/png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      {
+        property: "og:image:alt",
+        content: "KERJAKU — Jasa pembuatan website, aplikasi & landing page",
+      },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: serviceMeta.title },
       { name: "twitter:description", content: serviceMeta.description },
       { name: "twitter:image", content: "https://kerjaku.space/og-image.png" },
+      {
+        name: "twitter:image:alt",
+        content: "KERJAKU — Jasa pembuatan website, aplikasi & landing page",
+      },
     ],
     links: [{ rel: "canonical", href: serviceMeta.url }],
     scripts: [
