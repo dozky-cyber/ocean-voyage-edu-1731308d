@@ -95,3 +95,59 @@ export const timelineOptions = [
   "Lebih dari 3 bulan",
   "Fleksibel",
 ] as const;
+
+export const serviceCategories = {
+  eyebrow: "Layanan",
+  title: "Layanan KERJAKU",
+  body: "Setiap layanan dimulai dari kebutuhan dan masalah nyata, lalu dibuat sesuai proses kerja Anda.",
+  items: [
+    {
+      title: "Website & Landing Page",
+      body: "Website profesional untuk bisnis, personal brand, produk, dan kebutuhan digital lainnya.",
+    },
+    {
+      title: "Web Application & Custom System",
+      body: "Aplikasi web dan sistem digital yang dibuat sesuai proses kerja dan kebutuhan bisnis.",
+    },
+    {
+      title: "Dashboard & Operational System",
+      body: "Dashboard pencatatan, monitoring, dan sistem operasional untuk membantu pekerjaan lebih efektif.",
+    },
+    {
+      title: "AI & Automation",
+      body: "Solusi otomatisasi workflow untuk meningkatkan efisiensi proses kerja.",
+    },
+  ],
+} as const;
+
+export const ctaLabels = {
+  primary: "Konsultasikan Project Anda",
+  secondary: "Lihat Layanan",
+} as const;
+
+export const faqSection = {
+  eyebrow: "FAQ",
+  title: "Pertanyaan yang Sering Diajukan",
+  items: [
+    {
+      q: "Berapa biaya pembuatan website?",
+      a: "Biaya disesuaikan dengan kebutuhan fitur, desain, dan tingkat kompleksitas project.",
+    },
+    {
+      q: "Apakah KERJAKU menerima website custom?",
+      a: "Ya, KERJAKU dapat membantu membuat website dan aplikasi sesuai kebutuhan.",
+    },
+    {
+      q: "Apakah domain dan hosting sudah termasuk?",
+      a: "Domain dan hosting menyesuaikan kebutuhan project dan dapat dibantu proses setup.",
+    },
+    {
+      q: "Berapa lama proses pembuatan website?",
+      a: "Waktu pengerjaan tergantung kompleksitas fitur dan kebutuhan project.",
+    },
+    {
+      q: "Apakah website bisa dikembangkan setelah selesai?",
+      a: "Ya, website dapat dikembangkan sesuai kebutuhan berikutnya.",
+    },
+  ],
+} as const;
