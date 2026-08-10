@@ -72,53 +72,6 @@ export function ShowcaseStage() {
             );
           })}
         </motion.div>
-
-        <Reveal delay={0.1}>
-          <div className="mt-12 rounded-[2rem] glass-panel p-6 sm:p-9">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={selected}
-                initial={{ opacity: 0, y: 18, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: -12, filter: "blur(8px)" }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <p className="text-[11px] uppercase tracking-[0.3em] text-primary/90">
-                  {active.subtitle}
-                </p>
-                <h3 className="mt-3 font-display text-3xl">{active.title}</h3>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  {active.body}
-                </p>
-
-                <ul className="mt-7 grid gap-3 sm:grid-cols-2">
-                  {active.points.map((line) => (
-                    <li
-                      key={line}
-                      className="flex items-start gap-3 rounded-2xl bg-secondary/40 px-4 py-3 text-sm"
-                    >
-                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                  <OceanButton className="w-full sm:w-auto" onClick={() => scrollTo("products")}>
-                    Lihat Produk
-                  </OceanButton>
-                  <OceanButton
-                    variant="secondary"
-                    className="w-full sm:w-auto"
-                    onClick={() => openPanel("process")}
-                  >
-                    Cara Saya Membangun
-                  </OceanButton>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </Reveal>
       </div>
     </section>
   );
