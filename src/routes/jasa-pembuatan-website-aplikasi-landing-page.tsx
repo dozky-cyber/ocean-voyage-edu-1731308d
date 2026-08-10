@@ -66,8 +66,6 @@ export const Route = createFileRoute("/jasa-pembuatan-website-aplikasi-landing-p
   component: ServicePage,
 });
 
-const mailto = `mailto:${brand.contactEmail}`;
-
 function ServicePage() {
   return (
     <div className="relative min-h-screen bg-background text-foreground">
@@ -101,12 +99,13 @@ function ServicePage() {
             {serviceHero.body}
           </p>
           <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-            <a
-              href={mailto}
+            <Link
+              to="/"
+              hash="konsultasi"
               className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-7 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5"
             >
               {serviceHero.primaryCta}
-            </a>
+            </Link>
             <Link
               to="/"
               hash="products"
@@ -264,12 +263,13 @@ function ServicePage() {
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
             {serviceCta.body}
           </p>
-          <a
-            href={mailto}
+          <Link
+            to="/"
+            hash="konsultasi"
             className="mt-7 inline-flex h-12 items-center justify-center rounded-full bg-primary px-7 text-sm font-medium text-primary-foreground transition-transform hover:-translate-y-0.5"
           >
             {serviceCta.button}
-          </a>
+          </Link>
           <p className="mt-4 text-xs text-muted-foreground">{brand.contactEmail}</p>
         </section>
       </main>
