@@ -29,7 +29,7 @@ const title = "KERJAKU | Jasa Pembuatan Website Profesional & Digital Solution";
 const description =
   "KERJAKU menyediakan jasa pembuatan website profesional, website bisnis, landing page, dan aplikasi custom dengan desain modern, cepat, dan sesuai kebutuhan bisnis.";
 const keywords =
-  "jasa pembuatan website, jasa website profesional, website bisnis, landing page, aplikasi custom, web application, dashboard, jasa developer website, digital solution, automation, AI";
+  "jasa pembuatan website, website development, custom web application, aplikasi custom, AI automation, business system, digital transformation, software development Indonesia, landing page, dashboard bisnis, workflow automation, jasa developer website";
 const ogImage = "https://kerjaku.space/og-image.png";
 
 export const Route = createFileRoute("/")({
