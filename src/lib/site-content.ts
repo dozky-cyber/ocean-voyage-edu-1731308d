@@ -56,7 +56,10 @@ export const pastel = {
       label: "Membangun Solusi",
       note: "Mengubah kebutuhan menjadi sistem yang sederhana dan bisa digunakan.",
     },
-    { label: "Dipakai & Diperbaiki", note: "Menguji langsung, melihat kekurangan, lalu memperbaikinya." },
+    {
+      label: "Dipakai & Diperbaiki",
+      note: "Menguji langsung, melihat kekurangan, lalu memperbaikinya.",
+    },
   ],
 };
 
@@ -278,7 +281,12 @@ export const workPanel: Record<ProjectMode, { subject: string; topics: string[] 
     },
     {
       subject: "DOMPET GUE",
-      topics: ["Aset & arus kas", "Hutang dan cicilan", "Kategori pengeluaran", "Ringkasan bulanan"],
+      topics: [
+        "Aset & arus kas",
+        "Hutang dan cicilan",
+        "Kategori pengeluaran",
+        "Ringkasan bulanan",
+      ],
     },
     {
       subject: "MATERIAL ESTIMATOR",
@@ -301,7 +309,12 @@ export const workPanel: Record<ProjectMode, { subject: string; topics: string[] 
     },
     {
       subject: "AI Assistant",
-      topics: ["Ringkasan catatan", "Tanya jawab internal", "Saran tindak lanjut", "Bahasa sederhana"],
+      topics: [
+        "Ringkasan catatan",
+        "Tanya jawab internal",
+        "Saran tindak lanjut",
+        "Bahasa sederhana",
+      ],
     },
   ],
 };

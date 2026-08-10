@@ -64,7 +64,6 @@ export function PastelStage() {
           <p className="mt-6 text-base leading-relaxed text-muted-foreground">{pastel.body}</p>
         </Reveal>
 
-
         <div className="mt-10 grid grid-cols-2 gap-3 md:hidden">
           {pastel.fragments.map((f, i) => (
             <Reveal key={f.label} delay={0.05 * i}>

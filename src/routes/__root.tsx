@@ -80,8 +80,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "KERJAKU — Work, made your way." },
       {
         name: "description",
-        content:
-          "Portofolio digital: aplikasi, sistem kerja, AI, dan automation yang saya bangun.",
+        content: "Portofolio digital: aplikasi, sistem kerja, AI, dan automation yang saya bangun.",
       },
       { name: "author", content: "KERJAKU" },
       { property: "og:type", content: "website" },
