@@ -87,15 +87,73 @@ export async function storeConsultation(data: ConsultationForm) {
   return row;
 }
 
+function htmlBody(data: ConsultationForm, createdAt: string) {
+  const row = (label: string, value?: string | null) =>
+    `<tr><td style="padding:6px 12px 6px 0;font-weight:600;vertical-align:top;white-space:nowrap">${esc(
+      label,
+    )}</td><td style="padding:6px 0">${
+      value && value.trim() ? esc(value.trim()).replace(/\n/g, "<br/>") : "-"
+    }</td></tr>`;
+
+  return `<div style="font-family:Arial,Helvetica,sans-serif;color:#111"><h2 style="margin:0 0 12px">Konsultasi Baru KERJAKU</h2><table style="border-collapse:collapse;font-size:14px">${[
+    row("Nama", data.name),
+    row("Email", data.email),
+    row("WhatsApp", data.whatsapp),
+    row("Project", data.projectType),
+    row("Budget", data.budget),
+    row("Timeline", data.timeline),
+    row("Kebutuhan", data.requirement),
+    row("Fitur", data.features),
+    row("Catatan", data.notes),
+    row("Tanggal", createdAt),
+  ].join("")}</table></div>`;
+}
+
 /**
- * Email notification to the owner. Managed email sending requires a verified
- * sender domain; until then the lead is logged (Telegram + database still work).
+ * Email notification to the owner via the Resend connector gateway.
+ * Best-effort: failures are logged, never thrown back to the form.
  */
 export async function sendLeadEmail(data: ConsultationForm, createdAt: string) {
+  const lovableKey = process.env["LOVABLE_API_KEY"];
+  const resendKey = process.env["RESEND_API_KEY"];
+  if (!lovableKey || !resendKey) {
+    console.error("[consultation] email skipped: missing LOVABLE_API_KEY or RESEND_API_KEY");
+    return { sent: false, reason: "email_not_configured" as const };
+  }
+
   const { subject, text } = formatLeadEmail(data, createdAt);
-  // Managed email sending requires a verified sender domain for kerjaku.space.
-  // Until it is set up, the lead is logged server-side; Telegram + database
-  // storage still capture every submission so no lead is lost.
-  console.info(`[consultation] ${subject}\n${text}`);
-  return { sent: false, reason: "email_domain_not_configured" as const };
+  const from = process.env["RESEND_FROM"] ?? "KERJAKU <onboarding@resend.dev>";
+
+  try {
+    const response = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${lovableKey}`,
+        "X-Connection-Api-Key": resendKey,
+      },
+      body: JSON.stringify({
+        from,
+        to: [LEAD_EMAIL],
+        reply_to: data.email,
+        subject,
+        text,
+        html: htmlBody(data, createdAt),
+      }),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      console.error(`[consultation] email failed [${response.status}]: ${detail}`);
+      return { sent: false, reason: "email_send_failed" as const };
+    }
+
+    return { sent: true, reason: null };
+  } catch (error) {
+    console.error(
+      `[consultation] email threw: ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return { sent: false, reason: "email_send_failed" as const };
+  }
 }
+
