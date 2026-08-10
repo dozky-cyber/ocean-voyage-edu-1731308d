@@ -56,18 +56,37 @@ export function ProductsStage() {
               {p.problem && (
                 <div className="mt-5">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-primary/90">Masalah</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{p.problem}</p>
+                  <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{p.problem}</p>
                 </div>
               )}
 
               {p.solution && (
                 <div className="mt-4">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-primary/90">Solusi</p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{p.solution}</p>
+                  <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-muted-foreground">{p.solution}</p>
                 </div>
               )}
 
-              {p.features && p.features.length > 0 && (
+              {p.featureGroups && p.featureGroups.length > 0 && (
+                <div className="mt-4 space-y-4">
+                  <p className="text-[10px] uppercase tracking-[0.24em] text-primary/90">Fitur Utama</p>
+                  {p.featureGroups.map((g) => (
+                    <div key={g.title}>
+                      <p className="text-xs font-medium text-foreground">{g.title}</p>
+                      <ul className="mt-1.5 space-y-1">
+                        {g.items.map((item) => (
+                          <li key={item} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {p.features && p.features.length > 0 && !p.featureGroups && (
                 <div className="mt-4">
                   <p className="text-[10px] uppercase tracking-[0.24em] text-primary/90">Fitur Utama</p>
                   <ul className="mt-2 space-y-1.5">
