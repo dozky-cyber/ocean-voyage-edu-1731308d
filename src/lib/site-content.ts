@@ -148,6 +148,7 @@ export const projects: Record<ProjectMode, Project[]> = {
       category: "SMART ORDER MANAGEMENT SYSTEM",
       description:
         "Platform smart order management untuk cafe dan restoran yang menghubungkan pelanggan, kasir, dan operasional bisnis melalui sistem QR meja. Pelanggan dapat melakukan pemesanan secara mandiri melalui perangkat mereka, sementara admin dapat mengelola pesanan, transaksi, pencetakan nota, serta memantau laporan penjualan secara real-time melalui satu dashboard terintegrasi.",
+      status: "LIVE",
       icon: "workflow",
       url: "https://qresto.kerjaku.space/",
     },
