@@ -129,9 +129,11 @@ function Index() {
         
         <AboutStage />
         <ServicesStage />
+        <ServicePackageStage />
         <ProcessStage />
         <WhyStage />
         <FaqStage />
+
         <TrustCtaStage />
         <ConsultationStage />
         <FinalStage />
