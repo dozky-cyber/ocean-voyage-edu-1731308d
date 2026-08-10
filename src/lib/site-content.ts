@@ -288,6 +288,10 @@ export const workPanel: Record<ProjectMode, { subject: string; topics: string[] 
       topics: ["Aktivitas kunjungan", "Workshop", "Performa kerja", "AI & Telegram"],
     },
     {
+      subject: "QResto",
+      topics: ["QR meja", "Order management", "Kasir & transaksi", "Laporan real-time"],
+    },
+    {
       subject: "DOMPET GUE",
       topics: [
         "Aset & arus kas",
