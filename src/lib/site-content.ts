@@ -127,7 +127,7 @@ export type Project = {
   name: string;
   category: string;
   description: string;
-  status: "LIVE" | "IN DEVELOPMENT";
+  status?: "LIVE" | "IN DEVELOPMENT";
   icon: "activity" | "wallet" | "ruler" | "bot" | "workflow" | "sparkle";
   url?: string;
 };
