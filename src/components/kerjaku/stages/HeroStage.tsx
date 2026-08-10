@@ -1,7 +1,7 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { brand, hero } from "@/lib/site-content";
+import { hero } from "@/lib/site-content";
 import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
