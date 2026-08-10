@@ -125,6 +125,7 @@ function Index() {
         <PastelStage />
         <ShowcaseStage />
         <ProductsStage />
+        <PortfolioCtaStage />
         <ProfileStage />
         <ServiceEntryStage />
         
