@@ -15,9 +15,11 @@ import { WhyStage } from "@/components/kerjaku/stages/WhyStage";
 import { ConsultationStage } from "@/components/kerjaku/stages/ConsultationStage";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
-const title = "KERJAKU — Website, Web App & Sistem Digital";
+const title = "KERJAKU | Jasa Pembuatan Website Profesional & Digital Solution";
 const description =
-  "KERJAKU membangun produk digital, website, web application, dashboard kerja, sistem pencatatan, AI dan automation berdasarkan kebutuhan nyata.";
+  "KERJAKU menyediakan jasa pembuatan website profesional, website bisnis, landing page, dan aplikasi custom dengan desain modern, cepat, dan sesuai kebutuhan bisnis.";
+const keywords =
+  "jasa pembuatan website, jasa website profesional, website bisnis, landing page, aplikasi custom, web application, dashboard, jasa developer website, digital solution, automation, AI";
 const ogImage = "https://kerjaku.space/og-image.png";
 
 export const Route = createFileRoute("/")({
