@@ -138,6 +138,7 @@ function Index() {
         <FaqStage />
 
         <TrustCtaStage />
+        <TrustReasonsStage />
         <ConsultationStage />
         <FinalStage />
       </main>
