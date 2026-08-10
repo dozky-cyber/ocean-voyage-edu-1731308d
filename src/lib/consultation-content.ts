@@ -379,4 +379,35 @@ export const servicePackageCta = {
   cta: "Konsultasikan Project Anda",
 } as const;
 
+export const trustReasons = {
+  eyebrow: "Trust",
+  title: "Why Build With KERJAKU?",
+  subtitle:
+    "Building digital solutions with custom development, AI integration, and business-focused technology.",
+  cards: [
+    {
+      title: "Custom Solution",
+      body: "Setiap sistem dikembangkan berdasarkan kebutuhan dan workflow bisnis, bukan menggunakan solusi template yang terbatas.",
+      icon: "puzzle" as const,
+    },
+    {
+      title: "AI & Automation Ready",
+      body: "Mengintegrasikan AI, automation, dan intelligent system untuk membantu meningkatkan efisiensi kerja.",
+      icon: "bot" as const,
+    },
+    {
+      title: "Scalable Development",
+      body: "Solusi dapat dikembangkan mulai dari kebutuhan sederhana hingga enterprise platform yang kompleks.",
+      icon: "layers" as const,
+    },
+    {
+      title: "Long-Term Support",
+      body: "Mendukung pengembangan, improvement, dan maintenance setelah sistem digunakan.",
+      icon: "headphones" as const,
+    },
+  ],
+  techLine: "Built with modern technology • AI Integration • Custom System • Business Automation",
+} as const;
+
+
 
