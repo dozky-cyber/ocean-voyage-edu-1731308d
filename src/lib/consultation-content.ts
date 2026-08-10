@@ -35,6 +35,12 @@ export const trustCta = {
   cta: "Konsultasikan Project Anda",
 } as const;
 
+export const portfolioCta = {
+  title: "Have a Digital Idea?",
+  body: "Punya ide aplikasi atau sistem untuk bisnis Anda? KERJAKU membantu mengubah kebutuhan bisnis menjadi solusi digital yang sesuai.",
+  cta: "Diskusikan Project",
+} as const;
+
 export const whyKerjaku = {
   eyebrow: "Kenapa KERJAKU",
   title: "Kenapa Memilih KERJAKU",
