@@ -30,7 +30,8 @@ export function HeroStage() {
             className="hero-wordmark mx-auto leading-[0.92]"
             style={{ fontSize: "clamp(3rem, 14vw, 7.2rem)" }}
           >
-            <span>KERJ</span>
+            <span className="sr-only">KERJAKU</span>
+            <span aria-hidden="true">KERJ</span>
             <svg className="wordmark-a" viewBox="0 0 72 100" aria-hidden="true" focusable="false">
               <path
                 d="M4 100 L36 0 L68 100"
