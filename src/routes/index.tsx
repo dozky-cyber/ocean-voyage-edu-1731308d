@@ -11,6 +11,8 @@ import { ProductsStage } from "@/components/kerjaku/stages/ProductsStage";
 import { ProfileStage } from "@/components/kerjaku/stages/ProfileStage";
 import { ServiceEntryStage } from "@/components/kerjaku/stages/ServiceEntryStage";
 import { LabStage } from "@/components/kerjaku/stages/LabStage";
+import { WhyStage } from "@/components/kerjaku/stages/WhyStage";
+import { ConsultationStage } from "@/components/kerjaku/stages/ConsultationStage";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
 const title = "KERJAKU — Website, Web App & Sistem Digital";
@@ -89,6 +91,8 @@ function Index() {
         <ProfileStage />
         <ServiceEntryStage />
         <LabStage />
+        <WhyStage />
+        <ConsultationStage />
         <FinalStage />
       </main>
       <JourneyPanels />
