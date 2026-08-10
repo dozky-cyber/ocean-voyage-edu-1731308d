@@ -31,9 +31,7 @@ export function FinalStage() {
           <div className="mt-10 flex justify-center">
             <OceanButton
               className="w-full sm:w-56"
-              onClick={() => {
-                window.location.href = `mailto:${brand.contactEmail}`;
-              }}
+              onClick={() => scrollTo("konsultasi")}
             >
               {finalCta.primary}
             </OceanButton>
