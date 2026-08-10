@@ -145,18 +145,70 @@ export const projects: Record<ProjectMode, Project[]> = {
   Products: [
     {
       name: "RO MEMORY",
-      category: "Field Activity Intelligence System",
+      category: "FIELD ACTIVITY INTELLIGENCE SYSTEM",
       problem:
-        "Tim lapangan kesulitan mencatat kunjungan, data workshop, dan performa kerja dalam satu tempat yang terstruktur.",
+        "Sebagai Relationship Officer pada industri material interior, aktivitas lapangan membutuhkan pengelolaan data yang cepat, terstruktur, dan mudah dianalisa.\n\nTantangan yang terjadi:\n- Sulit mengetahui progres target dan pencapaian secara real-time.\n- Data workshop, customer, dan aktivitas visit masih tersebar.\n- Membutuhkan waktu lama untuk membuat laporan pekerjaan.\n- Informasi penting sering terlupakan karena tidak langsung terdokumentasi.\n- Sulit menentukan prioritas lokasi visit berikutnya.\n- Kesulitan mempresentasikan performa kerja karena data belum tervisualisasi dengan baik.",
       solution:
-        "Sistem operasional lapangan digital untuk mengelola kunjungan workshop, data pelanggan, performa kerja, dan pelaporan berbasis AI.",
+        "Sistem Field Activity Intelligence berbasis AI yang mengubah aktivitas lapangan menjadi informasi bisnis terstruktur melalui dashboard visual, analisa data, dan otomatisasi laporan.\n\nRO Memory membantu mengelola aktivitas visit, database workshop/customer, monitoring performa, hingga pembuatan laporan otomatis dalam satu platform terintegrasi.",
       description:
-        "Sistem operasional lapangan digital untuk mengelola kunjungan workshop, data pelanggan, performa kerja, dan pelaporan berbasis AI.",
-      features: [
-        "AI Assistant",
-        "Telegram integration",
-        "Dashboard monitoring",
-        "Field activity management",
+        "Enterprise Field Intelligence Platform yang mengubah aktivitas lapangan menjadi informasi bisnis terstruktur melalui dashboard visual, analisa data, dan otomatisasi laporan.",
+      featureGroups: [
+        {
+          title: "Smart Business Dashboard",
+          items: [
+            "Monitoring target dan pencapaian",
+            "Grafik performa aktivitas",
+            "Visualisasi data customer/workshop",
+            "Business insight dari data lapangan",
+          ],
+        },
+        {
+          title: "AI Intelligence System",
+          items: [
+            "AI Assistant pribadi",
+            "AI report generator",
+            "Smart notes otomatis",
+            "Voice to text reporting",
+            "Automatic summary aktivitas",
+          ],
+        },
+        {
+          title: "Performance Analytics",
+          items: [
+            "Grafik tren performa",
+            "Statistik aktivitas visit",
+            "Monitoring progress target",
+            "Visual report untuk presentasi",
+          ],
+        },
+        {
+          title: "Field Activity Management",
+          items: [
+            "Database workshop/customer",
+            "Riwayat kunjungan",
+            "Follow-up management",
+            "Project tracking",
+          ],
+        },
+        {
+          title: "Location Intelligence",
+          items: [
+            "Share location database",
+            "Mapping workshop/customer",
+            "Pencarian lokasi berdasarkan area",
+            "Support penentuan rute visit",
+          ],
+        },
+        {
+          title: "Automation & Data Integration",
+          items: [
+            "Spreadsheet integration",
+            "Excel backup & restore",
+            "Report sharing",
+            "Reminder otomatis",
+            "Personal assistant bot",
+          ],
+        },
       ],
       status: "LIVE",
       icon: "activity",
