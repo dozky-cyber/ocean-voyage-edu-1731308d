@@ -37,7 +37,7 @@ export function ServicesStage() {
               {ctaLabels.primary}
             </a>
             <a
-              href="#produk"
+              href="#products"
               className="inline-flex h-12 items-center justify-center rounded-full border border-primary/40 px-7 text-sm text-primary transition-colors hover:bg-primary/10"
             >
               Lihat Produk

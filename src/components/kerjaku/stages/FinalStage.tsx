@@ -1,4 +1,5 @@
 import { finalCta, brand } from "@/lib/site-content";
+import { ctaLabels } from "@/lib/consultation-content";
 import { useJourney } from "../JourneyProvider";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
@@ -28,9 +29,16 @@ export function FinalStage() {
           </p>
         </Reveal>
         <Reveal delay={0.3}>
-          <div className="mt-10 flex justify-center">
-            <OceanButton className="w-full sm:w-56" onClick={() => scrollTo("konsultasi")}>
-              {finalCta.primary}
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <OceanButton className="w-full sm:w-auto" onClick={() => scrollTo("konsultasi")}>
+              {ctaLabels.primary}
+            </OceanButton>
+            <OceanButton
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={() => scrollTo("layanan")}
+            >
+              {ctaLabels.secondary}
             </OceanButton>
           </div>
         </Reveal>
@@ -41,6 +49,20 @@ export function FinalStage() {
           {brand.name} — {brand.motto}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4">
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => scrollTo("layanan")}
+          >
+            Layanan
+          </button>
+          <button
+            type="button"
+            className="hover:text-foreground"
+            onClick={() => scrollTo("konsultasi")}
+          >
+            Konsultasikan Project Anda
+          </button>
           <button type="button" className="hover:text-foreground" onClick={() => scrollTo("hero")}>
             Kembali ke permukaan ↑
           </button>
