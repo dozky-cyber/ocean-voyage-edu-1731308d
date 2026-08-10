@@ -16,7 +16,15 @@ export const Route = createFileRoute("/jasa-pembuatan-website-aplikasi-landing-p
     meta: [
       { title: serviceMeta.title },
       { name: "description", content: serviceMeta.description },
+      {
+        name: "keywords",
+        content:
+          "jasa pembuatan website, website development, custom web application, AI automation, business system, digital transformation, software development Indonesia, landing page, dashboard custom",
+      },
+      { name: "author", content: "Adji Taufiq — KERJAKU" },
+      { name: "language", content: "id-ID" },
       { name: "robots", content: "index, follow" },
+      { property: "og:locale", content: "id_ID" },
       { property: "og:title", content: serviceMeta.title },
       { property: "og:description", content: serviceMeta.description },
       { property: "og:type", content: "website" },
