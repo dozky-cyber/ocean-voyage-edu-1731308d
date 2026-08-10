@@ -29,7 +29,24 @@ export function HeroStage() {
             className="hero-wordmark mx-auto leading-[0.92]"
             style={{ fontSize: "clamp(3.2rem, 15vw, 7.5rem)" }}
           >
-            KERJ<span className="wordmark-a">A</span>KU
+            <span>KERJ</span>
+            <svg
+              className="wordmark-a"
+              viewBox="0 0 72 100"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                d="M4 100 L36 0 L68 100"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="10.5"
+                strokeLinecap="butt"
+                strokeLinejoin="miter"
+              />
+              <circle cx="36" cy="72" r="6.5" fill="#22d3ee" />
+            </svg>
+            <span>KU</span>
           </h1>
         </Reveal>
 
