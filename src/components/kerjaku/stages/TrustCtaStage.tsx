@@ -1,4 +1,4 @@
-import { trustCta } from "@/lib/consultation-content";
+import { ctaLabels, trustCta } from "@/lib/consultation-content";
 import { Reveal } from "../Reveal";
 
 export function TrustCtaStage() {
@@ -13,12 +13,20 @@ export function TrustCtaStage() {
               </h2>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{trustCta.body}</p>
             </div>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
             <a
               href="#konsultasi"
               className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-primary px-7 text-sm font-medium text-primary-foreground shadow-[0_18px_50px_-18px_var(--lagoon)] transition-transform duration-300 hover:-translate-y-0.5"
             >
               {trustCta.cta}
             </a>
+            <a
+              href="#layanan"
+              className="inline-flex h-12 shrink-0 items-center justify-center rounded-full border border-primary/40 px-6 text-sm text-primary transition-colors hover:bg-primary/10"
+            >
+              {ctaLabels.secondary}
+            </a>
+            </div>
           </div>
         </Reveal>
       </div>

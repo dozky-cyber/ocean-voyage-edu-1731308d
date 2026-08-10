@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { faqSection } from "@/lib/consultation-content";
 import { JourneyProvider } from "@/components/kerjaku/JourneyProvider";
 import { JourneyPanels } from "@/components/kerjaku/JourneyPanels";
 import { OceanScene } from "@/components/kerjaku/OceanScene";
@@ -14,6 +15,8 @@ import { LabStage } from "@/components/kerjaku/stages/LabStage";
 import { AboutStage } from "@/components/kerjaku/stages/AboutStage";
 import { ProcessStage } from "@/components/kerjaku/stages/ProcessStage";
 import { TrustCtaStage } from "@/components/kerjaku/stages/TrustCtaStage";
+import { ServicesStage } from "@/components/kerjaku/stages/ServicesStage";
+import { FaqStage } from "@/components/kerjaku/stages/FaqStage";
 import { WhyStage } from "@/components/kerjaku/stages/WhyStage";
 import { ConsultationStage } from "@/components/kerjaku/stages/ConsultationStage";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
@@ -84,6 +87,15 @@ export const Route = createFileRoute("/")({
               founder: { "@id": "https://kerjaku.space/#adji-taufiq" },
             },
             {
+              "@type": "FAQPage",
+              "@id": "https://kerjaku.space/#faq",
+              mainEntity: faqSection.items.map((item) => ({
+                "@type": "Question",
+                name: item.q,
+                acceptedAnswer: { "@type": "Answer", text: item.a },
+              })),
+            },
+            {
               "@type": "Person",
               "@id": "https://kerjaku.space/#adji-taufiq",
               name: "Adji Taufiq",
@@ -114,8 +126,10 @@ function Index() {
         <ServiceEntryStage />
         <LabStage />
         <AboutStage />
+        <ServicesStage />
         <ProcessStage />
         <WhyStage />
+        <FaqStage />
         <TrustCtaStage />
         <ConsultationStage />
         <FinalStage />
