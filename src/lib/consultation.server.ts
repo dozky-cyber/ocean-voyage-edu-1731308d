@@ -92,29 +92,10 @@ export async function storeConsultation(data: ConsultationForm) {
  * sender domain; until then the lead is logged (Telegram + database still work).
  */
 export async function sendLeadEmail(data: ConsultationForm, createdAt: string) {
-  const { subject } = formatLeadEmail(data, createdAt);
-  try {
-    const mod = (await import("@/lib/email-templates/send-email").catch(() => null)) as {
-      sendTemplateEmail?: (
-        template: string,
-        to: string,
-        options: { templateData: Record<string, unknown>; idempotencyKey?: string },
-      ) => Promise<{ sent: boolean }>;
-    } | null;
-
-    if (!mod?.sendTemplateEmail) {
-      console.warn(`[consultation] email pending sender domain — ${subject}`);
-      return { sent: false, reason: "email_domain_not_configured" as const };
-    }
-
-    const result = await mod.sendTemplateEmail("consultation-lead", LEAD_EMAIL, {
-      templateData: { ...data, createdAt },
-    });
-    return { sent: result.sent, reason: "sent" as const };
-  } catch (error) {
-    console.error(
-      `[consultation] email failed: ${error instanceof Error ? error.message : String(error)}`,
-    );
-    return { sent: false, reason: "email_failed" as const };
-  }
+  const { subject, text } = formatLeadEmail(data, createdAt);
+  // Managed email sending requires a verified sender domain for kerjaku.space.
+  // Until it is set up, the lead is logged server-side; Telegram + database
+  // storage still capture every submission so no lead is lost.
+  console.info(`[consultation] ${subject}\n${text}`);
+  return { sent: false, reason: "email_domain_not_configured" as const };
 }
