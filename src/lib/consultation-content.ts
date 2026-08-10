@@ -130,26 +130,6 @@ export const faqSection = {
   title: "Pertanyaan yang Sering Diajukan",
   items: [
     {
-      q: "Berapa biaya pembuatan website?",
-      a: "Biaya disesuaikan dengan kebutuhan fitur, desain, dan tingkat kompleksitas project.",
-    },
-    {
-      q: "Apakah KERJAKU menerima website custom?",
-      a: "Ya, KERJAKU dapat membantu membuat website dan aplikasi sesuai kebutuhan.",
-    },
-    {
-      q: "Apakah domain dan hosting sudah termasuk?",
-      a: "Domain dan hosting menyesuaikan kebutuhan project dan dapat dibantu proses setup.",
-    },
-    {
-      q: "Berapa lama proses pembuatan website?",
-      a: "Waktu pengerjaan tergantung kompleksitas fitur dan kebutuhan project.",
-    },
-    {
-      q: "Apakah website bisa dikembangkan setelah selesai?",
-      a: "Ya, website dapat dikembangkan sesuai kebutuhan berikutnya.",
-    },
-    {
       q: "Berapa biaya pembuatan website di KERJAKU?",
       a: "Biaya pembuatan website di KERJAKU menyesuaikan kebutuhan dan kompleksitas project. KERJAKU menyediakan solusi mulai dari website sederhana, website bisnis profesional, hingga aplikasi custom dengan fitur yang dapat disesuaikan dengan kebutuhan client. Konsultasikan project Anda untuk mendapatkan estimasi terbaik.",
     },
