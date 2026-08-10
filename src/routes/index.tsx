@@ -16,10 +16,12 @@ import { AboutStage } from "@/components/kerjaku/stages/AboutStage";
 import { ProcessStage } from "@/components/kerjaku/stages/ProcessStage";
 import { TrustCtaStage } from "@/components/kerjaku/stages/TrustCtaStage";
 import { ServicesStage } from "@/components/kerjaku/stages/ServicesStage";
+import { ServicePackageStage } from "@/components/kerjaku/stages/ServicePackageStage";
 import { FaqStage } from "@/components/kerjaku/stages/FaqStage";
 import { WhyStage } from "@/components/kerjaku/stages/WhyStage";
 import { ConsultationStage } from "@/components/kerjaku/stages/ConsultationStage";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
+
 
 const title = "KERJAKU | Jasa Pembuatan Website Profesional & Digital Solution";
 const description =
@@ -127,9 +129,11 @@ function Index() {
         
         <AboutStage />
         <ServicesStage />
+        <ServicePackageStage />
         <ProcessStage />
         <WhyStage />
         <FaqStage />
+
         <TrustCtaStage />
         <ConsultationStage />
         <FinalStage />
