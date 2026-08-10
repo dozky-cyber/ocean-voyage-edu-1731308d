@@ -66,6 +66,18 @@ export const Route = createFileRoute("/")({
               email: "cs@kerjaku.space",
               slogan: "Work, made your way.",
               description,
+              logo: "https://kerjaku.space/og-image.png",
+              areaServed: "ID",
+              knowsLanguage: "id-ID",
+              makesOffer: [
+                "Jasa pembuatan website profesional",
+                "Landing page bisnis",
+                "Web application & dashboard custom",
+                "AI & automation system",
+              ].map((name) => ({
+                "@type": "Offer",
+                itemOffered: { "@type": "Service", name, serviceType: name },
+              })),
               founder: { "@id": "https://kerjaku.space/#adji-taufiq" },
             },
             {
