@@ -9,8 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as JasaPembuatanWebsiteAplikasiLandingPageRouteImport } from './routes/jasa-pembuatan-website-aplikasi-landing-page'
 import { Route as IndexRouteImport } from './routes/index'
 
+const JasaPembuatanWebsiteAplikasiLandingPageRoute =
+  JasaPembuatanWebsiteAplikasiLandingPageRouteImport.update({
+    id: '/jasa-pembuatan-website-aplikasi-landing-page',
+    path: '/jasa-pembuatan-website-aplikasi-landing-page',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +26,39 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/jasa-pembuatan-website-aplikasi-landing-page'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/jasa-pembuatan-website-aplikasi-landing-page'
+  id: '__root__' | '/' | '/jasa-pembuatan-website-aplikasi-landing-page'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  JasaPembuatanWebsiteAplikasiLandingPageRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/jasa-pembuatan-website-aplikasi-landing-page': {
+      id: '/jasa-pembuatan-website-aplikasi-landing-page'
+      path: '/jasa-pembuatan-website-aplikasi-landing-page'
+      fullPath: '/jasa-pembuatan-website-aplikasi-landing-page'
+      preLoaderRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +71,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  JasaPembuatanWebsiteAplikasiLandingPageRoute:
+    JasaPembuatanWebsiteAplikasiLandingPageRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
