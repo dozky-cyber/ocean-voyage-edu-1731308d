@@ -9,7 +9,7 @@ import { analytics } from "@/lib/analytics";
 const SECTION_IDS = [
   "layanan",
   "paket-layanan",
-  "portfolio",
+  "products",
   "proses",
   "tentang",
   "faq",
