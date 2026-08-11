@@ -84,7 +84,9 @@ function LeadDetailPage() {
     onError: () => toast.error("Gagal membuat proposal."),
   });
 
-  const [assistantOpen, setAssistantOpen] = useState(false);
+  const { ai: aiParam } = Route.useSearch();
+  const [assistantOpen, setAssistantOpen] = useState(Boolean(aiParam));
+
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
