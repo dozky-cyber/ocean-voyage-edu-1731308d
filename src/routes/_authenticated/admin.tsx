@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   BarChart3,
+  Bot,
+  Brain,
   LayoutDashboard,
   LogOut,
   Menu,
