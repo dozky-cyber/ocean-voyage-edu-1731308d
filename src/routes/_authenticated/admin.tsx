@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { GlobalSearch } from "@/components/admin/GlobalSearch";
+import { NotificationBell } from "@/components/admin/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminAccess } from "@/lib/admin.functions";
 import {
@@ -140,9 +142,13 @@ function AdminLayout() {
         >
           <Menu className="h-4 w-4" />
         </button>
-        <Link to="/admin" className="min-w-0 truncate text-sm font-semibold tracking-tight">
-          KERJAKU <span className="text-muted-foreground">Business OS</span>
+        <Link to="/admin" className="min-w-0 shrink-0 truncate text-sm font-semibold tracking-tight">
+          KERJAKU
         </Link>
+        <div className="ml-auto flex min-w-0 flex-1 items-center gap-2">
+          <GlobalSearch />
+          <NotificationBell />
+        </div>
       </header>
 
       {menuOpen ? (
@@ -179,6 +185,15 @@ function AdminLayout() {
           {navList}
         </aside>
 
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 hidden items-center gap-3 border-b border-border/40 bg-background/60 px-6 py-3 backdrop-blur-xl lg:flex lg:px-8">
+            <div className="min-w-0 max-w-xl flex-1">
+              <GlobalSearch />
+            </div>
+            <div className="ml-auto">
+              <NotificationBell />
+            </div>
+          </header>
         <main className={cn("min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8")}>
           {state === "loading" ? (
             <p className="text-sm text-muted-foreground">Memuat workspace…</p>
@@ -193,6 +208,7 @@ function AdminLayout() {
             <Outlet />
           )}
         </main>
+        </div>
       </div>
     </div>
   );
