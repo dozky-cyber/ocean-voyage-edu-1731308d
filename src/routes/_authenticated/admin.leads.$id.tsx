@@ -145,6 +145,24 @@ function LeadDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {lead.whatsapp ? (
+            <a
+              href={`https://wa.me/${lead.whatsapp.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-xl border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+            >
+              WhatsApp
+            </a>
+          ) : null}
+          {lead.email ? (
+            <a
+              href={`mailto:${lead.email}`}
+              className="rounded-xl border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+            >
+              Email
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={openAssistant}
@@ -193,6 +211,50 @@ function LeadDetailPage() {
           Terakhir diubah: {formatDate(lead.status_updated_at)}
         </p>
       </GlassCard>
+
+      <GlassCard>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Lead Score Explanation</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {temperatureReason(lead.lead_temperature, score.total)}
+            </p>
+          </div>
+          <span className="shrink-0 text-sm font-semibold text-primary">
+            {score.total}
+            <span className="text-muted-foreground">/{score.max}</span>
+          </span>
+        </div>
+        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-muted/30">
+          <div
+            className="h-full rounded-full bg-primary transition-all"
+            style={{ width: `${Math.min(100, Math.round((score.total / score.max) * 100))}%` }}
+          />
+        </div>
+        <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+          {score.factors.map((factor) => (
+            <li
+              key={factor.label}
+              className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 text-sm ${
+                factor.earned
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-border/40 bg-background/30 opacity-60"
+              }`}
+            >
+              <div className="min-w-0">
+                <p className="truncate">{factor.label}</p>
+                {factor.detail ? (
+                  <p className="truncate text-xs text-muted-foreground">{factor.detail}</p>
+                ) : null}
+              </div>
+              <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                +{factor.points}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </GlassCard>
+
 
       <div id="ai-assistant" className="scroll-mt-24">
         <SalesAssistant lead={lead} open={assistantOpen} onOpenChange={setAssistantOpen} />
