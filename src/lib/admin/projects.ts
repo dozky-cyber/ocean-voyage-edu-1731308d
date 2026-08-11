@@ -8,14 +8,18 @@
 
 import { parseTimeline, timelineProgress, type TimelineStep } from "@/lib/admin/payments";
 
-export const TASK_PRIORITIES = ["Low", "Medium", "High", "Critical"] as const;
+export const TASK_PRIORITIES = ["Low", "Medium", "High", "Urgent"] as const;
 export type TaskPriority = (typeof TASK_PRIORITIES)[number];
+
+/** Includes the legacy "Critical" value so older rows keep validating. */
+export const TASK_PRIORITY_VALUES = [...TASK_PRIORITIES, "Critical"] as const;
 
 export const TASK_STATUSES = ["Todo", "In Progress", "Review", "Revision", "Completed"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
 export function taskPriorityClass(priority: string): string {
   switch (priority) {
+    case "Urgent":
     case "Critical":
       return "bg-destructive/15 text-destructive border-destructive/30";
     case "High":
@@ -26,6 +30,7 @@ export function taskPriorityClass(priority: string): string {
       return "bg-secondary/40 text-secondary-foreground border-border/60";
   }
 }
+
 
 export function taskStatusClass(status: string): string {
   switch (status) {
