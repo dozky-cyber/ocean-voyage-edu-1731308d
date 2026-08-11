@@ -165,37 +165,44 @@ export async function appendMessage(
 
 /* --------------------------- Business OS snapshot -------------------------- */
 
+const DAY = 86_400_000;
+const daysBetween = (iso: string | null | undefined, now: number) =>
+  iso ? Math.round((now - new Date(iso).getTime()) / DAY) : null;
+const daysUntil = (iso: string | null | undefined, now: number) =>
+  iso ? Math.round((new Date(iso).getTime() - now) / DAY) : null;
+
 export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
-  const today = new Date().toISOString().slice(0, 10);
+  const nowMs = Date.now();
+  const today = new Date(nowMs).toISOString().slice(0, 10);
   const [leads, proposals, invoices, projects, tasks, clients, team] = await Promise.all([
     supabase
       .from("consultations")
       .select(
-        "name, company, project_type, budget, status, lead_score, lead_temperature, ai_recommended_package, created_at",
+        "name, company, project_type, requirement, budget, timeline, status, lead_score, lead_temperature, ai_recommended_package, ai_summary, lead_source, created_at, status_updated_at",
       )
       .order("created_at", { ascending: false })
-      .limit(15),
+      .limit(25),
     supabase
       .from("proposals")
-      .select("title, client_name, status, recommended_package, updated_at")
+      .select("title, client_name, status, recommended_package, sent_at, viewed_at, valid_until, updated_at")
       .order("updated_at", { ascending: false })
-      .limit(10),
-    supabase
-      .from("invoices")
-      .select("number, client_name, amount, currency, status, due_date, paid_at")
-      .order("created_at", { ascending: false })
       .limit(15),
     supabase
+      .from("invoices")
+      .select("number, client_name, amount, currency, status, due_date, paid_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(25),
+    supabase
       .from("client_projects")
-      .select("name, status, stage, phase, progress, target_date")
+      .select("name, status, stage, phase, progress, target_date, updated_at")
       .order("updated_at", { ascending: false })
-      .limit(12),
+      .limit(15),
     supabase
       .from("project_tasks")
       .select("title, status, assignee, priority, due_date")
       .neq("status", "done")
       .order("due_date", { ascending: true })
-      .limit(15),
+      .limit(25),
     supabase.from("clients").select("name, company, package, status").limit(15),
     supabase
       .from("team_members")
@@ -204,17 +211,17 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
       .limit(20),
   ]);
 
-
   const lines: string[] = [`Tanggal hari ini: ${today}`];
 
   const leadRows = leads.data ?? [];
   lines.push(
     `\n[LEADS TERBARU] (${leadRows.length})\n` +
       leadRows
-        .map(
-          (l) =>
-            `- ${l.name} (${l.company ?? "tanpa perusahaan"}) · ${l.project_type} · budget ${l.budget} · status ${l.status} · skor ${l.lead_score} ${l.lead_temperature} · rekomendasi ${l.ai_recommended_package ?? "-"}`,
-        )
+        .map((l) => {
+          const age = daysBetween(l.created_at, nowMs);
+          const idle = daysBetween(l.status_updated_at, nowMs);
+          return `- ${l.name} (${l.company ?? "tanpa perusahaan"}) · ${l.project_type} · budget ${l.budget} · timeline ${l.timeline} · status ${l.status} · skor ${l.lead_score} ${l.lead_temperature} · rekomendasi ${l.ai_recommended_package ?? "-"} · sumber ${l.lead_source} · masuk ${age}h lalu · tanpa update ${idle ?? age}h · kebutuhan: ${(l.ai_summary || l.requirement || "-").slice(0, 180)}`;
+        })
         .join("\n"),
   );
 
@@ -222,7 +229,11 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
   lines.push(
     `\n[PROPOSAL] (${proposalRows.length})\n` +
       proposalRows
-        .map((p) => `- ${p.title} · ${p.client_name ?? "-"} · ${p.status} · paket ${p.recommended_package ?? "-"}`)
+        .map((p) => {
+          const sent = daysBetween(p.sent_at, nowMs);
+          const expiry = daysUntil(p.valid_until, nowMs);
+          return `- ${p.title} · ${p.client_name ?? "-"} · ${p.status} · paket ${p.recommended_package ?? "-"}${sent !== null ? ` · dikirim ${sent}h lalu` : " · belum dikirim"}${p.viewed_at ? " · sudah dibuka klien" : " · belum dibuka klien"}${expiry !== null ? ` · berlaku ${expiry}h lagi` : ""}`;
+        })
         .join("\n"),
   );
 
@@ -232,10 +243,16 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
   lines.push(
     `\n[INVOICE] dibayar ${paid.length} (${money(paid.reduce((s, i) => s + Number(i.amount ?? 0), 0))}), outstanding ${outstanding.length} (${money(outstanding.reduce((s, i) => s + Number(i.amount ?? 0), 0))})\n` +
       invoiceRows
-        .map(
-          (i) =>
-            `- ${i.number} · ${i.client_name ?? "-"} · ${money(Number(i.amount ?? 0), i.currency ?? "IDR")} · ${i.status}${i.due_date ? ` · jatuh tempo ${i.due_date}` : ""}`,
-        )
+        .map((i) => {
+          const due = daysUntil(i.due_date, nowMs);
+          const dueLabel =
+            i.status === "paid" || due === null
+              ? ""
+              : due < 0
+                ? ` · TELAT ${Math.abs(due)} hari`
+                : ` · jatuh tempo ${due} hari lagi`;
+          return `- ${i.number} · ${i.client_name ?? "-"} · ${money(Number(i.amount ?? 0), i.currency ?? "IDR")} · ${i.status}${i.due_date ? ` · due ${i.due_date}` : ""}${dueLabel}`;
+        })
         .join("\n"),
   );
 
@@ -243,10 +260,11 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
   lines.push(
     `\n[PROJECT AKTIF] (${projectRows.length})\n` +
       projectRows
-        .map(
-          (p) =>
-            `- ${p.name} · stage ${p.stage ?? p.phase} · ${p.status} · progress ${p.progress}%${p.target_date ? ` · target ${p.target_date}` : ""}`,
-        )
+        .map((p) => {
+          const left = daysUntil(p.target_date, nowMs);
+          const idle = daysBetween(p.updated_at, nowMs);
+          return `- ${p.name} · stage ${p.stage ?? p.phase} · ${p.status} · progress ${p.progress}%${p.target_date ? ` · target ${p.target_date}${left !== null ? (left < 0 ? ` (LEWAT ${Math.abs(left)} hari)` : ` (${left} hari lagi)`) : ""}` : ""} · terakhir bergerak ${idle}h lalu`;
+        })
         .join("\n"),
   );
 
@@ -254,10 +272,10 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
   lines.push(
     `\n[TASK BELUM SELESAI] (${taskRows.length})\n` +
       taskRows
-        .map(
-          (t) =>
-            `- ${t.title} · ${t.assignee?.trim() || "belum ditugaskan"} · ${t.status} · prioritas ${t.priority}${t.due_date ? ` · due ${t.due_date}` : ""}`,
-        )
+        .map((t) => {
+          const left = daysUntil(t.due_date, nowMs);
+          return `- ${t.title} · ${t.assignee?.trim() || "belum ditugaskan"} · ${t.status} · prioritas ${t.priority}${t.due_date ? ` · due ${t.due_date}${left !== null && left < 0 ? ` (TELAT ${Math.abs(left)} hari)` : ""}` : ""}`;
+        })
         .join("\n"),
   );
 
@@ -275,8 +293,57 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
       teamRows.map((t) => `- ${t.name} · ${t.role} · kapasitas ${t.capacity}`).join("\n"),
   );
 
+  /* ------------------------- Derived executive signals ------------------------ */
+
+  const closed = new Set(["closed", "lost", "rejected", "converted", "won"]);
+  const hotLeads = leadRows.filter(
+    (l) =>
+      !closed.has((l.status ?? "").toLowerCase()) &&
+      ((l.lead_temperature ?? "").toLowerCase().includes("hot") || (l.lead_score ?? 0) >= 70),
+  );
+  const coolingLeads = leadRows.filter((l) => {
+    const idle = daysBetween(l.status_updated_at ?? l.created_at, nowMs) ?? 0;
+    return !closed.has((l.status ?? "").toLowerCase()) && idle >= 5;
+  });
+  const stalledProposals = proposalRows.filter((p) => {
+    const sent = daysBetween(p.sent_at, nowMs);
+    return (
+      ["sent", "viewed", "negotiation"].includes((p.status ?? "").toLowerCase()) &&
+      sent !== null &&
+      sent >= 3
+    );
+  });
+  const overdueInvoices = outstanding.filter((i) => (daysUntil(i.due_date, nowMs) ?? 99) < 0);
+  const dueSoonInvoices = outstanding.filter((i) => {
+    const d = daysUntil(i.due_date, nowMs);
+    return d !== null && d >= 0 && d <= 7;
+  });
+  const lateProjects = projectRows.filter((p) => (daysUntil(p.target_date, nowMs) ?? 99) < 0);
+  const stalledProjects = projectRows.filter(
+    (p) => (daysBetween(p.updated_at, nowMs) ?? 0) >= 7 && (p.progress ?? 0) < 100,
+  );
+  const overdueTasks = taskRows.filter((t) => (daysUntil(t.due_date, nowMs) ?? 99) < 0);
+  const unassignedTasks = taskRows.filter((t) => !t.assignee?.trim());
+
+  const sum = (rows: Array<{ amount?: number | string | null }>) =>
+    rows.reduce((s, r) => s + Number(r.amount ?? 0), 0);
+
+  lines.push(
+    "\n[SINYAL EKSEKUTIF — hasil analisis otomatis, gunakan sebagai dasar prioritas]",
+    `- Lead panas siap dikontak: ${hotLeads.length}${hotLeads.length ? ` → ${hotLeads.map((l) => `${l.name} (skor ${l.lead_score})`).join(", ")}` : ""}`,
+    `- Lead mulai dingin (≥5 hari tanpa update): ${coolingLeads.length}${coolingLeads.length ? ` → ${coolingLeads.map((l) => l.name).join(", ")}` : ""}`,
+    `- Proposal menggantung (≥3 hari sejak dikirim, belum closing): ${stalledProposals.length}${stalledProposals.length ? ` → ${stalledProposals.map((p) => `${p.title} (${p.client_name ?? "-"})`).join(", ")}` : ""}`,
+    `- Invoice telat bayar: ${overdueInvoices.length} senilai ${money(sum(overdueInvoices))}${overdueInvoices.length ? ` → ${overdueInvoices.map((i) => `${i.number} ${i.client_name ?? "-"}`).join(", ")}` : ""}`,
+    `- Invoice jatuh tempo ≤7 hari: ${dueSoonInvoices.length} senilai ${money(sum(dueSoonInvoices))}${dueSoonInvoices.length ? ` → ${dueSoonInvoices.map((i) => `${i.number} ${i.client_name ?? "-"}`).join(", ")}` : ""}`,
+    `- Perkiraan kas masuk dari seluruh invoice outstanding: ${money(sum(outstanding))}`,
+    `- Project lewat target: ${lateProjects.length}${lateProjects.length ? ` → ${lateProjects.map((p) => p.name).join(", ")}` : ""}`,
+    `- Project stagnan ≥7 hari: ${stalledProjects.length}${stalledProjects.length ? ` → ${stalledProjects.map((p) => p.name).join(", ")}` : ""}`,
+    `- Task telat: ${overdueTasks.length} · task tanpa PIC: ${unassignedTasks.length}`,
+  );
+
   return lines.join("\n");
 }
+
 
 /* --------------------------- Conversation context -------------------------- */
 
