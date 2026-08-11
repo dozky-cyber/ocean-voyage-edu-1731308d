@@ -1,16 +1,25 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Bot, Check, ChevronLeft, RotateCcw, Sparkle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport, type UIMessage } from "ai";
+import { motion } from "framer-motion";
+import { Bot, Check, RotateCcw, Sparkle } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
+
 import {
-  aiConsultantSection,
-  buildRecommendation,
-  consultantSteps,
-  emptyAnswers,
-  type ConsultantAnswers,
-  type ConsultantResult,
-} from "@/lib/ai-consultant";
+  Conversation,
+  ConversationContent,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  type PromptInputMessage,
+} from "@/components/ai-elements/prompt-input";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { analytics } from "@/lib/analytics";
 import { consultationFormSchema } from "@/lib/consultation-schema";
 import { submitConsultationLead } from "@/lib/consultation.functions";
@@ -24,17 +33,67 @@ type Props = {
   compact?: boolean;
 };
 
+type Recommendation = {
+  businessCategory: string;
+  problems: string[];
+  requirements: string[];
+  packageName: string;
+  features: string[];
+  complexity: "Low" | "Medium" | "High";
+  budget: string;
+  timeline: string;
+  users: string;
+  summary: string;
+};
+
 const contactSchema = consultationFormSchema.pick({ name: true, email: true, whatsapp: true });
 
 const projectTypeByPackage: Record<string, string> = {
-  "basic-system": "Website Company Profile",
-  "professional-system": "Website Bisnis",
-  "digital-workflow": "Dashboard Sistem",
-  "enterprise-transformation": "Aplikasi Custom",
+  "Basic System": "Website Company Profile",
+  "Professional System": "Website Bisnis",
+  "Digital Workflow Solution": "Dashboard Sistem",
+  "Enterprise Digital Transformation": "Aplikasi Custom",
 };
+
+const SUGGESTIONS = [
+  "Saya butuh website untuk bisnis saya",
+  "Operasional saya masih manual, bisa dibantu?",
+  "Saya ingin dashboard & laporan otomatis",
+  "Bisa integrasi AI ke sistem saya?",
+];
 
 const inputClass =
   "w-full rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm text-foreground outline-none backdrop-blur-md transition-colors placeholder:text-muted-foreground/70 focus:border-primary/60";
+
+const GREETING: UIMessage = {
+  id: "greeting",
+  role: "assistant",
+  parts: [
+    {
+      type: "text",
+      text: "Halo! Saya AI Consultant KERJAKU. Ceritakan sedikit soal bisnis Anda — bidangnya apa dan kendala apa yang paling terasa saat ini?",
+    },
+  ],
+};
+
+function scoreOf(rec: Recommendation): number {
+  const complexity = rec.complexity === "High" ? 22 : rec.complexity === "Medium" ? 14 : 8;
+  const known = (value: string) =>
+    value && !/belum|tidak tahu|-/i.test(value) ? 18 : 6;
+  return Math.min(
+    100,
+    20 +
+      complexity +
+      known(rec.budget) +
+      known(rec.timeline) +
+      Math.min(12, rec.requirements.length * 4) +
+      Math.min(10, rec.problems.length * 3),
+  );
+}
+
+function qualificationOf(score: number) {
+  return score >= 70 ? "Hot Lead" : score >= 40 ? "Warm Lead" : ("Cold Lead" as const);
+}
 
 function scrollToConsultation() {
   if (typeof document === "undefined") return;
@@ -42,71 +101,119 @@ function scrollToConsultation() {
 }
 
 export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) {
-  const [started, setStarted] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [answers, setAnswers] = useState<ConsultantAnswers>(emptyAnswers);
-  const [result, setResult] = useState<ConsultantResult | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const [contact, setContact] = useState({ name: "", email: "", whatsapp: "" });
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
   const [honeypot, setHoneypot] = useState("");
   const [mountedAt] = useState(() => Date.now());
   const [sending, setSending] = useState(false);
-
   const [submitted, setSubmitted] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [chatKey, setChatKey] = useState(0);
   const submitLead = useServerFn(submitConsultationLead);
 
-  const step = consultantSteps[index]!;
-  const progress = useMemo(
-    () => Math.round(((result ? consultantSteps.length : index) / consultantSteps.length) * 100),
-    [index, result],
-  );
+  const { messages, sendMessage, status, error, setMessages } = useChat({
+    id: `kerjaku-consultant-${chatKey}`,
+    messages: [GREETING],
+    transport: new DefaultChatTransport({ api: "/api/public/consultant-chat" }),
+    onError: (err) => toast.error(err.message || "AI Consultant sedang tidak tersedia."),
+  });
 
-  const selected: string[] = (() => {
-    const value = answers[step.id];
-    return Array.isArray(value) ? value : value ? [value] : [];
-  })();
+  const busy = status === "submitted" || status === "streaming";
 
-  function start() {
-    setStarted(true);
-    analytics.aiConsultationStart(source);
-  }
+  const recommendation = useMemo<Recommendation | null>(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      for (const part of messages[i]!.parts ?? []) {
+        const anyPart = part as { type: string; state?: string; output?: unknown };
+        if (
+          anyPart.type === "tool-finalize_consultation" &&
+          anyPart.state === "output-available" &&
+          anyPart.output
+        ) {
+          return anyPart.output as Recommendation;
+        }
+      }
+    }
+    return null;
+  }, [messages]);
 
-  function finish(next: ConsultantAnswers) {
-    const outcome = buildRecommendation(next);
-    setResult(outcome);
+  const trackedRef = useRef(false);
+  useEffect(() => {
+    if (!recommendation || trackedRef.current) return;
+    trackedRef.current = true;
+    const score = scoreOf(recommendation);
+    const qualification = qualificationOf(score);
     saveAiConsultation({
-      businessCategory: outcome.businessCategory,
-      problems: outcome.problems,
-      requirements: outcome.requirements,
-      packageName: outcome.packageName,
-      complexity: outcome.complexity,
-      score: outcome.score,
-      qualification: outcome.qualification,
-      summary: outcome.summary,
-      budget: outcome.budget,
-      timeline: outcome.timeline,
-      users: outcome.users,
-      conversation: consultantSteps.map((s) => {
-        const value = next[s.id];
-        return { q: s.question, a: Array.isArray(value) ? value.join(", ") : value };
-      }),
+      businessCategory: recommendation.businessCategory,
+      problems: recommendation.problems,
+      requirements: recommendation.requirements,
+      packageName: recommendation.packageName,
+      complexity: recommendation.complexity,
+      score,
+      qualification,
+      summary: recommendation.summary,
+      budget: recommendation.budget,
+      timeline: recommendation.timeline,
+      users: recommendation.users,
+      conversation: messages.slice(0, 20).map((message) => ({
+        q: message.role,
+        a: (message.parts ?? [])
+          .map((part) => (part.type === "text" ? part.text : ""))
+          .join("")
+          .slice(0, 600),
+      })),
     });
     analytics.aiConsultationComplete({
-      recommended_package: outcome.packageName,
-      business_category: outcome.businessCategory,
-      complexity: outcome.complexity,
-      ai_score: outcome.score,
-      qualification: outcome.qualification,
+      recommended_package: recommendation.packageName,
+      business_category: recommendation.businessCategory,
+      complexity: recommendation.complexity,
+      ai_score: score,
+      qualification,
     });
     analytics.aiPreviewView({
-      recommended_package: outcome.packageName,
-      ai_score: outcome.score,
+      recommended_package: recommendation.packageName,
+      ai_score: score,
     });
+  }, [recommendation, messages]);
+
+  useEffect(() => {
+    if (!busy) inputRef.current?.focus();
+  }, [busy]);
+
+  function send(text: string) {
+    const value = text.trim();
+    if (!value || busy) return;
+    if (!started) {
+      setStarted(true);
+      analytics.aiConsultationStart(source);
+    }
+    void sendMessage({ text: value });
+  }
+
+  function submit(message: PromptInputMessage) {
+    send(message.text ?? "");
+  }
+
+  function reset() {
+    trackedRef.current = false;
+    setSubmitted(false);
+    setContact({ name: "", email: "", whatsapp: "" });
+    setContactErrors({});
+    setStarted(false);
+    setMessages([GREETING]);
+    setChatKey((value) => value + 1);
+  }
+
+  function discuss() {
+    analytics.aiToConsultation(recommendation?.packageName ?? "");
+    analytics.consultationButtonClick(`ai_consultant_${source}`, "Diskusikan Project");
+    onDiscuss?.();
+    scrollToConsultation();
   }
 
   async function submitContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!result || sending || submitted) return;
+    if (!recommendation || sending || submitted) return;
 
     const parsed = contactSchema.safeParse(contact);
     if (!parsed.success) {
@@ -120,9 +227,11 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
     }
     setContactErrors({});
     setSending(true);
+    const score = scoreOf(recommendation);
+    const qualification = qualificationOf(score);
     analytics.aiContactSubmit({
-      recommended_package: result.packageName,
-      ai_score: result.score,
+      recommended_package: recommendation.packageName,
+      ai_score: score,
     });
 
     try {
@@ -131,93 +240,54 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
         data: {
           form: {
             ...parsed.data,
-            projectType: projectTypeByPackage[result.packageId] ?? "Lainnya",
-            requirement: result.summary,
-            budget: result.budget || "Belum ditentukan",
-            timeline: result.timeline || "Belum ditentukan",
+            projectType: projectTypeByPackage[recommendation.packageName] ?? "Lainnya",
+            requirement: recommendation.summary,
+            budget: recommendation.budget || "Belum ditentukan",
+            timeline: recommendation.timeline || "Belum ditentukan",
             businessName: "",
-            features: result.features.join(", "),
-            notes: `Skala pengguna: ${result.users || "-"}`,
+            features: recommendation.features.join(", "),
+            notes: `Skala pengguna: ${recommendation.users || "-"}`,
           },
           tracking,
           ai: {
-            businessCategory: result.businessCategory,
-            problems: result.problems,
-            requirements: result.requirements,
-            packageName: result.packageName,
-            complexity: result.complexity,
-            score: result.score,
-            qualification: result.qualification,
-            summary: result.summary,
-            budget: result.budget,
-            timeline: result.timeline,
-            users: result.users,
-            conversation: consultantSteps.map((s) => {
-              const value = answers[s.id];
-              return { q: s.question, a: Array.isArray(value) ? value.join(", ") : value };
-            }),
+            businessCategory: recommendation.businessCategory,
+            problems: recommendation.problems,
+            requirements: recommendation.requirements,
+            packageName: recommendation.packageName,
+            complexity: recommendation.complexity,
+            score,
+            qualification,
+            summary: recommendation.summary,
+            budget: recommendation.budget,
+            timeline: recommendation.timeline,
+            users: recommendation.users,
+            conversation: messages.slice(0, 20).map((message) => ({
+              q: message.role,
+              a: (message.parts ?? [])
+                .map((part) => (part.type === "text" ? part.text : ""))
+                .join("")
+                .slice(0, 600),
+            })),
           },
           leadSource: "ai_consultant",
           honeypot,
           elapsedMs: Date.now() - mountedAt,
-
         },
       });
       setSubmitted(true);
-      analytics.aiConsultationConversion({
-        recommended_package: result.packageName,
-        ai_score: result.score,
-        qualification: result.qualification,
-      });
+      analytics.aiConsultationConversion(recommendation.packageName);
       toast.success("Konsultasi terkirim. Tim KERJAKU akan menghubungi Anda.");
-    } catch {
-      toast.error("Gagal mengirim. Coba lagi beberapa saat lagi.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Gagal mengirim. Coba lagi.");
     } finally {
       setSending(false);
     }
   }
 
-  function choose(optionId: string) {
-    const next: ConsultantAnswers = { ...answers };
-    if (step.multi) {
-      const list = new Set(next[step.id] as string[]);
-      if (list.has(optionId)) list.delete(optionId);
-      else list.add(optionId);
-      next[step.id] = [...list] as never;
-      setAnswers(next);
-      return;
-    }
-    next[step.id] = optionId as never;
-    setAnswers(next);
-    analytics.aiConsultationStep(step.id, optionId);
-    if (index === consultantSteps.length - 1) finish(next);
-    else setIndex(index + 1);
-  }
-
-  function nextMulti() {
-    analytics.aiConsultationStep(step.id, (answers[step.id] as string[]).join(","));
-    if (index === consultantSteps.length - 1) finish(answers);
-    else setIndex(index + 1);
-  }
-
-  function reset() {
-    setAnswers(emptyAnswers);
-    setResult(null);
-    setIndex(0);
-    setContact({ name: "", email: "", whatsapp: "" });
-    setContactErrors({});
-    setSubmitted(false);
-  }
-
-  function discuss() {
-    analytics.aiToConsultation(result?.packageName ?? "");
-    analytics.consultationButtonClick(`ai_consultant_${source}`, "Diskusikan Project");
-    onDiscuss?.();
-    scrollToConsultation();
-  }
+  const score = recommendation ? scoreOf(recommendation) : 0;
 
   return (
-    <div className={cn("flex flex-col", compact ? "gap-4" : "gap-5")}>
+    <div className="flex flex-col gap-4">
       <div className="flex items-center gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-primary">
           <Bot className="h-4.5 w-4.5" strokeWidth={1.5} />
@@ -228,147 +298,111 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
             Digital solution advisor
           </p>
         </div>
+        <span className="ml-auto flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-primary/90">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" /> Online
+        </span>
       </div>
 
-      <div className="h-1 w-full overflow-hidden rounded-full bg-border/60">
-        <motion.div
-          className="h-full rounded-full bg-primary"
-          animate={{ width: `${started ? Math.max(progress, 8) : 0}%` }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        />
-      </div>
-
-      <AnimatePresence mode="wait" initial={false}>
-        {!started && (
-          <motion.div
-            key="intro"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25 }}
-            className="space-y-5"
-          >
-            <p className="rounded-2xl border border-border bg-card/60 p-4 text-sm leading-relaxed text-muted-foreground">
-              {aiConsultantSection.intro}
-            </p>
-            <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-primary/90">
-                {aiConsultantSection.disclosureTitle}
-              </p>
-              <ul className="mt-3 space-y-2">
-                {aiConsultantSection.disclosurePoints.map((point) => (
-                  <li key={point} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
-                    <Sparkle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.5} />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground/80">
-                {aiConsultantSection.disclosureFooter}
-              </p>
-            </div>
-
-            <OceanButton className="w-full sm:w-auto" onClick={start}>
-              {aiConsultantSection.cta}
-            </OceanButton>
-          </motion.div>
-        )}
-
-        {started && !result && (
-          <motion.div
-            key={step.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25 }}
-            className="space-y-4"
-          >
-            <div className="rounded-2xl border border-border bg-card/60 p-4">
-              <p className="text-[11px] uppercase tracking-[0.28em] text-primary/90">
-                Langkah {index + 1} / {consultantSteps.length}
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-foreground">{step.question}</p>
-              {step.hint && (
-                <p className="mt-1 text-xs text-muted-foreground">{step.hint}</p>
-              )}
-            </div>
-
-            <div className="grid gap-2 sm:grid-cols-2">
-              {step.options.map((option) => {
-                const active = selected.includes(option.id);
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => choose(option.id)}
-                    className={cn(
-                      "flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-200",
-                      active
-                        ? "border-primary/60 bg-primary/10 text-foreground"
-                        : "border-border bg-card/50 text-muted-foreground hover:border-primary/40 hover:text-foreground",
+      <div className="rounded-2xl border border-border/70 bg-card/40 backdrop-blur-md">
+        <Conversation
+          className={cn("min-h-0", compact ? "h-[19rem]" : "h-[26rem]")}
+          style={{ overflowY: "auto" }}
+        >
+          <ConversationContent className="gap-5 p-4">
+            {messages.map((message) => {
+              const text = (message.parts ?? [])
+                .map((part) => (part.type === "text" ? part.text : ""))
+                .join("");
+              if (!text.trim()) return null;
+              return (
+                <Message from={message.role} key={message.id}>
+                  <MessageContent>
+                    {message.role === "assistant" ? (
+                      <MessageResponse>{text}</MessageResponse>
+                    ) : (
+                      <p className="whitespace-pre-wrap">{text}</p>
                     )}
-                  >
-                    <span className="min-w-0">{option.label}</span>
-                    {active && <Check className="h-4 w-4 shrink-0 text-primary" />}
-                  </button>
-                );
-              })}
-            </div>
+                  </MessageContent>
+                </Message>
+              );
+            })}
+            {busy && (
+              <Message from="assistant">
+                <MessageContent>
+                  <Shimmer>AI Consultant sedang menganalisa…</Shimmer>
+                </MessageContent>
+              </Message>
+            )}
+          </ConversationContent>
+          <ConversationScrollButton />
+        </Conversation>
+      </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {index > 0 && (
-                <OceanButton variant="ghost" size="sm" onClick={() => setIndex(index - 1)}>
-                  <ChevronLeft className="h-4 w-4" /> Kembali
-                </OceanButton>
-              )}
-              {step.multi && (
-                <OceanButton
-                  size="sm"
-                  disabled={selected.length === 0}
-                  onClick={nextMulti}
-                  className="ml-auto"
-                >
-                  Lanjut
-                </OceanButton>
-              )}
-            </div>
-          </motion.div>
-        )}
+      {error && (
+        <p className="text-xs text-destructive">
+          Koneksi AI bermasalah. Coba kirim ulang pesan Anda.
+        </p>
+      )}
 
-        {result && (
-          <motion.div
-            key="result"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
-          >
-            <div className="rounded-2xl border border-primary/40 bg-primary/[0.07] p-5">
-              <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-primary/90">
-                <Sparkle className="h-3.5 w-3.5" /> Rekomendasi KERJAKU
-              </p>
-              <h3 className="mt-3 font-display text-xl leading-tight text-foreground">
-                {result.packageName}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {result.packageTagline}
-              </p>
-            </div>
+      {messages.length <= 1 && !busy && (
+        <div className="flex flex-wrap gap-2">
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => send(suggestion)}
+              className="rounded-full border border-border bg-card/50 px-3.5 py-2 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SummaryCard label="Bisnis" value={result.businessCategory || "-"} />
-              <SummaryCard label="Estimasi Kompleksitas" value={result.complexity} />
-              <SummaryCard label="Masalah" value={result.problems.join(", ") || "-"} />
-              <SummaryCard label="Kebutuhan" value={result.requirements.join(", ") || "-"} />
-            </div>
+      <PromptInput onSubmit={submit}>
+        <PromptInputTextarea
+          ref={inputRef}
+          placeholder="Tulis pesan untuk AI Consultant…"
+          disabled={submitted}
+        />
+        <PromptInputFooter className="justify-end">
+          <PromptInputSubmit status={status} disabled={busy || submitted} />
+        </PromptInputFooter>
+      </PromptInput>
 
+      {recommendation && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-4"
+        >
+          <div className="rounded-2xl border border-primary/40 bg-primary/[0.07] p-5">
+            <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.28em] text-primary/90">
+              <Sparkle className="h-3.5 w-3.5" /> Rekomendasi KERJAKU
+            </p>
+            <h3 className="mt-3 font-display text-xl leading-tight text-foreground">
+              {recommendation.packageName}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {recommendation.summary}
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <SummaryCard label="Bisnis" value={recommendation.businessCategory || "-"} />
+            <SummaryCard label="Estimasi Kompleksitas" value={recommendation.complexity} />
+            <SummaryCard label="Masalah" value={recommendation.problems.join(", ") || "-"} />
+            <SummaryCard label="Kebutuhan" value={recommendation.requirements.join(", ") || "-"} />
+          </div>
+
+          {recommendation.features.length > 0 && (
             <div className="rounded-2xl border border-border bg-card/50 p-4">
               <p className="text-[11px] uppercase tracking-[0.28em] text-muted-foreground">
                 Fitur Utama
               </p>
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-                {result.features.map((feature) => (
+                {recommendation.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm text-foreground">
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                     <span>{feature}</span>
@@ -376,101 +410,90 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
                 ))}
               </ul>
             </div>
+          )}
 
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/50 px-4 py-3">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                Kualifikasi
-              </span>
-              <span className="text-sm text-foreground">
-                {result.qualification} · {result.score}/100
-              </span>
-            </div>
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/50 px-4 py-3">
+            <span className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+              Kualifikasi
+            </span>
+            <span className="text-sm text-foreground">
+              {qualificationOf(score)} · {score}/100
+            </span>
+          </div>
 
-            <div className="rounded-2xl border border-border bg-card/50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                Arah Project
+          {submitted ? (
+            <div className="space-y-3">
+              <p className="rounded-2xl border border-primary/40 bg-primary/10 px-5 py-4 text-sm leading-relaxed text-foreground">
+                Terima kasih. Ringkasan konsultasi Anda sudah terkirim ke tim KERJAKU. Kami akan
+                menghubungi Anda melalui WhatsApp atau email.
               </p>
-              <p className="mt-2 text-sm leading-relaxed text-foreground">
-                {result.packageTagline} Kesiapan budget: {result.budget || "-"} · Target waktu:{" "}
-                {result.timeline || "-"} · Skala pengguna: {result.users || "-"}.
-              </p>
+              <OceanButton variant="ghost" size="sm" onClick={reset}>
+                <RotateCcw className="h-4 w-4" /> Mulai Percakapan Baru
+              </OceanButton>
             </div>
-
-            {submitted ? (
-              <div className="space-y-3">
-                <p className="rounded-2xl border border-primary/40 bg-primary/10 px-5 py-4 text-sm leading-relaxed text-foreground">
-                  Terima kasih. Rekomendasi dan data kebutuhan Anda sudah terkirim ke tim KERJAKU.
-                  Kami akan menghubungi Anda melalui WhatsApp atau email.
-                </p>
-                <OceanButton variant="ghost" size="sm" onClick={reset}>
-                  <RotateCcw className="h-4 w-4" /> Mulai Ulang
+          ) : (
+            <form onSubmit={submitContact} className="space-y-3" noValidate>
+              {/* Honeypot: hidden from users, filled only by bots. */}
+              <input
+                type="text"
+                name="company_website"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="hidden"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Konsultasi selesai. Masukkan kontak agar tim KERJAKU dapat menyiapkan rekomendasi
+                dan estimasi project Anda.
+              </p>
+              <div className="grid gap-3">
+                <ContactField label="Nama" error={contactErrors["name"]}>
+                  <input
+                    className={inputClass}
+                    value={contact.name}
+                    onChange={(e) => setContact((v) => ({ ...v, name: e.target.value }))}
+                    placeholder="Nama Anda"
+                    autoComplete="name"
+                  />
+                </ContactField>
+                <ContactField label="Email" error={contactErrors["email"]}>
+                  <input
+                    className={inputClass}
+                    type="email"
+                    value={contact.email}
+                    onChange={(e) => setContact((v) => ({ ...v, email: e.target.value }))}
+                    placeholder="nama@email.com"
+                    autoComplete="email"
+                  />
+                </ContactField>
+                <ContactField label="WhatsApp" error={contactErrors["whatsapp"]}>
+                  <input
+                    className={inputClass}
+                    inputMode="tel"
+                    value={contact.whatsapp}
+                    onChange={(e) => setContact((v) => ({ ...v, whatsapp: e.target.value }))}
+                    placeholder="08xxxxxxxxxx"
+                    autoComplete="tel"
+                  />
+                </ContactField>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <OceanButton type="submit" disabled={sending}>
+                  {sending ? "Mengirim…" : "Kirim Konsultasi"}
+                </OceanButton>
+                <OceanButton type="button" variant="ghost" size="sm" onClick={discuss}>
+                  Isi Form Lengkap
+                </OceanButton>
+                <OceanButton type="button" variant="ghost" size="sm" onClick={reset}>
+                  <RotateCcw className="h-4 w-4" /> Ulangi
                 </OceanButton>
               </div>
-            ) : (
-              <form onSubmit={submitContact} className="space-y-3" noValidate>
-                {/* Honeypot: hidden from users, filled only by bots. */}
-                <input
-                  type="text"
-                  name="company_website"
-                  tabIndex={-1}
-                  autoComplete="off"
-                  aria-hidden="true"
-                  className="hidden"
-                  value={honeypot}
-                  onChange={(e) => setHoneypot(e.target.value)}
-                />
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Analisa kebutuhan Anda sudah selesai. Masukkan kontak agar tim KERJAKU dapat
-                  menyiapkan rekomendasi dan estimasi project.
-                </p>
-
-                <div className="grid gap-3">
-                  <ContactField label="Nama" error={contactErrors["name"]}>
-                    <input
-                      className={inputClass}
-                      value={contact.name}
-                      onChange={(e) => setContact((v) => ({ ...v, name: e.target.value }))}
-                      placeholder="Nama Anda"
-                      autoComplete="name"
-                    />
-                  </ContactField>
-                  <ContactField label="Email" error={contactErrors["email"]}>
-                    <input
-                      className={inputClass}
-                      type="email"
-                      value={contact.email}
-                      onChange={(e) => setContact((v) => ({ ...v, email: e.target.value }))}
-                      placeholder="nama@email.com"
-                      autoComplete="email"
-                    />
-                  </ContactField>
-                  <ContactField label="WhatsApp" error={contactErrors["whatsapp"]}>
-                    <input
-                      className={inputClass}
-                      inputMode="tel"
-                      value={contact.whatsapp}
-                      onChange={(e) => setContact((v) => ({ ...v, whatsapp: e.target.value }))}
-                      placeholder="08xxxxxxxxxx"
-                      autoComplete="tel"
-                    />
-                  </ContactField>
-                </div>
-                <div className="flex flex-wrap items-center gap-3 pt-1">
-                  <OceanButton type="submit" disabled={sending}>
-                    {sending ? "Mengirim…" : "Kirim Konsultasi"}
-                  </OceanButton>
-                  <OceanButton type="button" variant="ghost" size="sm" onClick={discuss}>
-                    Isi Form Lengkap
-                  </OceanButton>
-                  <OceanButton type="button" variant="ghost" size="sm" onClick={reset}>
-                    <RotateCcw className="h-4 w-4" /> Ulangi
-                  </OceanButton>
-                </div>
-              </form>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </form>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
