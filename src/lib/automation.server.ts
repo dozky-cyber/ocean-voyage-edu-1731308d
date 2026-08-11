@@ -11,10 +11,6 @@
  */
 import { configNumber, ruleCategory } from "@/lib/automation/rules";
 
-type Admin = Awaited<
-  ReturnType<typeof import("@/integrations/supabase/client.server").getAdmin>
->;
-
 async function admin() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
@@ -63,7 +59,7 @@ export async function logAutomation(entry: LogEntry): Promise<void> {
       detail: entry.detail ?? null,
       entity_type: entry.entityType ?? null,
       entity_id: entry.entityId ?? null,
-      meta: entry.meta ?? {},
+      meta: (entry.meta ?? {}) as never,
     });
   } catch (error) {
     console.error(
@@ -120,7 +116,7 @@ export async function scheduleTask(entry: TaskEntry): Promise<boolean> {
       invoice_id: entry.invoiceId ?? null,
       project_id: entry.projectId ?? null,
       client_id: entry.clientId ?? null,
-      meta: entry.meta ?? {},
+      meta: (entry.meta ?? {}) as never,
     });
     return true;
   } catch (error) {
@@ -650,7 +646,7 @@ export async function scanAutomationDue(): Promise<{
   scanned: number;
 }> {
   const rule = await loadRule("project.deadline_reminder");
-  const db: Admin = await admin();
+  const db = await admin();
   const leadDays = configNumber(rule.config, "leadDays", 3);
   const horizon = new Date(Date.now() + leadDays * 86_400_000).toISOString().slice(0, 10);
   const today = new Date().toISOString().slice(0, 10);
