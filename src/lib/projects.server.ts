@@ -135,7 +135,7 @@ export async function fetchProjectWorkspace(supabase: Client, projectId: string)
   if (!row) throw new Error("Project tidak ditemukan.");
   const project = shapeProject(row as Record<string, unknown>);
 
-  const [client, tasks, activities, documents, invoice, comments] = await Promise.all([
+  const [client, tasks, activities, documents, comments, invoice] = await Promise.all([
     supabase
       .from("clients")
       .select("id, name, email, whatsapp, company, package, status, portal_token, lead_id")
