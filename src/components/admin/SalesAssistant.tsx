@@ -51,7 +51,7 @@ export function SalesAssistant({
         </div>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(!open)}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
         >
           {open ? "Sembunyikan analisa" : "Ask AI About This Lead"}
