@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { ctaLabels, serviceCategories } from "@/lib/consultation-content";
 import { Reveal } from "../Reveal";
 
@@ -32,6 +33,7 @@ export function ServicesStage() {
           <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
             <a
               href="#konsultasi"
+              onClick={() => analytics.consultationButtonClick("services", ctaLabels.primary)}
               className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-7 text-sm font-medium text-primary-foreground shadow-[0_18px_50px_-18px_var(--lagoon)] transition-transform duration-300 hover:-translate-y-0.5"
             >
               {ctaLabels.primary}

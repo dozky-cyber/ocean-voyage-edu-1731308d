@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { finalCta, brand } from "@/lib/site-content";
 import { ctaLabels } from "@/lib/consultation-content";
 import { useJourney } from "../JourneyProvider";
@@ -30,7 +31,13 @@ export function FinalStage() {
         </Reveal>
         <Reveal delay={0.3}>
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <OceanButton className="w-full sm:w-auto" onClick={() => scrollTo("konsultasi")}>
+            <OceanButton
+              className="w-full sm:w-auto"
+              onClick={() => {
+                analytics.consultationButtonClick("final", ctaLabels.primary);
+                scrollTo("konsultasi");
+              }}
+            >
               {ctaLabels.primary}
             </OceanButton>
             <OceanButton
@@ -59,7 +66,10 @@ export function FinalStage() {
           <button
             type="button"
             className="hover:text-foreground"
-            onClick={() => scrollTo("konsultasi")}
+            onClick={() => {
+              analytics.consultationButtonClick("footer", "Konsultasikan Project Anda");
+              scrollTo("konsultasi");
+            }}
           >
             Konsultasikan Project Anda
           </button>

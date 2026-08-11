@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { Hourglass } from "lucide-react";
@@ -105,6 +106,7 @@ export function ProductsStage() {
                   href={p.url}
                   target="_blank"
                   rel="noreferrer"
+                  onClick={() => analytics.portfolioProjectClick(p.name, p.url)}
                   className="mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-primary/40 px-4 py-2 text-xs text-primary transition-colors hover:bg-primary/10"
                 >
                   Kunjungi produk

@@ -9,6 +9,7 @@ import {
 } from "@/lib/consultation-content";
 import { consultationFormSchema, type ConsultationForm } from "@/lib/consultation-schema";
 import { submitConsultationLead } from "@/lib/consultation.functions";
+import { analytics } from "@/lib/analytics";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
@@ -58,6 +59,11 @@ export function ConsultationStage() {
     setSending(true);
     try {
       await submit({ data: parsed.data });
+      analytics.consultationFormSubmit({
+        project_type: parsed.data.projectType,
+        budget: parsed.data.budget,
+        timeline: parsed.data.timeline,
+      });
       setDone(true);
       setValues(empty);
       toast.success("Konsultasi terkirim. KERJAKU akan menghubungi Anda.");
@@ -84,7 +90,13 @@ export function ConsultationStage() {
             </p>
 
             {!open && (
-              <OceanButton className="mt-8 w-full sm:w-60" onClick={() => setOpen(true)}>
+              <OceanButton
+                className="mt-8 w-full sm:w-60"
+                onClick={() => {
+                  analytics.consultationButtonClick("consultation_section", consultationSection.cta);
+                  setOpen(true);
+                }}
+              >
                 {consultationSection.cta}
               </OceanButton>
             )}
