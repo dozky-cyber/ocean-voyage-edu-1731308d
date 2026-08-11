@@ -10,6 +10,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { parseTimeline, timelineProgress, type TimelineStep } from "@/lib/admin/payments";
 import {
+  isOverdue,
+  normalizeStage,
+  projectHealth,
+  type DeliveryStage,
+  type ProjectHealth,
+} from "@/lib/admin/ops";
+import {
   currentPhase,
   parseTeam,
   templateMeta,
@@ -21,7 +28,7 @@ import {
 type Client = SupabaseClient<Database>;
 
 const PROJECT_COLUMNS =
-  "id, client_id, invoice_id, name, status, progress, summary, scope, template, phase, team, timeline, start_date, target_date, created_at, updated_at";
+  "id, client_id, invoice_id, name, status, stage, progress, summary, scope, template, phase, team, timeline, start_date, target_date, created_at, updated_at";
 
 const TASK_COLUMNS =
   "id, project_id, title, description, assignee, priority, status, due_date, notes, position, created_at, updated_at";
@@ -31,6 +38,7 @@ function shapeProject(row: Record<string, unknown>) {
   return {
     ...(row as Record<string, unknown>),
     timeline,
+    stage: normalizeStage(row['stage']),
     team: parseTeam(row['team']),
     progress: timelineProgress(timeline),
     phase: currentPhase(timeline),
@@ -43,6 +51,7 @@ export type ProjectRow = {
   invoice_id: string | null;
   name: string;
   status: string;
+  stage: DeliveryStage;
   progress: number;
   summary: string | null;
   scope: string | null;
@@ -63,6 +72,8 @@ export type ProjectBoardItem = ProjectRow & {
   client_package: string | null;
   open_tasks: number;
   total_tasks: number;
+  overdue_tasks: number;
+  health: ProjectHealth;
 };
 
 /* --------------------------------- Board ---------------------------------- */
@@ -75,23 +86,24 @@ export async function fetchProjectBoard(supabase: Client): Promise<ProjectBoardI
       .order("created_at", { ascending: false })
       .limit(300),
     supabase.from("clients").select("id, name, company, status, package"),
-    supabase.from("project_tasks").select("project_id, status"),
+    supabase.from("project_tasks").select("project_id, status, due_date"),
   ]);
   if (error) throw new Error(error.message);
 
   const clientById = new Map((clients ?? []).map((c) => [c.id, c]));
-  const taskStats = new Map<string, { open: number; total: number }>();
+  const taskStats = new Map<string, { open: number; total: number; overdue: number }>();
   for (const task of tasks ?? []) {
-    const stat = taskStats.get(task.project_id) ?? { open: 0, total: 0 };
+    const stat = taskStats.get(task.project_id) ?? { open: 0, total: 0, overdue: 0 };
     stat.total += 1;
     if (task.status !== "Completed") stat.open += 1;
+    if (isOverdue(task.due_date, task.status)) stat.overdue += 1;
     taskStats.set(task.project_id, stat);
   }
 
   return (projects ?? []).map((row) => {
     const project = shapeProject(row as Record<string, unknown>);
     const client = clientById.get(project.client_id);
-    const stat = taskStats.get(project.id) ?? { open: 0, total: 0 };
+    const stat = taskStats.get(project.id) ?? { open: 0, total: 0, overdue: 0 };
     return {
       ...project,
       client_name: client?.name ?? "Klien KERJAKU",
@@ -100,6 +112,13 @@ export async function fetchProjectBoard(supabase: Client): Promise<ProjectBoardI
       client_package: client?.package ?? null,
       open_tasks: stat.open,
       total_tasks: stat.total,
+      overdue_tasks: stat.overdue,
+      health: projectHealth({
+        stage: project.stage,
+        progress: project.progress,
+        target_date: project.target_date,
+        overdue_tasks: stat.overdue,
+      }),
     };
   });
 }
@@ -116,7 +135,7 @@ export async function fetchProjectWorkspace(supabase: Client, projectId: string)
   if (!row) throw new Error("Project tidak ditemukan.");
   const project = shapeProject(row as Record<string, unknown>);
 
-  const [client, tasks, activities, documents, invoice] = await Promise.all([
+  const [client, tasks, activities, documents, invoice, comments] = await Promise.all([
     supabase
       .from("clients")
       .select("id, name, email, whatsapp, company, package, status, portal_token, lead_id")
@@ -139,6 +158,12 @@ export async function fetchProjectWorkspace(supabase: Client, projectId: string)
       .select("id, title, kind, url, created_at")
       .eq("client_id", project.client_id)
       .order("created_at", { ascending: false }),
+    supabase
+      .from("task_comments")
+      .select("id, task_id, author_name, body, created_at")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: true })
+      .limit(400),
     project.invoice_id
       ? supabase
           .from("invoices")
@@ -155,6 +180,7 @@ export async function fetchProjectWorkspace(supabase: Client, projectId: string)
     activities: activities.data ?? [],
     documents: documents.data ?? [],
     invoice: invoice.data ?? null,
+    comments: comments.data ?? [],
   };
 }
 
@@ -182,6 +208,7 @@ export async function updateProjectDetails(
     id: string;
     name: string;
     status: string;
+    stage: DeliveryStage;
     summary: string | null;
     scope: string | null;
     team: string[];
@@ -196,6 +223,7 @@ export async function updateProjectDetails(
     .update({
       name: input.name,
       status: input.status,
+      stage: input.stage,
       summary: input.summary,
       scope: input.scope,
       team: input.team,
@@ -209,7 +237,11 @@ export async function updateProjectDetails(
   if (error) throw new Error(error.message);
   await logProjectActivity(
     supabase,
-    { projectId: input.id, action: "Project diperbarui", detail: `Status: ${input.status}` },
+    {
+      projectId: input.id,
+      action: "Project diperbarui",
+      detail: `Stage: ${input.stage} · Status: ${input.status}`,
+    },
     userId,
   );
   return { ok: true as const };
