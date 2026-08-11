@@ -20,9 +20,16 @@ import { downloadOrderBriefPdf } from "@/lib/order-brief-pdf";
 import { formatDate } from "@/lib/admin/pipeline";
 import { cn } from "@/lib/utils";
 
-type Props = { conversationId: string; onClose: () => void };
+type Props = {
+  /** Source of the brief: AI conversation view or CRM lead detail. */
+  conversationId?: string;
+  leadId?: string;
+  onClose: () => void;
+};
 
-export function OrderBriefDialog({ conversationId, onClose }: Props) {
+export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
+  const target = conversationId ? { conversationId } : { leadId: leadId! };
+  const targetKey = conversationId ?? leadId ?? "";
   const queryClient = useQueryClient();
   const load = useServerFn(getOrderBrief);
   const markSent = useServerFn(markOrderBriefSent);
@@ -30,8 +37,8 @@ export function OrderBriefDialog({ conversationId, onClose }: Props) {
   const [confirm, setConfirm] = useState<"whatsapp" | "email" | null>(null);
 
   const query = useQuery({
-    queryKey: ["order-brief", conversationId],
-    queryFn: () => load({ data: { conversationId } }),
+    queryKey: ["order-brief", targetKey],
+    queryFn: () => load({ data: target }),
   });
 
   const brief = query.data?.brief ?? null;
@@ -44,7 +51,7 @@ export function OrderBriefDialog({ conversationId, onClose }: Props) {
     mutationFn: async () => {
       if (!waNumber) throw new Error("Nomor WhatsApp customer tidak valid.");
       window.open(waLink(waNumber, message), "_blank", "noopener");
-      return markSent({ data: { conversationId, channel: "whatsapp", markContacted: true } });
+      return markSent({ data: { ...target, channel: "whatsapp" as const, markContacted: true } });
     },
     onSuccess: async () => {
       toast.success("Order Brief ditandai terkirim via WhatsApp. Status lead → Contacted.");
@@ -55,7 +62,7 @@ export function OrderBriefDialog({ conversationId, onClose }: Props) {
   });
 
   const email = useMutation({
-    mutationFn: () => sendEmail({ data: { conversationId, markContacted: true } }),
+    mutationFn: () => sendEmail({ data: { ...target, markContacted: true } }),
     onSuccess: async (result) => {
       toast.success(`Order Brief dikirim ke ${result.to}. Status lead → Contacted.`);
       setConfirm(null);
@@ -67,7 +74,8 @@ export function OrderBriefDialog({ conversationId, onClose }: Props) {
 
   async function refresh() {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["order-brief", conversationId] }),
+      queryClient.invalidateQueries({ queryKey: ["order-brief", targetKey] }),
+      queryClient.invalidateQueries({ queryKey: ["admin"] }),
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] }),
       queryClient.invalidateQueries({ queryKey: ["ai-conversations"] }),
     ]);
