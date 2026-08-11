@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot, Check, ChevronLeft, RotateCcw, Sparkle } from "lucide-react";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import {
   aiConsultantSection,
   buildRecommendation,
@@ -10,7 +12,9 @@ import {
   type ConsultantResult,
 } from "@/lib/ai-consultant";
 import { analytics } from "@/lib/analytics";
-import { saveAiConsultation } from "@/lib/lead-journey";
+import { consultationFormSchema } from "@/lib/consultation-schema";
+import { submitConsultationLead } from "@/lib/consultation.functions";
+import { getLeadTracking, saveAiConsultation } from "@/lib/lead-journey";
 import { cn } from "@/lib/utils";
 import { OceanButton } from "./OceanButton";
 
@@ -19,6 +23,18 @@ type Props = {
   onDiscuss?: () => void;
   compact?: boolean;
 };
+
+const contactSchema = consultationFormSchema.pick({ name: true, email: true, whatsapp: true });
+
+const projectTypeByPackage: Record<string, string> = {
+  "basic-system": "Website Company Profile",
+  "professional-system": "Website Bisnis",
+  "digital-workflow": "Dashboard Sistem",
+  "enterprise-transformation": "Aplikasi Custom",
+};
+
+const inputClass =
+  "w-full rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm text-foreground outline-none backdrop-blur-md transition-colors placeholder:text-muted-foreground/70 focus:border-primary/60";
 
 function scrollToConsultation() {
   if (typeof document === "undefined") return;
@@ -30,6 +46,11 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<ConsultantAnswers>(emptyAnswers);
   const [result, setResult] = useState<ConsultantResult | null>(null);
+  const [contact, setContact] = useState({ name: "", email: "", whatsapp: "" });
+  const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
+  const [sending, setSending] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const submitLead = useServerFn(submitConsultationLead);
 
   const step = consultantSteps[index]!;
   const progress = useMemo(
@@ -59,6 +80,9 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
       score: outcome.score,
       qualification: outcome.qualification,
       summary: outcome.summary,
+      budget: outcome.budget,
+      timeline: outcome.timeline,
+      users: outcome.users,
       conversation: consultantSteps.map((s) => {
         const value = next[s.id];
         return { q: s.question, a: Array.isArray(value) ? value.join(", ") : value };
@@ -71,6 +95,80 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
       ai_score: outcome.score,
       qualification: outcome.qualification,
     });
+    analytics.aiPreviewView({
+      recommended_package: outcome.packageName,
+      ai_score: outcome.score,
+    });
+  }
+
+  async function submitContact(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!result || sending || submitted) return;
+
+    const parsed = contactSchema.safeParse(contact);
+    if (!parsed.success) {
+      const next: Record<string, string> = {};
+      for (const issue of parsed.error.issues) {
+        const key = String(issue.path[0]);
+        if (!next[key]) next[key] = issue.message;
+      }
+      setContactErrors(next);
+      return;
+    }
+    setContactErrors({});
+    setSending(true);
+    analytics.aiContactSubmit({
+      recommended_package: result.packageName,
+      ai_score: result.score,
+    });
+
+    try {
+      const tracking = getLeadTracking();
+      await submitLead({
+        data: {
+          form: {
+            ...parsed.data,
+            projectType: projectTypeByPackage[result.packageId] ?? "Lainnya",
+            requirement: result.summary,
+            budget: result.budget || "Belum ditentukan",
+            timeline: result.timeline || "Belum ditentukan",
+            businessName: "",
+            features: result.features.join(", "),
+            notes: `Skala pengguna: ${result.users || "-"}`,
+          },
+          tracking,
+          ai: {
+            businessCategory: result.businessCategory,
+            problems: result.problems,
+            requirements: result.requirements,
+            packageName: result.packageName,
+            complexity: result.complexity,
+            score: result.score,
+            qualification: result.qualification,
+            summary: result.summary,
+            budget: result.budget,
+            timeline: result.timeline,
+            users: result.users,
+            conversation: consultantSteps.map((s) => {
+              const value = answers[s.id];
+              return { q: s.question, a: Array.isArray(value) ? value.join(", ") : value };
+            }),
+          },
+          leadSource: "ai_consultant",
+        },
+      });
+      setSubmitted(true);
+      analytics.aiConsultationConversion({
+        recommended_package: result.packageName,
+        ai_score: result.score,
+        qualification: result.qualification,
+      });
+      toast.success("Konsultasi terkirim. Tim KERJAKU akan menghubungi Anda.");
+    } catch {
+      toast.error("Gagal mengirim. Coba lagi beberapa saat lagi.");
+    } finally {
+      setSending(false);
+    }
   }
 
   function choose(optionId: string) {
@@ -100,6 +198,9 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
     setAnswers(emptyAnswers);
     setResult(null);
     setIndex(0);
+    setContact({ name: "", email: "", whatsapp: "" });
+    setContactErrors({});
+    setSubmitted(false);
   }
 
   function discuss() {
@@ -262,16 +363,100 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
               </span>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <OceanButton onClick={discuss}>Diskusikan Project</OceanButton>
-              <OceanButton variant="ghost" size="sm" onClick={reset}>
-                <RotateCcw className="h-4 w-4" /> Ulangi
-              </OceanButton>
+            <div className="rounded-2xl border border-border bg-card/50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                Arah Project
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-foreground">
+                {result.packageTagline} Kesiapan budget: {result.budget || "-"} · Target waktu:{" "}
+                {result.timeline || "-"} · Skala pengguna: {result.users || "-"}.
+              </p>
             </div>
+
+            {submitted ? (
+              <div className="space-y-3">
+                <p className="rounded-2xl border border-primary/40 bg-primary/10 px-5 py-4 text-sm leading-relaxed text-foreground">
+                  Terima kasih. Rekomendasi dan data kebutuhan Anda sudah terkirim ke tim KERJAKU.
+                  Kami akan menghubungi Anda melalui WhatsApp atau email.
+                </p>
+                <OceanButton variant="ghost" size="sm" onClick={reset}>
+                  <RotateCcw className="h-4 w-4" /> Mulai Ulang
+                </OceanButton>
+              </div>
+            ) : (
+              <form onSubmit={submitContact} className="space-y-3" noValidate>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Analisa kebutuhan Anda sudah selesai. Masukkan kontak agar tim KERJAKU dapat
+                  menyiapkan rekomendasi dan estimasi project.
+                </p>
+                <div className="grid gap-3">
+                  <ContactField label="Nama" error={contactErrors["name"]}>
+                    <input
+                      className={inputClass}
+                      value={contact.name}
+                      onChange={(e) => setContact((v) => ({ ...v, name: e.target.value }))}
+                      placeholder="Nama Anda"
+                      autoComplete="name"
+                    />
+                  </ContactField>
+                  <ContactField label="Email" error={contactErrors["email"]}>
+                    <input
+                      className={inputClass}
+                      type="email"
+                      value={contact.email}
+                      onChange={(e) => setContact((v) => ({ ...v, email: e.target.value }))}
+                      placeholder="nama@email.com"
+                      autoComplete="email"
+                    />
+                  </ContactField>
+                  <ContactField label="WhatsApp" error={contactErrors["whatsapp"]}>
+                    <input
+                      className={inputClass}
+                      inputMode="tel"
+                      value={contact.whatsapp}
+                      onChange={(e) => setContact((v) => ({ ...v, whatsapp: e.target.value }))}
+                      placeholder="08xxxxxxxxxx"
+                      autoComplete="tel"
+                    />
+                  </ContactField>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <OceanButton type="submit" disabled={sending}>
+                    {sending ? "Mengirim…" : "Kirim Konsultasi"}
+                  </OceanButton>
+                  <OceanButton type="button" variant="ghost" size="sm" onClick={discuss}>
+                    Isi Form Lengkap
+                  </OceanButton>
+                  <OceanButton type="button" variant="ghost" size="sm" onClick={reset}>
+                    <RotateCcw className="h-4 w-4" /> Ulangi
+                  </OceanButton>
+                </div>
+              </form>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+function ContactField({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="block text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </span>
+      <span className="mt-2 block">{children}</span>
+      {error && <span className="mt-1.5 block text-xs text-destructive">{error}</span>}
+    </label>
   );
 }
 
