@@ -41,14 +41,63 @@ export type LeadListRow = {
   ai_complexity: string | null;
 };
 
-export async function assertAdmin(supabase: Client, userId: string): Promise<void> {
-  const { data, error } = await supabase.rpc("has_role", {
-    _user_id: userId,
-    _role: "admin",
-  });
-  if (error) throw new Error("Tidak dapat memverifikasi akses admin.");
-  if (!data) throw new Error("Forbidden: akses admin diperlukan.");
+/** Roles held by the signed-in user (RLS lets users read their own rows). */
+export async function fetchUserRole(supabase: Client, userId: string): Promise<WorkspaceRole | null> {
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  if (error) throw new Error("Tidak dapat memverifikasi akses workspace.");
+  return highestRole((data ?? []).map((row) => String(row.role)));
 }
+
+/** Any workspace role (owner/admin/sales/viewer) — read access. */
+export async function assertWorkspace(supabase: Client, userId: string): Promise<WorkspaceRole> {
+  const role = await fetchUserRole(supabase, userId);
+  if (!role) throw new Error("Forbidden: akses workspace diperlukan.");
+  return role;
+}
+
+/** Owner/Admin/Sales — may edit leads and sales artefacts. */
+export async function assertLeadWork(supabase: Client, userId: string): Promise<WorkspaceRole> {
+  const role = await assertWorkspace(supabase, userId);
+  if (!canWorkLeads(role)) throw new Error("Forbidden: akses sales diperlukan.");
+  return role;
+}
+
+/** Owner/Admin — may manage business data and the team. */
+export async function assertManage(supabase: Client, userId: string): Promise<WorkspaceRole> {
+  const role = await assertWorkspace(supabase, userId);
+  if (!canManageBusiness(role)) throw new Error("Forbidden: akses admin diperlukan.");
+  return role;
+}
+
+/* ------------------------------- Team members ----------------------------- */
+
+export async function fetchWorkspaceMembers(supabase: Client) {
+  const { data, error } = await supabase
+    .from("workspace_members")
+    .select("id, email, role, created_at")
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function addWorkspaceMember(
+  supabase: Client,
+  input: { email: string; role: WorkspaceRole; invitedBy: string },
+) {
+  const { error } = await supabase.from("workspace_members").upsert(
+    { email: input.email.trim().toLowerCase(), role: input.role, invited_by: input.invitedBy },
+    { onConflict: "email" },
+  );
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+export async function removeWorkspaceMember(supabase: Client, id: string) {
+  const { error } = await supabase.from("workspace_members").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
 
 export async function fetchLeads(supabase: Client): Promise<LeadListRow[]> {
   const { data, error } = await supabase
