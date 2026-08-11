@@ -4,12 +4,12 @@ import { z } from "zod";
 
 import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import {
-  formatQualifiedTelegram,
   qualifyConversation,
   saveDraftConversation,
   scoreConversation,
   type ConversationTurn,
 } from "@/lib/ai-conversation.server";
+import { formatRequirementTelegram } from "@/lib/requirements.server";
 import { sendTelegramMessage } from "@/lib/telegram.server";
 
 type Body = { messages?: unknown; sessionId?: unknown };
