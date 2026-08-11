@@ -27,6 +27,7 @@ import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/t
 import { Route as AuthenticatedAdminProposalsIdRouteImport } from './routes/_authenticated/admin.proposals.$id'
 import { Route as AuthenticatedAdminLeadsIdRouteImport } from './routes/_authenticated/admin.leads.$id'
 import { Route as AuthenticatedAdminInvoicesIdRouteImport } from './routes/_authenticated/admin.invoices.$id'
+import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authenticated/admin.clients.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -128,6 +129,12 @@ const AuthenticatedAdminInvoicesIdRoute =
     path: '/invoices/$id',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminClientsIdRoute =
+  AuthenticatedAdminClientsIdRouteImport.update({
+    id: '/clients/$id',
+    path: '/clients/$id',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
@@ -178,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/admin/pipeline'
     | '/admin/settings'
     | '/admin/'
+    | '/admin/clients/$id'
     | '/admin/invoices/$id'
     | '/admin/leads/$id'
     | '/admin/proposals/$id'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/admin/pipeline'
     | '/admin/settings'
     | '/admin'
+    | '/admin/clients/$id'
     | '/admin/invoices/$id'
     | '/admin/leads/$id'
     | '/admin/proposals/$id'
@@ -237,6 +249,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/invoices/$id'
     | '/_authenticated/admin/leads/$id'
     | '/_authenticated/admin/proposals/$id'
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminInvoicesIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/clients/$id': {
+      id: '/_authenticated/admin/clients/$id'
+      path: '/clients/$id'
+      fullPath: '/admin/clients/$id'
+      preLoaderRoute: typeof AuthenticatedAdminClientsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
@@ -392,6 +412,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPipelineRoute: typeof AuthenticatedAdminPipelineRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminClientsIdRoute: typeof AuthenticatedAdminClientsIdRoute
   AuthenticatedAdminInvoicesIdRoute: typeof AuthenticatedAdminInvoicesIdRoute
   AuthenticatedAdminLeadsIdRoute: typeof AuthenticatedAdminLeadsIdRoute
   AuthenticatedAdminProposalsIdRoute: typeof AuthenticatedAdminProposalsIdRoute
@@ -406,6 +427,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPipelineRoute: AuthenticatedAdminPipelineRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminClientsIdRoute: AuthenticatedAdminClientsIdRoute,
   AuthenticatedAdminInvoicesIdRoute: AuthenticatedAdminInvoicesIdRoute,
   AuthenticatedAdminLeadsIdRoute: AuthenticatedAdminLeadsIdRoute,
   AuthenticatedAdminProposalsIdRoute: AuthenticatedAdminProposalsIdRoute,
