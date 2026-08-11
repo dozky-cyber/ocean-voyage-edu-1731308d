@@ -134,6 +134,17 @@ function ProposalDetailPage() {
     onError: () => toast.error("Gagal memperbarui status."),
   });
 
+  const invoiceMutation = useMutation({
+    mutationFn: () => createInvoice({ data: { proposalId: id } }),
+    onSuccess: async (invoice) => {
+      toast.success(`Invoice ${invoice.number} dibuat.`);
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      navigate({ to: "/admin/invoices/$id", params: { id: invoice.id } });
+    },
+    onError: () => toast.error("Gagal membuat invoice."),
+  });
+
+
   const duplicateMutation = useMutation({
     mutationFn: () => duplicate({ data: { id } }),
     onSuccess: async (result) => {
