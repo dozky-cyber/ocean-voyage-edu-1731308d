@@ -138,6 +138,7 @@ export async function qualifyConversation(
   };
 
   let leadId = conversation?.lead_id ?? null;
+  const isNewLead = !leadId;
   if (leadId) {
     const { error } = await supabaseAdmin
       .from("consultations")
@@ -156,6 +157,13 @@ export async function qualifyConversation(
     }
     leadId = data.id;
   }
+
+  // Notify admin straight from the stored CRM record (same data as dashboard).
+  if (isNewLead && leadId) {
+    const { notifyLeadFromCrm } = await import("./lead-notify.server");
+    await notifyLeadFromCrm(leadId);
+  }
+
 
   let requirementVersion: number | null = null;
 
