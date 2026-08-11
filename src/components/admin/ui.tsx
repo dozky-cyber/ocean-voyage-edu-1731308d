@@ -87,6 +87,47 @@ export function Kpi({
   );
 }
 
+/** Compact SaaS-style metric used in the dashboard metric strip. */
+export function MetricTile({
+  label,
+  value,
+  hint,
+  icon: Icon,
+  tone = "default",
+}: {
+  label: string;
+  value: string | number;
+  hint?: string;
+  icon?: ComponentType<{ className?: string }>;
+  tone?: "default" | "hot" | "primary";
+}) {
+  const toneClass =
+    tone === "hot"
+      ? "bg-destructive/15 text-destructive"
+      : tone === "primary"
+        ? "bg-primary/15 text-primary"
+        : "bg-muted/30 text-muted-foreground";
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-2xl border border-border/40 bg-card/40 px-3 py-2.5 shadow-sm backdrop-blur-xl">
+      {Icon ? (
+        <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-xl", toneClass)}>
+          <Icon className="h-4 w-4" />
+        </span>
+      ) : null}
+      <div className="min-w-0">
+        <p className="truncate text-[0.6rem] uppercase tracking-[0.18em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="truncate text-lg font-semibold leading-tight tracking-tight text-foreground">
+          {value}
+        </p>
+        {hint ? <p className="truncate text-[0.65rem] text-muted-foreground">{hint}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+
 export function BarList({
   title,
   items,
