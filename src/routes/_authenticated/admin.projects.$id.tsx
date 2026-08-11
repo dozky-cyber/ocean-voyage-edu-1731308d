@@ -23,6 +23,8 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/admin/projects";
+import { teamRoleClass } from "@/lib/admin/team";
+import { getTeamMembersFn } from "@/lib/team.functions";
 import {
   applyTemplateFn,
   createTaskFn,
@@ -70,6 +72,12 @@ function ProjectWorkspacePage() {
   const workspace = useQuery({
     queryKey: ["admin", "project", id],
     queryFn: () => fetchWorkspace({ data: { id } }),
+  });
+
+  const fetchTeamMembers = useServerFn(getTeamMembersFn);
+  const teamMembers = useQuery({
+    queryKey: ["admin", "team-members"],
+    queryFn: () => fetchTeamMembers(),
   });
 
   useEffect(() => {
