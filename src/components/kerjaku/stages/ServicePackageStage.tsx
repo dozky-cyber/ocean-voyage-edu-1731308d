@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { servicePackageCta, servicePackages } from "@/lib/consultation-content";
 import { Reveal } from "../Reveal";
 
@@ -126,6 +127,7 @@ export function ServicePackageStage() {
               </div>
               <a
                 href="#konsultasi"
+                onClick={() => analytics.consultationButtonClick("service_package", servicePackageCta.cta)}
                 className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-primary px-7 text-sm font-medium text-primary-foreground shadow-[0_18px_50px_-18px_var(--lagoon)] transition-transform duration-300 hover:-translate-y-0.5"
               >
                 {servicePackageCta.cta}

@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { ctaLabels, trustCta } from "@/lib/consultation-content";
 import { Reveal } from "../Reveal";
 
@@ -16,6 +17,7 @@ export function TrustCtaStage() {
             <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
             <a
               href="#konsultasi"
+              onClick={() => analytics.consultationButtonClick("trust_cta", trustCta.cta)}
               className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-primary px-7 text-sm font-medium text-primary-foreground shadow-[0_18px_50px_-18px_var(--lagoon)] transition-transform duration-300 hover:-translate-y-0.5"
             >
               {trustCta.cta}

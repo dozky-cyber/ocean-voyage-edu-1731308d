@@ -1,3 +1,4 @@
+import { analytics } from "@/lib/analytics";
 import { portfolioCta } from "@/lib/consultation-content";
 import { Reveal } from "../Reveal";
 import { OceanButton } from "../OceanButton";
@@ -15,7 +16,10 @@ export function PortfolioCtaStage() {
               {portfolioCta.body}
             </p>
             <div className="mt-8">
-              <a href="#konsultasi">
+              <a
+                href="#konsultasi"
+                onClick={() => analytics.consultationButtonClick("portfolio_cta", portfolioCta.cta)}
+              >
                 <OceanButton>{portfolioCta.cta}</OceanButton>
               </a>
             </div>
