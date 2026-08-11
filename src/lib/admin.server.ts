@@ -8,6 +8,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { normalizeStage, type PipelineStage } from "@/lib/admin/pipeline";
+import {
+  canManageBusiness,
+  canWorkLeads,
+  highestRole,
+  type WorkspaceRole,
+} from "@/lib/admin/roles";
 import type { Database } from "@/integrations/supabase/types";
 
 type Client = SupabaseClient<Database>;
