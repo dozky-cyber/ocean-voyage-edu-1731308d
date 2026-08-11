@@ -4,7 +4,15 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { OrderBriefData } from "@/lib/order-brief";
 
-const idSchema = z.object({ conversationId: z.string().uuid() });
+/** Either a conversation id (AI Consultant view) or a CRM lead id. */
+const targetSchema = z
+  .object({
+    conversationId: z.string().uuid().optional(),
+    leadId: z.string().uuid().optional(),
+  })
+  .refine((value) => Boolean(value.conversationId || value.leadId), {
+    message: "conversationId atau leadId wajib diisi.",
+  });
 
 export type OrderBriefDelivery = {
   id: string;
@@ -17,11 +25,12 @@ export type OrderBriefDelivery = {
 /** Latest Order Brief for a conversation + delivery history. */
 export const getOrderBrief = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => idSchema.parse(input))
+  .inputValidator((input: unknown) => targetSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { loadOrderBrief } = await import("@/lib/order-brief.server");
-    const loaded = await loadOrderBrief(context.supabase as never, data.conversationId);
-    if (!loaded) return { brief: null, leadId: null, deliveries: [] as OrderBriefDelivery[] };
+    const { loadOrderBriefFor } = await import("@/lib/order-brief.server");
+    const found = await loadOrderBriefFor(context.supabase as never, data);
+    const loaded = found ? { ...found, leadId: found.leadId ?? data.leadId ?? null } : null;
+    if (!loaded) return { brief: null, leadId: data.leadId ?? null, deliveries: [] as OrderBriefDelivery[] };
 
     let deliveries: OrderBriefDelivery[] = [];
     if (loaded.leadId) {
@@ -44,11 +53,16 @@ export const getOrderBrief = createServerFn({ method: "GET" })
     return { brief: loaded.brief as OrderBriefData, leadId: loaded.leadId, deliveries };
   });
 
-const deliverySchema = z.object({
-  conversationId: z.string().uuid(),
-  channel: z.enum(["whatsapp", "email"]),
-  markContacted: z.boolean().default(true),
-});
+const deliverySchema = z
+  .object({
+    conversationId: z.string().uuid().optional(),
+    leadId: z.string().uuid().optional(),
+    channel: z.enum(["whatsapp", "email"]),
+    markContacted: z.boolean().default(true),
+  })
+  .refine((value) => Boolean(value.conversationId || value.leadId), {
+    message: "conversationId atau leadId wajib diisi.",
+  });
 
 async function recordDelivery(
   context: { supabase: unknown; userId: string; claims: unknown },
@@ -94,14 +108,14 @@ export const markOrderBriefSent = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => deliverySchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { loadOrderBrief } = await import("@/lib/order-brief.server");
+    const { loadOrderBriefFor } = await import("@/lib/order-brief.server");
     const { briefFileName } = await import("@/lib/order-brief");
-    const loaded = await loadOrderBrief(context.supabase as never, data.conversationId);
+    const loaded = await loadOrderBriefFor(context.supabase as never, data);
     if (!loaded) throw new Error("Order Brief belum tersedia.");
     const fileName = briefFileName(loaded.brief.customerName);
     await recordDelivery(
       context as never,
-      loaded.leadId,
+      loaded.leadId ?? data.leadId ?? null,
       data.channel,
       fileName,
       `Order Brief v${loaded.brief.version} dikirim melalui ${
@@ -118,20 +132,24 @@ export const sendOrderBriefByEmail = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
       .object({
-        conversationId: z.string().uuid(),
+        conversationId: z.string().uuid().optional(),
+        leadId: z.string().uuid().optional(),
         to: z.string().email().optional(),
         markContacted: z.boolean().default(true),
+      })
+      .refine((value) => Boolean(value.conversationId || value.leadId), {
+        message: "conversationId atau leadId wajib diisi.",
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { loadOrderBrief, sendOrderBriefEmail } = await import("@/lib/order-brief.server");
+    const { loadOrderBriefFor, sendOrderBriefEmail } = await import("@/lib/order-brief.server");
     const { briefFileName, buildFollowUpMessage, emailSubject } = await import(
       "@/lib/order-brief"
     );
     const { orderBriefPdfBase64 } = await import("@/lib/order-brief-pdf");
 
-    const loaded = await loadOrderBrief(context.supabase as never, data.conversationId);
+    const loaded = await loadOrderBriefFor(context.supabase as never, data);
     if (!loaded) throw new Error("Order Brief belum tersedia.");
     const to = data.to ?? loaded.brief.email;
     if (!to) throw new Error("Email customer belum tersedia.");
@@ -148,7 +166,7 @@ export const sendOrderBriefByEmail = createServerFn({ method: "POST" })
 
     await recordDelivery(
       context as never,
-      loaded.leadId,
+      loaded.leadId ?? data.leadId ?? null,
       "email",
       fileName,
       `Order Brief v${loaded.brief.version} dikirim melalui Email ke ${to}`,
