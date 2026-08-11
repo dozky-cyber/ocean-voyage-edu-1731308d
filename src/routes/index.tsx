@@ -79,8 +79,10 @@ export const Route = createFileRoute("/")({
           "@graph": [
             {
               "@type": "WebSite",
+              "@id": "https://kerjaku.space/#website",
               name: "KERJAKU",
               url: "https://kerjaku.space/",
+              description,
               inLanguage: "id-ID",
               publisher: { "@id": "https://kerjaku.space/#organization" },
             },
@@ -88,6 +90,7 @@ export const Route = createFileRoute("/")({
               "@type": "Organization",
               "@id": "https://kerjaku.space/#organization",
               name: "KERJAKU",
+              alternateName: "KERJAKU Digital Solution Studio",
               url: "https://kerjaku.space/",
               email: "cs@kerjaku.space",
               slogan: "Work, made your way.",
@@ -97,14 +100,13 @@ export const Route = createFileRoute("/")({
               knowsLanguage: "id-ID",
               makesOffer: [
                 "Jasa pembuatan website profesional",
-                "Landing page bisnis",
+                "Custom business system",
                 "Web application & dashboard custom",
-                "AI & automation system",
+                "AI & automation solutions",
               ].map((name) => ({
                 "@type": "Offer",
                 itemOffered: { "@type": "Service", name, serviceType: name },
               })),
-              founder: { "@id": "https://kerjaku.space/#adji-taufiq" },
             },
             {
               "@type": "FAQPage",
@@ -114,14 +116,6 @@ export const Route = createFileRoute("/")({
                 name: item.q,
                 acceptedAnswer: { "@type": "Answer", text: item.a },
               })),
-            },
-            {
-              "@type": "Person",
-              "@id": "https://kerjaku.space/#adji-taufiq",
-              name: "Adji Taufiq",
-              jobTitle: "Digital Product Builder",
-              url: "https://kerjaku.space/",
-              worksFor: { "@id": "https://kerjaku.space/#organization" },
             },
           ],
         }),
