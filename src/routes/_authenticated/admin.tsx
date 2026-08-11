@@ -16,6 +16,12 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminAccess } from "@/lib/admin.functions";
+import {
+  ROLE_LABELS,
+  isWorkspaceRole,
+  roleBadgeClass,
+  type WorkspaceRole,
+} from "@/lib/admin/roles";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
