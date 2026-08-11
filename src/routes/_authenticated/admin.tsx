@@ -42,6 +42,7 @@ function AdminLayout() {
   const queryClient = useQueryClient();
   const access = useServerFn(getAdminAccess);
   const [state, setState] = useState<"loading" | "ok" | "denied">("loading");
+  const [role, setRole] = useState<WorkspaceRole | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
@@ -53,7 +54,9 @@ function AdminLayout() {
     let active = true;
     void access()
       .then((result) => {
-        if (active) setState(result.isAdmin ? "ok" : "denied");
+        if (!active) return;
+        setRole(isWorkspaceRole(result.role) ? result.role : null);
+        setState(result.hasAccess ? "ok" : "denied");
       })
       .catch(() => {
         if (active) setState("denied");
@@ -62,6 +65,7 @@ function AdminLayout() {
       active = false;
     };
   }, [access]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();
