@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 
 import { BarList, Chip, GlassCard, Kpi } from "@/components/admin/ui";
-import { getAdminOverview } from "@/lib/admin.functions";
+import { getAdminOverview, getProposalAnalytics } from "@/lib/admin.functions";
 import { formatDate, leadSourceLabel, temperatureClass } from "@/lib/admin/pipeline";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
@@ -12,9 +12,14 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 function OverviewPage() {
   const fetchOverview = useServerFn(getAdminOverview);
+  const fetchProposalStats = useServerFn(getProposalAnalytics);
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "overview"],
     queryFn: () => fetchOverview(),
+  });
+  const proposalStats = useQuery({
+    queryKey: ["admin", "proposal-analytics"],
+    queryFn: () => fetchProposalStats(),
   });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat analitik…</p>;
@@ -40,6 +45,21 @@ function OverviewPage() {
         <Kpi label="Hot Leads" value={data.hot} hint={`${conversion}% dari total`} />
         <Kpi label="AI Conversations" value={data.aiLeads} hint={`${data.aiConversionRate}% via AI`} />
         <Kpi label="Rata-rata Skor" value={data.averageScore} />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Kpi label="Proposal Dibuat" value={proposalStats.data?.total ?? 0} />
+        <Kpi
+          label="Proposal Conversion"
+          value={`${proposalStats.data?.conversionRate ?? 0}%`}
+          hint={`${proposalStats.data?.approved ?? 0} approved`}
+        />
+        <Kpi label="Paket Tersukses" value={proposalStats.data?.topPackage ?? "-"} />
+        <Kpi
+          label="Lead → Proposal"
+          value={`${proposalStats.data?.avgLeadToProposalHours ?? 0} jam`}
+          hint="rata-rata waktu"
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

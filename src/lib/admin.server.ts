@@ -166,3 +166,181 @@ export function buildOverview(rows: LeadListRow[]): AdminOverview {
     recent: rows.slice(0, 8),
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * Proposals (AI Proposal Generator + management)
+ * ------------------------------------------------------------------------ */
+
+import {
+  buildProposalSections,
+  recommendPackage,
+  buildSalesBrief,
+  type ProposalStatus,
+} from "@/lib/admin/sales-ai";
+
+export const PROPOSAL_COLUMNS =
+  "id, lead_id, title, status, recommended_package, content, investment_note, timeline_note, sent_at, approved_at, created_at, updated_at";
+
+export async function fetchProposals(supabase: Client, leadId?: string) {
+  let query = supabase
+    .from("proposals")
+    .select(PROPOSAL_COLUMNS)
+    .order("created_at", { ascending: false })
+    .limit(300);
+  if (leadId) query = query.eq("lead_id", leadId);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function fetchProposal(supabase: Client, id: string) {
+  const { data, error } = await supabase
+    .from("proposals")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createProposalForLead(supabase: Client, leadId: string, userId: string) {
+  const lead = await fetchLead(supabase, leadId);
+  if (!lead) throw new Error("Lead tidak ditemukan.");
+  const brief = buildSalesBrief(lead);
+  const { data, error } = await supabase
+    .from("proposals")
+    .insert({
+      lead_id: leadId,
+      title: `KERJAKU Digital Solution Proposal — ${lead.business_name || lead.company || lead.name}`,
+      status: "Draft",
+      recommended_package: recommendPackage(lead),
+      content: buildProposalSections(lead),
+      investment_note: brief.investment,
+      timeline_note: brief.timeline,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: data.id as string };
+}
+
+export async function duplicateProposal(supabase: Client, id: string, userId: string) {
+  const source = await fetchProposal(supabase, id);
+  if (!source) throw new Error("Proposal tidak ditemukan.");
+  const { data, error } = await supabase
+    .from("proposals")
+    .insert({
+      lead_id: source.lead_id,
+      title: `${source.title} (copy)`,
+      status: "Draft",
+      recommended_package: source.recommended_package,
+      content: source.content,
+      investment_note: source.investment_note,
+      timeline_note: source.timeline_note,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  return { id: data.id as string };
+}
+
+export async function saveProposal(
+  supabase: Client,
+  input: {
+    id: string;
+    title: string;
+    recommended_package: string | null;
+    content: { heading: string; body: string }[];
+  },
+) {
+  const { error } = await supabase
+    .from("proposals")
+    .update({
+      title: input.title,
+      recommended_package: input.recommended_package,
+      content: input.content,
+    })
+    .eq("id", input.id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+export async function setProposalStatus(supabase: Client, id: string, status: ProposalStatus) {
+  const now = new Date().toISOString();
+  const patch: { status: string; sent_at?: string; approved_at?: string } = { status };
+  if (status === "Sent") patch.sent_at = now;
+  if (status === "Approved") patch.approved_at = now;
+  const { error } = await supabase.from("proposals").update(patch).eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+export async function deleteProposal(supabase: Client, id: string) {
+  const { error } = await supabase.from("proposals").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+export type ProposalAnalytics = {
+  total: number;
+  byStatus: { status: string; count: number }[];
+  approved: number;
+  conversionRate: number;
+  topPackage: string | null;
+  packages: { name: string; count: number }[];
+  avgLeadToProposalHours: number;
+};
+
+export async function buildProposalAnalytics(supabase: Client): Promise<ProposalAnalytics> {
+  const [{ data: proposals, error }, leads] = await Promise.all([
+    supabase.from("proposals").select("id, lead_id, status, recommended_package, created_at"),
+    fetchLeads(supabase),
+  ]);
+  if (error) throw new Error(error.message);
+  const rows = proposals ?? [];
+  const leadCreated = new Map(leads.map((l) => [l.id, l.created_at]));
+
+  const byStatus = new Map<string, number>();
+  const packages = new Map<string, number>();
+  const approvedPackages = new Map<string, number>();
+  let hoursTotal = 0;
+  let hoursCount = 0;
+
+  for (const row of rows) {
+    byStatus.set(row.status, (byStatus.get(row.status) ?? 0) + 1);
+    if (row.recommended_package) {
+      packages.set(row.recommended_package, (packages.get(row.recommended_package) ?? 0) + 1);
+      if (row.status === "Approved") {
+        approvedPackages.set(
+          row.recommended_package,
+          (approvedPackages.get(row.recommended_package) ?? 0) + 1,
+        );
+      }
+    }
+    const created = leadCreated.get(row.lead_id);
+    if (created) {
+      const diff = (new Date(row.created_at).getTime() - new Date(created).getTime()) / 3_600_000;
+      if (diff >= 0) {
+        hoursTotal += diff;
+        hoursCount += 1;
+      }
+    }
+  }
+
+  const approved = byStatus.get("Approved") ?? 0;
+  const rank = (map: Map<string, number>) =>
+    [...map.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
+  const bestApproved = rank(approvedPackages)[0]?.name ?? rank(packages)[0]?.name ?? null;
+
+  return {
+    total: rows.length,
+    byStatus: [...byStatus.entries()].map(([status, count]) => ({ status, count })),
+    approved,
+    conversionRate: rows.length ? Number(((approved / rows.length) * 100).toFixed(1)) : 0,
+    topPackage: bestApproved,
+    packages: rank(packages),
+    avgLeadToProposalHours: hoursCount ? Number((hoursTotal / hoursCount).toFixed(1)) : 0,
+  };
+}

@@ -1,11 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { SalesAssistant } from "@/components/admin/SalesAssistant";
 import { Chip, GlassCard } from "@/components/admin/ui";
-import { getAdminLead, updateLeadNotes, updateLeadStage } from "@/lib/admin.functions";
+import {
+  generateProposal,
+  getAdminLead,
+  getLeadProposals,
+  updateLeadNotes,
+  updateLeadStage,
+} from "@/lib/admin.functions";
+import { proposalStatusClass } from "@/lib/admin/sales-ai";
 import {
   PIPELINE_STAGES,
   formatDate,
@@ -48,10 +56,28 @@ function LeadDetailPage() {
   const fetchLead = useServerFn(getAdminLead);
   const saveStage = useServerFn(updateLeadStage);
   const saveNotes = useServerFn(updateLeadNotes);
+  const createProposal = useServerFn(generateProposal);
+  const fetchProposals = useServerFn(getLeadProposals);
+  const navigate = useNavigate();
 
   const { data: lead, isLoading, error } = useQuery({
     queryKey: ["admin", "lead", id],
     queryFn: () => fetchLead({ data: { id } }),
+  });
+
+  const proposals = useQuery({
+    queryKey: ["admin", "lead-proposals", id],
+    queryFn: () => fetchProposals({ data: { leadId: id } }),
+  });
+
+  const proposalMutation = useMutation({
+    mutationFn: () => createProposal({ data: { leadId: id } }),
+    onSuccess: async (result) => {
+      toast.success("Proposal draft dibuat.");
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      navigate({ to: "/admin/proposals/$id", params: { id: result.id } });
+    },
+    onError: () => toast.error("Gagal membuat proposal."),
   });
 
   const [notes, setNotes] = useState("");
@@ -124,6 +150,45 @@ function LeadDetailPage() {
         <p className="mt-3 text-xs text-muted-foreground">
           Terakhir diubah: {formatDate(lead.status_updated_at)}
         </p>
+      </GlassCard>
+
+      <SalesAssistant lead={lead} />
+
+      <GlassCard>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">AI Proposal Generator</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Draft proposal otomatis dari data CRM lead ini.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => proposalMutation.mutate()}
+            disabled={proposalMutation.isPending}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+          >
+            {proposalMutation.isPending ? "Menyusun…" : "Generate Proposal"}
+          </button>
+        </div>
+        <div className="mt-4 space-y-2">
+          {(proposals.data ?? []).length === 0 ? (
+            <p className="text-xs text-muted-foreground">Belum ada proposal untuk lead ini.</p>
+          ) : (
+            (proposals.data ?? []).map((p) => (
+              <Link
+                key={p.id}
+                to="/admin/proposals/$id"
+                params={{ id: p.id }}
+                className="flex flex-wrap items-center gap-3 rounded-2xl bg-background/40 p-3 transition hover:opacity-80"
+              >
+                <span className="min-w-0 flex-1 truncate text-sm">{p.title}</span>
+                <span className="text-xs text-muted-foreground">{formatDate(p.created_at)}</span>
+                <Chip className={proposalStatusClass(p.status)}>{p.status}</Chip>
+              </Link>
+            ))
+          )}
+        </div>
       </GlassCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
