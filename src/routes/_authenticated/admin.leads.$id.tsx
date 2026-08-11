@@ -14,6 +14,7 @@ import {
   updateLeadStage,
 } from "@/lib/admin.functions";
 import { proposalStatusClass } from "@/lib/admin/sales-ai";
+import { explainLeadScore, temperatureReason } from "@/lib/admin/lead-score";
 import {
   PIPELINE_STAGES,
   formatDate,
