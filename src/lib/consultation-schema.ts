@@ -20,3 +20,35 @@ export const consultationFormSchema = z.object({
 });
 
 export type ConsultationForm = z.infer<typeof consultationFormSchema>;
+
+/** Hidden lead-intelligence payload attached to a submission (best-effort). */
+export const leadTrackingSchema = z.object({
+  utmSource: z.string().max(120).default(""),
+  utmMedium: z.string().max(120).default(""),
+  utmCampaign: z.string().max(120).default(""),
+  referrer: z.string().max(500).default(""),
+  landingPage: z.string().max(300).default(""),
+  visitedPages: z.array(z.string().max(300)).max(60).default([]),
+  visitorSource: z.string().max(120).default("direct"),
+  selectedPackage: z.string().max(120).default(""),
+  viewedProducts: z.array(z.string().max(120)).max(30).default([]),
+  clickedCtas: z.array(z.string().max(160)).max(30).default([]),
+  journey: z
+    .array(z.object({ step: z.string().max(160), at: z.string().max(40) }))
+    .max(60)
+    .default([]),
+  visitDurationSeconds: z.number().int().min(0).max(86400).default(0),
+  deviceType: z.enum(["mobile", "tablet", "desktop", "unknown"]).default("unknown"),
+  leadScore: z.number().int().min(0).max(1000).default(0),
+  leadTemperature: z.enum(["Cold Lead", "Warm Lead", "Hot Lead"]).default("Cold Lead"),
+});
+
+export type LeadTrackingPayload = z.infer<typeof leadTrackingSchema>;
+
+/** Full submission payload: visible form fields + hidden tracking. */
+export const consultationSubmissionSchema = z.object({
+  form: consultationFormSchema,
+  tracking: leadTrackingSchema.optional(),
+});
+
+export type ConsultationSubmission = z.infer<typeof consultationSubmissionSchema>;

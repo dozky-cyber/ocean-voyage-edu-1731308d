@@ -18,53 +18,132 @@ export type Database = {
         Row: {
           budget: string
           business_name: string | null
+          clicked_ctas: Json
+          company: string | null
           created_at: string
+          device_type: string | null
           email: string
           features: string | null
           id: string
+          journey: Json
+          landing_page: string | null
+          lead_score: number
+          lead_temperature: string
           name: string
           notes: string | null
           project_type: string
+          referrer: string | null
           requirement: string
+          selected_package: string | null
           status: string
           timeline: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          viewed_products: Json
+          visit_duration_seconds: number
+          visited_pages: Json
+          visitor_source: string | null
           whatsapp: string
         }
         Insert: {
           budget: string
           business_name?: string | null
+          clicked_ctas?: Json
+          company?: string | null
           created_at?: string
+          device_type?: string | null
           email: string
           features?: string | null
           id?: string
+          journey?: Json
+          landing_page?: string | null
+          lead_score?: number
+          lead_temperature?: string
           name: string
           notes?: string | null
           project_type: string
+          referrer?: string | null
           requirement: string
+          selected_package?: string | null
           status?: string
           timeline: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          viewed_products?: Json
+          visit_duration_seconds?: number
+          visited_pages?: Json
+          visitor_source?: string | null
           whatsapp: string
         }
         Update: {
           budget?: string
           business_name?: string | null
+          clicked_ctas?: Json
+          company?: string | null
           created_at?: string
+          device_type?: string | null
           email?: string
           features?: string | null
           id?: string
+          journey?: Json
+          landing_page?: string | null
+          lead_score?: number
+          lead_temperature?: string
           name?: string
           notes?: string | null
           project_type?: string
+          referrer?: string | null
           requirement?: string
+          selected_package?: string | null
           status?: string
           timeline?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          viewed_products?: Json
+          visit_duration_seconds?: number
+          visited_pages?: Json
+          visitor_source?: string | null
           whatsapp?: string
         }
         Relationships: []
       }
     }
     Views: {
-      [_ in never]: never
+      lead_cta_performance: {
+        Row: {
+          clicks: number | null
+          cta: string | null
+        }
+        Relationships: []
+      }
+      lead_monthly_trend: {
+        Row: {
+          avg_score: number | null
+          leads: number | null
+          month: string | null
+        }
+        Relationships: []
+      }
+      lead_product_interest: {
+        Row: {
+          product: string | null
+          views: number | null
+        }
+        Relationships: []
+      }
+      lead_source_performance: {
+        Row: {
+          avg_score: number | null
+          campaign: string | null
+          hot_leads: number | null
+          leads: number | null
+          source: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

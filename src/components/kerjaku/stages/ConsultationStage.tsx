@@ -10,6 +10,7 @@ import {
 import { consultationFormSchema, type ConsultationForm } from "@/lib/consultation-schema";
 import { submitConsultationLead } from "@/lib/consultation.functions";
 import { analytics } from "@/lib/analytics";
+import { getLeadTracking } from "@/lib/lead-journey";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
@@ -58,11 +59,14 @@ export function ConsultationStage() {
     setErrors({});
     setSending(true);
     try {
-      await submit({ data: parsed.data });
+      const tracking = getLeadTracking();
+      await submit({ data: { form: parsed.data, tracking } });
       analytics.consultationFormSubmit({
         project_type: parsed.data.projectType,
         budget: parsed.data.budget,
         timeline: parsed.data.timeline,
+        lead_score: tracking.leadScore,
+        lead_temperature: tracking.leadTemperature,
       });
       setDone(true);
       setValues(empty);
@@ -94,6 +98,7 @@ export function ConsultationStage() {
                 className="mt-8 w-full sm:w-60"
                 onClick={() => {
                   analytics.consultationButtonClick("consultation_section", consultationSection.cta);
+                  analytics.consultationFormOpen();
                   setOpen(true);
                 }}
               >

@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
+import { initLeadJourney } from "@/lib/lead-journey";
+
 
 function NotFoundComponent() {
   return (
@@ -130,10 +132,12 @@ function RootComponent() {
 
   useEffect(() => {
     initAnalytics();
+    initLeadJourney(window.location.pathname);
     return router.subscribe("onResolved", ({ toLocation }) => {
       trackPageView(toLocation.pathname);
     });
   }, [router]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
