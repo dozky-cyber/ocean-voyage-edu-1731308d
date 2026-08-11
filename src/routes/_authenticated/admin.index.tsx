@@ -6,13 +6,14 @@ import {
   FileText,
   Flame,
   KanbanSquare,
+  MessageCircle,
   Plus,
   Sparkle,
   TrendingUp,
   Users,
 } from "lucide-react";
 
-import { BarRows, Chip, Funnel, Kpi, SectionCard } from "@/components/admin/ui";
+import { BarRows, Chip, Funnel, MetricTile, SectionCard } from "@/components/admin/ui";
 import { getAdminOverview, getProposalAnalytics } from "@/lib/admin.functions";
 import {
   formatDate,
@@ -28,11 +29,44 @@ export const Route = createFileRoute("/_authenticated/admin/")({
 
 const QUICK_ACTIONS = [
   { label: "New Lead", to: "/", icon: Plus, hint: "form publik" },
-  { label: "View Leads", to: "/admin/leads", icon: Users },
-  { label: "Sales Pipeline", to: "/admin/pipeline", icon: KanbanSquare },
+  { label: "View CRM", to: "/admin/leads", icon: Users },
   { label: "Generate Proposal", to: "/admin/proposals", icon: FileText },
   { label: "Ask AI", to: "/admin/leads", icon: Bot, hint: "pilih lead" },
+  { label: "Follow Up Leads", to: "/admin/pipeline", icon: KanbanSquare },
 ] as const;
+
+function waLink(whatsapp: string, name: string) {
+  const digits = whatsapp.replace(/\D/g, "");
+  const phone = digits.startsWith("0") ? `62${digits.slice(1)}` : digits;
+  const text = encodeURIComponent(
+    `Halo ${name}, saya dari KERJAKU. Terima kasih sudah menghubungi kami — boleh kita lanjutkan diskusi project-nya?`,
+  );
+  return `https://wa.me/${phone}?text=${text}`;
+}
+
+function ActionLink({
+  to,
+  params,
+  search,
+  children,
+}: {
+  to: string;
+  params?: Record<string, string>;
+  search?: Record<string, string>;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      to={to as any}
+      params={params as never}
+      search={search as never}
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-border/50 px-2 py-1 text-[0.7rem] text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+    >
+      {children}
+    </Link>
+  );
+}
 
 function OverviewPage() {
   const fetchOverview = useServerFn(getAdminOverview);
@@ -57,7 +91,7 @@ function OverviewPage() {
   const stageCount = (stage: string) =>
     data.stageCounts.find((s) => s.stage === stage)?.count ?? 0;
   const closed = stageCount("Completed") + stageCount("Payment");
-
+  const qualified = data.hot + data.warm;
 
   return (
     <div className="space-y-6">
@@ -65,7 +99,7 @@ function OverviewPage() {
         <div className="min-w-0">
           <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ringkasan performa lead, sumber, dan konversi KERJAKU.
+            Sales control center KERJAKU — prioritas hari ini, konversi, dan sumber lead.
           </p>
         </div>
         <Chip className="shrink-0 border-primary/30 bg-primary/10 text-primary">
@@ -73,31 +107,31 @@ function OverviewPage() {
         </Chip>
       </header>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <Kpi label="Total Leads" value={data.totalLeads} icon={Users} />
-        <Kpi
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <MetricTile label="Total Leads" value={data.totalLeads} icon={Users} />
+        <MetricTile
           label="Hot Leads"
           value={data.hot}
           hint={`${conversion}% dari total`}
           icon={Flame}
           tone="hot"
         />
-        <Kpi
+        <MetricTile
           label="AI Conversations"
           value={data.aiLeads}
           hint={`${data.aiConversionRate}% via AI`}
           icon={Bot}
           tone="primary"
         />
-        <Kpi
+        <MetricTile
           label="Proposal Conversion"
           value={`${proposalStats.data?.conversionRate ?? 0}%`}
           hint={`${proposalStats.data?.approved ?? 0} approved`}
           icon={FileText}
           tone="primary"
         />
-        <Kpi
-          label="Rata-rata Skor"
+        <MetricTile
+          label="Average Score"
           value={data.averageScore}
           hint="lead scoring 10–50"
           icon={TrendingUp}
@@ -119,6 +153,71 @@ function OverviewPage() {
         </div>
       </SectionCard>
 
+      <SectionCard
+        title="Priority Lead Inbox"
+        description="Lead yang perlu ditindak hari ini."
+        action={
+          <Link to="/admin/pipeline" className="text-xs text-primary hover:underline">
+            Buka pipeline
+          </Link>
+        }
+      >
+        {data.priority.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Tidak ada lead yang menunggu tindakan. Mantap.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {data.priority.map((lead) => (
+              <li
+                key={lead.id}
+                className="rounded-2xl border border-border/40 bg-background/40 p-3"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 truncate text-sm font-medium">{lead.name}</span>
+                  <Chip className={temperatureClass(lead.lead_temperature)}>
+                    {lead.lead_temperature?.replace(" Lead", "")}
+                  </Chip>
+                  <Chip className={stageClass(normalizeStage(lead.status))}>
+                    {normalizeStage(lead.status)}
+                  </Chip>
+                  <span className="text-[0.7rem] text-muted-foreground">
+                    skor {lead.lead_score} · {leadSourceLabel(lead.lead_source)}
+                  </span>
+                </div>
+                <p className="mt-1 text-[0.7rem] text-muted-foreground">
+                  {lead.reason} · aktivitas terakhir{" "}
+                  {formatDate(lead.status_updated_at ?? lead.created_at)}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <ActionLink to="/admin/leads/$id" params={{ id: lead.id }}>
+                    <Sparkle className="h-3 w-3" /> View Lead
+                  </ActionLink>
+                  <ActionLink to="/admin/leads/$id" params={{ id: lead.id }} search={{ ai: "1" }}>
+                    <Bot className="h-3 w-3" /> Ask AI
+                  </ActionLink>
+                  <ActionLink
+                    to="/admin/leads/$id"
+                    params={{ id: lead.id }}
+                    search={{ ai: "followup" }}
+                  >
+                    <MessageCircle className="h-3 w-3" /> Generate Follow Up
+                  </ActionLink>
+                  <a
+                    href={waLink(lead.whatsapp, lead.name)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-primary/40 px-2 py-1 text-[0.7rem] text-primary transition hover:bg-primary/10"
+                  >
+                    <MessageCircle className="h-3 w-3" /> WhatsApp
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </SectionCard>
+
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Lead Funnel" description="Perjalanan visitor sampai closing.">
           <Funnel
@@ -126,8 +225,9 @@ function OverviewPage() {
               { label: "Visitor", value: null, hint: "sesi dilacak di GA4" },
               { label: "AI Chat", value: data.aiLeads },
               { label: "Consultation", value: data.totalLeads },
+              { label: "Qualified Lead", value: qualified, hint: "hot + warm" },
               { label: "Proposal", value: proposalStats.data?.total ?? 0 },
-              { label: "Closed", value: closed },
+              { label: "Closed Deal", value: closed },
             ]}
           />
         </SectionCard>
@@ -173,7 +273,7 @@ function OverviewPage() {
         }
       >
         <div className="-mx-2 overflow-x-auto">
-          <table className="w-full min-w-[46rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
             <thead>
               <tr className="text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
                 <th className="px-2 py-2 font-medium">Name</th>
@@ -182,7 +282,7 @@ function OverviewPage() {
                 <th className="px-2 py-2 font-medium">Score</th>
                 <th className="px-2 py-2 font-medium">Package</th>
                 <th className="px-2 py-2 font-medium">Date</th>
-                <th className="px-2 py-2 text-right font-medium">Action</th>
+                <th className="px-2 py-2 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -211,14 +311,27 @@ function OverviewPage() {
                   <td className="whitespace-nowrap px-2 py-2.5 text-xs text-muted-foreground">
                     {formatDate(lead.created_at)}
                   </td>
-                  <td className="px-2 py-2.5 text-right">
-                    <Link
-                      to="/admin/leads/$id"
-                      params={{ id: lead.id }}
-                      className="inline-flex items-center gap-1 rounded-lg border border-border/50 px-2 py-1 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
-                    >
-                      <Sparkle className="h-3 w-3" /> Detail
-                    </Link>
+                  <td className="px-2 py-2.5">
+                    <div className="flex justify-end gap-1.5">
+                      <ActionLink to="/admin/leads/$id" params={{ id: lead.id }}>
+                        <Sparkle className="h-3 w-3" /> Detail
+                      </ActionLink>
+                      <ActionLink
+                        to="/admin/leads/$id"
+                        params={{ id: lead.id }}
+                        search={{ ai: "1" }}
+                      >
+                        <Bot className="h-3 w-3" /> AI
+                      </ActionLink>
+                      <a
+                        href={waLink(lead.whatsapp, lead.name)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-primary/40 px-2 py-1 text-[0.7rem] text-primary transition hover:bg-primary/10"
+                      >
+                        <MessageCircle className="h-3 w-3" /> WA
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}
