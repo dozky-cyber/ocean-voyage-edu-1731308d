@@ -12,6 +12,7 @@ import {
   KanbanSquare,
   Receipt,
   Building2,
+  UsersRound,
   FolderKanban,
   X,
 } from "lucide-react";
