@@ -15,7 +15,9 @@ import {
   saveProposalFn,
   setProposalStatusFn,
 } from "@/lib/admin.functions";
+import { generateInvoice } from "@/lib/billing.functions";
 import { formatDate } from "@/lib/admin/pipeline";
+
 import {
   PROPOSAL_STATUSES,
   formatIDR,
