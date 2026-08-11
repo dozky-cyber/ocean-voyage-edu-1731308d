@@ -158,6 +158,9 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
             }),
           },
           leadSource: "ai_consultant",
+          honeypot,
+          elapsedMs: Date.now() - mountedAt,
+
         },
       });
       setSubmitted(true);
