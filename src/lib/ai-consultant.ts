@@ -12,9 +12,9 @@ export type OptionItem = { id: string; label: string; weight?: number };
 
 export const aiConsultantSection = {
   eyebrow: "AI CONSULTANT",
-  title: "Konsultasi Cepat dengan AI KERJAKU",
+  title: "Ngobrol Langsung dengan AI Consultant KERJAKU",
   subtitle:
-    "Jawab beberapa pertanyaan singkat. AI KERJAKU akan memetakan kebutuhan bisnis Anda dan merekomendasikan solusi yang paling tepat sebelum Anda bicara dengan tim.",
+    "Ceritakan kondisi bisnis Anda seperti chat biasa. AI KERJAKU akan menggali kebutuhan, menganalisa masalah, lalu merekomendasikan solusi digital yang paling tepat.",
   cta: "Mulai Konsultasi AI",
   fabLabel: "AI Consultant",
   intro:
