@@ -3,7 +3,9 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PROJECT_STATUSES } from "@/lib/admin/payments";
-import { PROJECT_TEMPLATES, TASK_PRIORITIES, TASK_STATUSES } from "@/lib/admin/projects";
+import { actorName } from "@/lib/admin/actor";
+import { DELIVERY_STAGES } from "@/lib/admin/ops";
+import { PROJECT_TEMPLATES, TASK_PRIORITY_VALUES, TASK_STATUSES } from "@/lib/admin/projects";
 
 const templateIds = PROJECT_TEMPLATES.map((t) => t.id) as [string, ...string[]];
 
@@ -54,6 +56,7 @@ export const saveProjectDetails = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         name: z.string().min(1).max(200),
         status: z.enum(PROJECT_STATUSES),
+        stage: z.enum(DELIVERY_STAGES),
         summary: z.string().max(4000).nullable(),
         scope: z.string().max(4000).nullable(),
         team: z.array(z.string().min(1).max(80)).max(20),
@@ -86,7 +89,7 @@ const taskFields = {
   title: z.string().min(1).max(200),
   description: z.string().max(4000).nullable(),
   assignee: z.string().max(120).nullable(),
-  priority: z.enum(TASK_PRIORITIES),
+  priority: z.enum(TASK_PRIORITY_VALUES),
   status: z.enum(TASK_STATUSES),
   due_date: z.string().max(20).nullable(),
 };
@@ -155,4 +158,47 @@ export const addProjectActivityFn = createServerFn({ method: "POST" })
     const { logProjectActivity } = await import("./projects.server");
     await assertLeadWork(context.supabase, context.userId);
     return logProjectActivity(context.supabase, data, context.userId);
+  });
+
+export const setProjectStageFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ id: z.string().uuid(), stage: z.enum(DELIVERY_STAGES) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertWorkspace } = await import("./admin.server");
+    const { setProjectStage } = await import("./projects.server");
+    await assertWorkspace(context.supabase, context.userId);
+    return setProjectStage(context.supabase, data, context.userId, actorName(context.claims));
+  });
+
+export const addTaskCommentFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ taskId: z.string().uuid(), body: z.string().min(1).max(2000) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertWorkspace } = await import("./admin.server");
+    const { addTaskComment } = await import("./projects.server");
+    await assertWorkspace(context.supabase, context.userId);
+    return addTaskComment(context.supabase, data, context.userId, actorName(context.claims));
+  });
+
+export const deleteTaskCommentFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertWorkspace } = await import("./admin.server");
+    const { deleteTaskComment } = await import("./projects.server");
+    await assertWorkspace(context.supabase, context.userId);
+    return deleteTaskComment(context.supabase, data.id);
+  });
+
+export const getOpsToday = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { assertWorkspace } = await import("./admin.server");
+    const { fetchOpsToday } = await import("./projects.server");
+    await assertWorkspace(context.supabase, context.userId);
+    return fetchOpsToday(context.supabase);
   });

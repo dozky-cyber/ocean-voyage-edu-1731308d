@@ -117,6 +117,7 @@ export type Database = {
           phase: string
           progress: number
           scope: string | null
+          stage: string
           start_date: string | null
           status: string
           summary: string | null
@@ -135,6 +136,7 @@ export type Database = {
           phase?: string
           progress?: number
           scope?: string | null
+          stage?: string
           start_date?: string | null
           status?: string
           summary?: string | null
@@ -153,6 +155,7 @@ export type Database = {
           phase?: string
           progress?: number
           scope?: string | null
+          stage?: string
           start_date?: string | null
           status?: string
           summary?: string | null
@@ -728,6 +731,51 @@ export type Database = {
           },
         ]
       }
+      task_comments: {
+        Row: {
+          author_name: string
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: string
+          task_id: string
+        }
+        Insert: {
+          author_name?: string
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: string
+          task_id: string
+        }
+        Update: {
+          author_name?: string
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "client_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           active: boolean
@@ -864,6 +912,11 @@ export type Database = {
         Returns: boolean
       }
       has_workspace_access: { Args: { _user_id: string }; Returns: boolean }
+      is_project_member: {
+        Args: { _project_id: string; _user_id: string }
+        Returns: boolean
+      }
+      team_member_name: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "staff" | "user" | "owner" | "sales" | "viewer"

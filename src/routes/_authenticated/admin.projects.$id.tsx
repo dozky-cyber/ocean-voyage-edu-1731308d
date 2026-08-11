@@ -5,7 +5,17 @@ import { ArrowLeft, ExternalLink, FileText, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Chip, GlassCard, SectionCard } from "@/components/admin/ui";
+import { TaskBoard } from "@/components/admin/TaskBoard";
+import { Chip, SectionCard } from "@/components/admin/ui";
+import {
+  DELIVERY_STAGES,
+  healthClass,
+  healthReason,
+  isOverdue,
+  projectHealth,
+  stageClass,
+  type DeliveryStage,
+} from "@/lib/admin/ops";
 import {
   formatMoney,
   PROJECT_STATUSES,
@@ -15,10 +25,6 @@ import {
 import {
   formatDate,
   PROJECT_TEMPLATES,
-  TASK_PRIORITIES,
-  TASK_STATUSES,
-  taskPriorityClass,
-  taskStatusClass,
   templateMeta,
   type TaskPriority,
   type TaskStatus,
@@ -26,11 +32,13 @@ import {
 import { teamRoleClass } from "@/lib/admin/team";
 import { getTeamMembersFn } from "@/lib/team.functions";
 import {
+  addTaskCommentFn,
   applyTemplateFn,
   createTaskFn,
   deleteTaskFn,
   getProjectWorkspace,
   saveProjectDetails,
+  setProjectStageFn,
   setTaskStatusFn,
   updateTaskFn,
 } from "@/lib/projects.functions";
@@ -56,11 +64,14 @@ function ProjectWorkspacePage() {
   const updateTask = useServerFn(updateTaskFn);
   const setTaskStatus = useServerFn(setTaskStatusFn);
   const deleteTask = useServerFn(deleteTaskFn);
+  const setStage = useServerFn(setProjectStageFn);
+  const addComment = useServerFn(addTaskCommentFn);
 
   const [tab, setTab] = useState<Tab>("Overview");
   const [draft, setDraft] = useState<{
     name: string;
     status: ProjectStatus;
+    stage: DeliveryStage;
     summary: string;
     scope: string;
     team: string;
@@ -86,6 +97,7 @@ function ProjectWorkspacePage() {
     setDraft({
       name: project.name,
       status: (project.status as ProjectStatus) ?? "Onboarding",
+      stage: project.stage,
       summary: project.summary ?? "",
       scope: project.scope ?? "",
       team: project.team.join(", "),
@@ -108,6 +120,7 @@ function ProjectWorkspacePage() {
           id,
           name: draft!.name,
           status: draft!.status,
+          stage: draft!.stage,
           summary: draft!.summary || null,
           scope: draft!.scope || null,
           team: draft!.team
@@ -175,6 +188,24 @@ function ProjectWorkspacePage() {
     onError: () => toast.error("Gagal mengubah status task."),
   });
 
+  const stageMutation = useMutation({
+    mutationFn: (stage: DeliveryStage) => setStage({ data: { id, stage } }),
+    onSuccess: () => {
+      toast.success("Stage project diperbarui.");
+      invalidate();
+    },
+    onError: () => toast.error("Gagal memperbarui stage."),
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: (input: { taskId: string; body: string }) => addComment({ data: input }),
+    onSuccess: () => {
+      toast.success("Komentar terkirim.");
+      invalidate();
+    },
+    onError: () => toast.error("Gagal mengirim komentar."),
+  });
+
   const removeMutation = useMutation({
     mutationFn: (taskId: string) => deleteTask({ data: { id: taskId } }),
     onSuccess: () => {
@@ -191,7 +222,15 @@ function ProjectWorkspacePage() {
     return <p className="text-sm text-destructive">Gagal memuat project.</p>;
   }
 
-  const { project, client, tasks, activities, documents, invoice } = workspace.data;
+  const { project, client, tasks, activities, documents, invoice, comments } = workspace.data;
+  const overdueTasks = tasks.filter((task) => isOverdue(task.due_date, task.status)).length;
+  const healthInput = {
+    stage: project.stage,
+    progress: project.progress,
+    target_date: project.target_date,
+    overdue_tasks: overdueTasks,
+  };
+  const health = projectHealth(healthInput);
 
   return (
     <div className="space-y-6">
@@ -244,12 +283,52 @@ function ProjectWorkspacePage() {
           ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <Chip className={healthClass(health)}>{health}</Chip>
+          <Chip className={stageClass(project.stage)}>{project.stage}</Chip>
           <Chip className="border-primary/30 bg-primary/10 text-primary">{project.status}</Chip>
           <Chip className="border-border/60 bg-muted/20 text-muted-foreground">
             {project.progress}%
           </Chip>
         </div>
       </header>
+
+      <SectionCard
+        title="Delivery Stage"
+        description={healthReason(healthInput)}
+        action={
+          overdueTasks > 0 ? (
+            <Chip className="border-destructive/30 bg-destructive/10 text-destructive">
+              {overdueTasks} task overdue
+            </Chip>
+          ) : null
+        }
+      >
+        <div className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+          {DELIVERY_STAGES.map((stage, index) => {
+            const active = stage === project.stage;
+            const passed = DELIVERY_STAGES.indexOf(project.stage) > index;
+            return (
+              <button
+                key={stage}
+                type="button"
+                disabled={stageMutation.isPending}
+                onClick={() => stageMutation.mutate(stage)}
+                className={cn(
+                  "shrink-0 rounded-2xl border px-3 py-2 text-xs transition disabled:opacity-50",
+                  active
+                    ? stageClass(stage)
+                    : passed
+                      ? "border-primary/25 bg-primary/5 text-primary/80"
+                      : "border-border/50 bg-background/30 text-muted-foreground hover:text-foreground",
+                )}
+              >
+                <span className="mr-1 opacity-60">{index + 1}.</span>
+                {stage}
+              </button>
+            );
+          })}
+        </div>
+      </SectionCard>
 
       <div className="flex min-w-0 gap-1 overflow-x-auto rounded-full border border-border/40 bg-card/40 p-1">
         {TABS.map((item) => (
@@ -549,13 +628,22 @@ function ProjectWorkspacePage() {
       ) : null}
 
       {tab === "Tasks" ? (
-        <TasksPanel
+        <TaskBoard
           tasks={tasks}
+          comments={comments}
+          members={teamMembers.data ?? []}
           onCreate={(input) => taskCreate.mutate(input)}
-          onUpdate={(input) => taskUpdate.mutate(input)}
+          onUpdate={(input) =>
+            taskUpdate.mutate({
+              ...input,
+              priority: input.priority as TaskPriority,
+              status: input.status as TaskStatus,
+            })
+          }
           onStatus={(input) => statusMutation.mutate(input)}
           onDelete={(taskId) => removeMutation.mutate(taskId)}
-          busy={taskCreate.isPending || taskUpdate.isPending}
+          onComment={(input) => commentMutation.mutate(input)}
+          busy={taskCreate.isPending || taskUpdate.isPending || commentMutation.isPending}
         />
       ) : null}
 
@@ -620,319 +708,6 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3">
       <span className="truncate text-xs text-muted-foreground">{label}</span>
       <span className="min-w-0 truncate text-sm text-foreground">{value}</span>
-    </div>
-  );
-}
-
-type TaskRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  assignee: string | null;
-  priority: string;
-  status: string;
-  due_date: string | null;
-  notes: string | null;
-};
-
-function TasksPanel({
-  tasks,
-  onCreate,
-  onUpdate,
-  onStatus,
-  onDelete,
-  busy,
-}: {
-  tasks: TaskRow[];
-  onCreate: (input: {
-    title: string;
-    description: string | null;
-    assignee: string | null;
-    priority: TaskPriority;
-    status: TaskStatus;
-    due_date: string | null;
-  }) => void;
-  onUpdate: (input: {
-    id: string;
-    title: string;
-    description: string | null;
-    assignee: string | null;
-    priority: TaskPriority;
-    status: TaskStatus;
-    due_date: string | null;
-    notes: string | null;
-  }) => void;
-  onStatus: (input: { id: string; status: TaskStatus }) => void;
-  onDelete: (id: string) => void;
-  busy: boolean;
-}) {
-  const [title, setTitle] = useState("");
-  const [assignee, setAssignee] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("Medium");
-  const [due, setDue] = useState("");
-  const [description, setDescription] = useState("");
-  const [editing, setEditing] = useState<TaskRow | null>(null);
-
-  return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <SectionCard title="Task List" description={`${tasks.length} task`}>
-        {tasks.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Belum ada task.</p>
-        ) : (
-          <ul className="space-y-2">
-            {tasks.map((task) => (
-              <li key={task.id} className="rounded-2xl border border-border/40 bg-card/30 p-3">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                    {task.description ? (
-                      <p className="mt-0.5 text-xs text-muted-foreground">{task.description}</p>
-                    ) : null}
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <Chip className={taskPriorityClass(task.priority)}>{task.priority}</Chip>
-                      <Chip className={taskStatusClass(task.status)}>{task.status}</Chip>
-                      <Chip className="border-border/60 bg-muted/20 text-muted-foreground">
-                        {task.assignee?.trim() || "Belum ditugaskan"}
-                      </Chip>
-                      <Chip className="border-border/60 bg-muted/20 text-muted-foreground">
-                        Due {formatDate(task.due_date)}
-                      </Chip>
-                    </div>
-                    {task.notes ? (
-                      <p className="mt-2 whitespace-pre-wrap text-xs text-muted-foreground">
-                        {task.notes}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-2">
-                    <select
-                      className="rounded-xl border border-border/50 bg-background/40 px-2 py-1 text-xs outline-none"
-                      value={task.status}
-                      onChange={(e) =>
-                        onStatus({ id: task.id, status: e.target.value as TaskStatus })
-                      }
-                    >
-                      {TASK_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setEditing(task)}
-                        className="rounded-lg border border-border/50 px-2 py-1 text-[0.65rem] text-muted-foreground transition hover:text-foreground"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Hapus task"
-                        onClick={() => onDelete(task.id)}
-                        className="grid h-6 w-6 place-items-center rounded-lg border border-border/50 text-muted-foreground transition hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {editing?.id === task.id ? (
-                  <EditTaskForm
-                    task={editing}
-                    onCancel={() => setEditing(null)}
-                    onSave={(input) => {
-                      onUpdate(input);
-                      setEditing(null);
-                    }}
-                  />
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        )}
-      </SectionCard>
-
-      <GlassCard className="h-fit">
-        <p className="text-sm font-medium text-foreground">Task Baru</p>
-        <div className="mt-3 space-y-2">
-          <input
-            className={inputClass}
-            placeholder="Judul task"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <textarea
-            rows={2}
-            className={inputClass}
-            placeholder="Deskripsi"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <input
-            className={inputClass}
-            placeholder="Assignee"
-            value={assignee}
-            onChange={(e) => setAssignee(e.target.value)}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <select
-              className={inputClass}
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as TaskPriority)}
-            >
-              {TASK_PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-            <input
-              type="date"
-              className={inputClass}
-              value={due}
-              onChange={(e) => setDue(e.target.value)}
-            />
-          </div>
-          <button
-            type="button"
-            disabled={!title.trim() || busy}
-            onClick={() => {
-              onCreate({
-                title: title.trim(),
-                description: description.trim() || null,
-                assignee: assignee.trim() || null,
-                priority,
-                status: "Todo",
-                due_date: due || null,
-              });
-              setTitle("");
-              setDescription("");
-              setDue("");
-            }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary/90 px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4" /> Tambah Task
-          </button>
-        </div>
-      </GlassCard>
-    </div>
-  );
-}
-
-function EditTaskForm({
-  task,
-  onSave,
-  onCancel,
-}: {
-  task: TaskRow;
-  onSave: (input: {
-    id: string;
-    title: string;
-    description: string | null;
-    assignee: string | null;
-    priority: TaskPriority;
-    status: TaskStatus;
-    due_date: string | null;
-    notes: string | null;
-  }) => void;
-  onCancel: () => void;
-}) {
-  const [form, setForm] = useState({
-    title: task.title,
-    description: task.description ?? "",
-    assignee: task.assignee ?? "",
-    priority: task.priority as TaskPriority,
-    status: task.status as TaskStatus,
-    due_date: task.due_date ?? "",
-    notes: task.notes ?? "",
-  });
-
-  return (
-    <div className="mt-3 space-y-2 border-t border-border/40 pt-3">
-      <input
-        className={inputClass}
-        value={form.title}
-        onChange={(e) => setForm({ ...form, title: e.target.value })}
-      />
-      <textarea
-        rows={2}
-        className={inputClass}
-        placeholder="Deskripsi"
-        value={form.description}
-        onChange={(e) => setForm({ ...form, description: e.target.value })}
-      />
-      <div className="grid gap-2 sm:grid-cols-2">
-        <input
-          className={inputClass}
-          placeholder="Assignee"
-          value={form.assignee}
-          onChange={(e) => setForm({ ...form, assignee: e.target.value })}
-        />
-        <input
-          type="date"
-          className={inputClass}
-          value={form.due_date}
-          onChange={(e) => setForm({ ...form, due_date: e.target.value })}
-        />
-        <select
-          className={inputClass}
-          value={form.priority}
-          onChange={(e) => setForm({ ...form, priority: e.target.value as TaskPriority })}
-        >
-          {TASK_PRIORITIES.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <select
-          className={inputClass}
-          value={form.status}
-          onChange={(e) => setForm({ ...form, status: e.target.value as TaskStatus })}
-        >
-          {TASK_STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
-      <textarea
-        rows={2}
-        className={inputClass}
-        placeholder="Catatan internal"
-        value={form.notes}
-        onChange={(e) => setForm({ ...form, notes: e.target.value })}
-      />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() =>
-            onSave({
-              id: task.id,
-              title: form.title,
-              description: form.description || null,
-              assignee: form.assignee || null,
-              priority: form.priority,
-              status: form.status,
-              due_date: form.due_date || null,
-              notes: form.notes || null,
-            })
-          }
-          className="rounded-xl bg-primary/90 px-3 py-1.5 text-xs font-medium text-primary-foreground"
-        >
-          Simpan Task
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="rounded-xl border border-border/50 px-3 py-1.5 text-xs text-muted-foreground"
-        >
-          Batal
-        </button>
-      </div>
     </div>
   );
 }

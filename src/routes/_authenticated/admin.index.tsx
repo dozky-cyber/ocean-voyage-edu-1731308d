@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   AlertTriangle,
   Bot,
+  CalendarClock,
+  CheckCircle2,
   FileText,
   Flame,
   FolderKanban,
@@ -20,6 +22,9 @@ import {
 import { BarRows, Chip, Funnel, MetricTile, SectionCard } from "@/components/admin/ui";
 import { getAdminOverview, getProposalAnalytics } from "@/lib/admin.functions";
 import { getTeamWorkspace } from "@/lib/team.functions";
+import { getOpsToday } from "@/lib/projects.functions";
+import { healthClass, isOverdue } from "@/lib/admin/ops";
+import { taskPriorityClass } from "@/lib/admin/projects";
 import {
   formatDate,
   leadSourceLabel,
@@ -84,6 +89,8 @@ function OverviewPage() {
     queryKey: ["admin", "proposal-analytics"],
     queryFn: () => fetchProposalStats(),
   });
+  const fetchOps = useServerFn(getOpsToday);
+  const ops = useQuery({ queryKey: ["admin", "ops-today"], queryFn: () => fetchOps() });
   const fetchTeam = useServerFn(getTeamWorkspace);
   const team = useQuery({
     queryKey: ["admin", "team"],
@@ -148,6 +155,116 @@ function OverviewPage() {
           icon={TrendingUp}
         />
       </div>
+
+      <SectionCard
+        title="Hari Ini"
+        description="Task jatuh tempo, task terlambat, dan deadline project terdekat."
+        action={
+          <Link to="/admin/projects" className="text-xs text-primary hover:underline">
+            Buka Operations
+          </Link>
+        }
+      >
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricTile
+            label="Due Today"
+            value={ops.data?.counts.today ?? 0}
+            icon={CalendarClock}
+            tone="primary"
+          />
+          <MetricTile
+            label="Overdue"
+            value={ops.data?.counts.overdue ?? 0}
+            icon={AlertTriangle}
+            tone={ops.data?.counts.overdue ? "hot" : "default"}
+          />
+          <MetricTile
+            label="7 Hari ke Depan"
+            value={ops.data?.counts.upcoming ?? 0}
+            hint={`${ops.data?.counts.unassigned ?? 0} task tanpa PIC`}
+            icon={KanbanSquare}
+          />
+          <MetricTile
+            label="Project Health"
+            value={`${ops.data?.health.on_track ?? 0} on track`}
+            hint={`${ops.data?.health.at_risk ?? 0} at risk · ${ops.data?.health.delayed ?? 0} delayed`}
+            icon={CheckCircle2}
+          />
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="min-w-0">
+            <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+              Task prioritas
+            </p>
+            <ul className="mt-2 space-y-2">
+              {[...(ops.data?.overdue ?? []), ...(ops.data?.today ?? [])].slice(0, 6).map((task) => (
+                <li
+                  key={task.id}
+                  className="rounded-2xl border border-border/40 bg-card/30 px-3 py-2"
+                >
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                    <Link
+                      to="/admin/projects/$id"
+                      params={{ id: task.project_id }}
+                      className="min-w-0 truncate text-sm text-foreground hover:text-primary"
+                    >
+                      {task.title}
+                    </Link>
+                    <Chip className={taskPriorityClass(task.priority)}>{task.priority}</Chip>
+                  </div>
+                  <p className="truncate text-[0.7rem] text-muted-foreground">
+                    {task.project_name} · {task.assignee?.trim() || "Belum ditugaskan"} ·{" "}
+                    <span
+                      className={
+                        isOverdue(task.due_date, task.status) ? "text-destructive" : undefined
+                      }
+                    >
+                      {formatDate(task.due_date)}
+                    </span>
+                  </p>
+                </li>
+              ))}
+              {(ops.data?.overdue.length ?? 0) + (ops.data?.today.length ?? 0) === 0 ? (
+                <li className="text-xs text-muted-foreground">
+                  Tidak ada task jatuh tempo hari ini.
+                </li>
+              ) : null}
+            </ul>
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+              Deadline project
+            </p>
+            <ul className="mt-2 space-y-2">
+              {(ops.data?.deadlines ?? []).map((item) => (
+                <li
+                  key={item.id}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-2xl border border-border/40 bg-card/30 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <Link
+                      to="/admin/projects/$id"
+                      params={{ id: item.id }}
+                      className="block truncate text-sm text-foreground hover:text-primary"
+                    >
+                      {item.name}
+                    </Link>
+                    <p className="truncate text-[0.7rem] text-muted-foreground">{item.client}</p>
+                  </div>
+                  <Chip className={healthClass(item.days < 0 ? "Delayed" : item.days <= 7 ? "At Risk" : "On Track")}>
+                    {item.days < 0 ? `${Math.abs(item.days)} hari lewat` : `${item.days} hari`}
+                  </Chip>
+                </li>
+              ))}
+              {(ops.data?.deadlines.length ?? 0) === 0 ? (
+                <li className="text-xs text-muted-foreground">Tidak ada deadline terdekat.</li>
+              ) : null}
+            </ul>
+          </div>
+        </div>
+      </SectionCard>
 
       <SectionCard
         title="Team Capacity"

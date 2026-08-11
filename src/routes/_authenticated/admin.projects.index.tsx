@@ -12,6 +12,7 @@ import {
 import { useMemo, useState } from "react";
 
 import { BarRows, Chip, GlassCard, MetricTile, SectionCard } from "@/components/admin/ui";
+import { DELIVERY_STAGES, healthClass, stageClass } from "@/lib/admin/ops";
 import {
   deadlineTone,
   formatDate,
@@ -25,11 +26,13 @@ export const Route = createFileRoute("/_authenticated/admin/projects/")({
 });
 
 const FILTERS = ["Active", "Completed", "All"] as const;
+const STAGE_FILTERS = ["Semua stage", ...DELIVERY_STAGES] as const;
 
 function ProjectsDashboard() {
   const fetchBoard = useServerFn(getProjectBoard);
   const fetchAnalytics = useServerFn(getProjectAnalytics);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Active");
+  const [stageFilter, setStageFilter] = useState<(typeof STAGE_FILTERS)[number]>("Semua stage");
 
   const board = useQuery({ queryKey: ["admin", "projects"], queryFn: () => fetchBoard() });
   const analytics = useQuery({
@@ -38,11 +41,21 @@ function ProjectsDashboard() {
   });
 
   const projects = useMemo(() => {
+    let rows = board.data ?? [];
+    if (filter === "Completed") rows = rows.filter((p) => p.stage === "Completed");
+    else if (filter === "Active") rows = rows.filter((p) => p.stage !== "Completed");
+    if (stageFilter !== "Semua stage") rows = rows.filter((p) => p.stage === stageFilter);
+    return rows;
+  }, [board.data, filter, stageFilter]);
+
+  const health = useMemo(() => {
     const rows = board.data ?? [];
-    if (filter === "All") return rows;
-    if (filter === "Completed") return rows.filter((p) => p.status === "Completed");
-    return rows.filter((p) => p.status !== "Completed");
-  }, [board.data, filter]);
+    return {
+      onTrack: rows.filter((p) => p.health === "On Track").length,
+      atRisk: rows.filter((p) => p.health === "At Risk").length,
+      delayed: rows.filter((p) => p.health === "Delayed").length,
+    };
+  }, [board.data]);
 
   return (
     <div className="space-y-6">
@@ -83,11 +96,12 @@ function ProjectsDashboard() {
         />
         <MetricTile label="Completed" value={analytics.data?.completed ?? 0} icon={CheckCircle2} />
         <MetricTile
-          label="Delayed"
-          value={analytics.data?.delayed ?? 0}
-          icon={AlertTriangle}
-          tone="hot"
+          label="At Risk"
+          value={health.atRisk}
+          hint={`${health.onTrack} on track`}
+          icon={Gauge}
         />
+        <MetricTile label="Delayed" value={health.delayed} icon={AlertTriangle} tone="hot" />
         <MetricTile
           label="Avg Progress"
           value={`${analytics.data?.averageProgress ?? 0}%`}
@@ -98,6 +112,24 @@ function ProjectsDashboard() {
           value={`${analytics.data?.averageCompletionDays ?? 0} hari`}
           icon={CalendarClock}
         />
+      </div>
+
+      <div className="flex min-w-0 flex-wrap gap-1.5">
+        {STAGE_FILTERS.map((stage) => (
+          <button
+            key={stage}
+            type="button"
+            onClick={() => setStageFilter(stage)}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs transition",
+              stageFilter === stage
+                ? "border-primary/40 bg-primary/15 text-primary"
+                : "border-border/50 bg-card/30 text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {stage}
+          </button>
+        ))}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
@@ -132,12 +164,13 @@ function ProjectsDashboard() {
                           {project.name}
                         </p>
                       </div>
-                      <Chip className="shrink-0 border-border/60 bg-secondary/40 text-secondary-foreground">
-                        {project.status}
+                      <Chip className={cn("shrink-0", healthClass(project.health))}>
+                        {project.health}
                       </Chip>
                     </div>
 
                     <div className="mt-3 flex flex-wrap gap-1.5">
+                      <Chip className={stageClass(project.stage)}>{project.stage}</Chip>
                       {project.client_package ? (
                         <Chip className="border-primary/30 bg-primary/10 text-primary">
                           {project.client_package}
@@ -170,6 +203,9 @@ function ProjectsDashboard() {
                     </div>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {project.open_tasks} task terbuka dari {project.total_tasks}
+                      {project.overdue_tasks > 0 ? (
+                        <span className="text-destructive"> · {project.overdue_tasks} overdue</span>
+                      ) : null}
                     </p>
                   </Link>
                 );
