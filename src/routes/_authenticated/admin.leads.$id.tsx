@@ -119,6 +119,7 @@ function LeadDetailPage() {
   const problems = asStrings(lead.ai_problems);
   const requirements = asStrings(lead.ai_requirements);
   const conversation = asConversation(lead.ai_conversation);
+  const score = explainLeadScore(lead);
 
   function openAssistant() {
     setAssistantOpen(true);
