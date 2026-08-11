@@ -284,7 +284,7 @@ function ProjectWorkspacePage() {
                   ))}
                 </select>
               </label>
-              <label className="block">
+              <div className="block sm:col-span-2">
                 <span className="text-xs text-muted-foreground">Tim (pisahkan koma)</span>
                 <input
                   className={cn(inputClass, "mt-1")}
@@ -292,7 +292,50 @@ function ProjectWorkspacePage() {
                   placeholder="Adji, Designer, QA"
                   onChange={(e) => setDraft({ ...draft, team: e.target.value })}
                 />
-              </label>
+                {teamMembers.data && teamMembers.data.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {teamMembers.data.map((member) => {
+                      const names = draft.team
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const assigned = names.some(
+                        (n) => n.toLowerCase() === member.name.toLowerCase(),
+                      );
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() =>
+                            setDraft({
+                              ...draft,
+                              team: (assigned
+                                ? names.filter(
+                                    (n) => n.toLowerCase() !== member.name.toLowerCase(),
+                                  )
+                                : [...names, member.name]
+                              ).join(", "),
+                            })
+                          }
+                          className={cn(
+                            "rounded-full border px-2.5 py-1 text-[0.7rem] transition",
+                            assigned
+                              ? teamRoleClass(member.role)
+                              : "border-border/50 bg-background/30 text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {member.name} · {member.role}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Link to="/admin/team" className="mt-2 inline-block text-xs text-primary hover:underline">
+                    Tambah anggota tim
+                  </Link>
+                )}
+              </div>
+
               <label className="block">
                 <span className="text-xs text-muted-foreground">Mulai</span>
                 <input
