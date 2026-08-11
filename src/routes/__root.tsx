@@ -81,10 +81,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "KERJAKU — Work, made your way." },
+      { title: "KERJAKU — Digital Solution & Business Automation Agency" },
       {
         name: "description",
-        content: "Portofolio digital: aplikasi, sistem kerja, AI, dan automation yang saya bangun.",
+        content:
+          "KERJAKU adalah digital solution studio yang membangun website profesional, custom business system, automation, dan AI-powered solutions untuk bisnis modern.",
       },
       { name: "author", content: "KERJAKU" },
       { property: "og:type", content: "website" },
