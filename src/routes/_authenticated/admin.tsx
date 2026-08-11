@@ -19,6 +19,7 @@ import {
   Images,
   Workflow,
   X,
+  MessagesSquare,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -54,6 +55,7 @@ const NAV = [
   { to: "/admin/projects", label: "Projects", exact: false, icon: FolderKanban },
   { to: "/admin/portfolio", label: "Portfolio", exact: false, icon: Images },
   { to: "/admin/automation", label: "Automation", exact: false, icon: Workflow },
+  { to: "/admin/conversations", label: "AI Conversations", exact: false, icon: MessagesSquare },
   { to: "/admin/assistant", label: "AI Assistant", exact: false, icon: Bot },
   { to: "/admin/memory", label: "AI Memory", exact: false, icon: Brain },
   { to: "/admin/team", label: "Team", exact: false, icon: UsersRound },

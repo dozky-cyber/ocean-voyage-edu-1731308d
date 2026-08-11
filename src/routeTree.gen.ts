@@ -25,6 +25,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminPortfolioRouteImport } from './routes/_authenticated/admin.portfolio'
 import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authenticated/admin.pipeline'
 import { Route as AuthenticatedAdminMemoryRouteImport } from './routes/_authenticated/admin.memory'
+import { Route as AuthenticatedAdminConversationsRouteImport } from './routes/_authenticated/admin.conversations'
 import { Route as AuthenticatedAdminAutomationRouteImport } from './routes/_authenticated/admin.automation'
 import { Route as AuthenticatedAdminAssistantRouteImport } from './routes/_authenticated/admin.assistant'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
@@ -127,6 +128,12 @@ const AuthenticatedAdminMemoryRoute =
   AuthenticatedAdminMemoryRouteImport.update({
     id: '/memory',
     path: '/memory',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminConversationsRoute =
+  AuthenticatedAdminConversationsRouteImport.update({
+    id: '/conversations',
+    path: '/conversations',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAutomationRoute =
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/assistant': typeof AuthenticatedAdminAssistantRouteWithChildren
   '/admin/automation': typeof AuthenticatedAdminAutomationRoute
+  '/admin/conversations': typeof AuthenticatedAdminConversationsRoute
   '/admin/memory': typeof AuthenticatedAdminMemoryRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -288,6 +296,7 @@ export interface FileRoutesByTo {
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/automation': typeof AuthenticatedAdminAutomationRoute
+  '/admin/conversations': typeof AuthenticatedAdminConversationsRoute
   '/admin/memory': typeof AuthenticatedAdminMemoryRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -326,6 +335,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/assistant': typeof AuthenticatedAdminAssistantRouteWithChildren
   '/_authenticated/admin/automation': typeof AuthenticatedAdminAutomationRoute
+  '/_authenticated/admin/conversations': typeof AuthenticatedAdminConversationsRoute
   '/_authenticated/admin/memory': typeof AuthenticatedAdminMemoryRoute
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/admin/analytics'
     | '/admin/assistant'
     | '/admin/automation'
+    | '/admin/conversations'
     | '/admin/memory'
     | '/admin/pipeline'
     | '/admin/portfolio'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/portfolio/$slug'
     | '/admin/analytics'
     | '/admin/automation'
+    | '/admin/conversations'
     | '/admin/memory'
     | '/admin/pipeline'
     | '/admin/portfolio'
@@ -435,6 +447,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/assistant'
     | '/_authenticated/admin/automation'
+    | '/_authenticated/admin/conversations'
     | '/_authenticated/admin/memory'
     | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/portfolio'
@@ -588,6 +601,13 @@ declare module '@tanstack/react-router' {
       path: '/memory'
       fullPath: '/admin/memory'
       preLoaderRoute: typeof AuthenticatedAdminMemoryRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/conversations': {
+      id: '/_authenticated/admin/conversations'
+      path: '/conversations'
+      fullPath: '/admin/conversations'
+      preLoaderRoute: typeof AuthenticatedAdminConversationsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/automation': {
@@ -748,6 +768,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminAssistantRoute: typeof AuthenticatedAdminAssistantRouteWithChildren
   AuthenticatedAdminAutomationRoute: typeof AuthenticatedAdminAutomationRoute
+  AuthenticatedAdminConversationsRoute: typeof AuthenticatedAdminConversationsRoute
   AuthenticatedAdminMemoryRoute: typeof AuthenticatedAdminMemoryRoute
   AuthenticatedAdminPipelineRoute: typeof AuthenticatedAdminPipelineRoute
   AuthenticatedAdminPortfolioRoute: typeof AuthenticatedAdminPortfolioRoute
@@ -771,6 +792,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAssistantRoute:
     AuthenticatedAdminAssistantRouteWithChildren,
   AuthenticatedAdminAutomationRoute: AuthenticatedAdminAutomationRoute,
+  AuthenticatedAdminConversationsRoute: AuthenticatedAdminConversationsRoute,
   AuthenticatedAdminMemoryRoute: AuthenticatedAdminMemoryRoute,
   AuthenticatedAdminPipelineRoute: AuthenticatedAdminPipelineRoute,
   AuthenticatedAdminPortfolioRoute: AuthenticatedAdminPortfolioRoute,
