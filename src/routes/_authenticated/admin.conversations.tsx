@@ -161,6 +161,8 @@ function ConversationCard({
         )}
       </div>
 
+      {row.status === "qualified_lead" && <RequirementPreviewPanel conversationId={row.id} />}
+
       {open && (
         <div className="mt-4 max-h-80 space-y-3 overflow-y-auto rounded-2xl border border-border/70 bg-card/40 p-3">
           {(row.messages ?? []).map((message, index) => (
