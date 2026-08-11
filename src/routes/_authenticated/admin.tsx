@@ -82,7 +82,18 @@ function AdminLayout() {
 
   const navList = (
     <nav className="flex flex-col gap-1">
+      {role ? (
+        <span
+          className={cn(
+            "mb-2 inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-[0.18em]",
+            roleBadgeClass(role),
+          )}
+        >
+          {ROLE_LABELS[role]}
+        </span>
+      ) : null}
       {NAV.map((item) => (
+
         <Link
           key={item.to}
           to={item.to}
