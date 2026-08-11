@@ -191,7 +191,13 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
 
         const result = streamText({
           model: gateway(ASSISTANT_MODEL),
-          system: SYSTEM,
+          system: `${SYSTEM}
+
+KONTEKS WAKTU SISTEM (WIB): ${new Intl.DateTimeFormat("id-ID", {
+            dateStyle: "full",
+            timeStyle: "short",
+            timeZone: "Asia/Jakarta",
+          }).format(new Date())}`,
           messages: await convertToModelMessages(messages),
           stopWhen: stepCountIs(50),
           tools: {
