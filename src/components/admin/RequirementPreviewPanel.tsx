@@ -124,7 +124,19 @@ export function RequirementPreviewPanel({ conversationId }: Props) {
                 : "Generate Final Prompt"}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => setBriefOpen(true)}
+          className="rounded-full border border-primary/60 bg-primary/10 px-3 py-1 text-primary transition-colors"
+        >
+          Kirim Order Brief
+        </button>
       </div>
+
+      {briefOpen && (
+        <OrderBriefDialog conversationId={conversationId} onClose={() => setBriefOpen(false)} />
+      )}
+
 
       {mode === "preview" && (
         <div className="mt-3 space-y-2 text-xs">
