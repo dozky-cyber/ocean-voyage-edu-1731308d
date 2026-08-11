@@ -131,6 +131,20 @@ export async function setLeadStage(supabase: Client, id: string, stage: Pipeline
     .update({ status: normalizeStage(stage), status_updated_at: new Date().toISOString() })
     .eq("id", id);
   if (error) throw new Error(error.message);
+
+  const { data: lead } = await supabase
+    .from("consultations")
+    .select("name")
+    .eq("id", id)
+    .maybeSingle();
+  const { runAutomation } = await import("@/lib/automation.server");
+  await runAutomation({
+    type: "lead.status_changed",
+    leadId: id,
+    name: lead?.name ?? "Lead",
+    status: normalizeStage(stage),
+  });
+
   return { ok: true as const };
 }
 
@@ -468,6 +482,22 @@ export async function setProposalStatus(supabase: Client, id: string, status: Pr
 
   const { error } = await supabase.from("proposals").update(patch).eq("id", id);
   if (error) throw new Error(error.message);
+
+  const { data: proposal } = await supabase
+    .from("proposals")
+    .select("id, lead_id, title, client_name")
+    .eq("id", id)
+    .maybeSingle();
+  const { runAutomation } = await import("@/lib/automation.server");
+  await runAutomation({
+    type: "proposal.status_changed",
+    proposalId: id,
+    leadId: proposal?.lead_id ?? null,
+    title: proposal?.title ?? "Proposal",
+    status,
+    clientName: proposal?.client_name ?? null,
+  });
+
   return { ok: true as const };
 }
 
