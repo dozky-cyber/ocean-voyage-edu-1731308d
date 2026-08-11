@@ -16,6 +16,9 @@ export type QualificationInput = {
   users: string;
   intent: "low" | "medium" | "high";
   summary: string;
+  projectType?: string;
+  goal?: string;
+  adminNeeds?: string;
   contactName?: string;
   contactEmail?: string;
   contactWhatsapp?: string;
@@ -111,13 +114,17 @@ export async function qualifyConversation(
     name: input.contactName?.trim() || `Prospek AI · ${input.businessCategory || "Umum"}`,
     email: input.contactEmail?.trim() || `ai-${sessionId.slice(0, 12)}@leads.kerjaku.space`,
     whatsapp: input.contactWhatsapp?.trim() || "-",
-    project_type: projectTypeByPackage[input.packageName] ?? "Lainnya",
+    project_type: input.projectType?.trim() || projectTypeByPackage[input.packageName] || "Lainnya",
     requirement: input.summary,
     budget: input.budget || "Belum ditentukan",
     timeline: input.timeline || "Belum ditentukan",
     business_name: input.businessCategory || null,
     features: input.features.join(", "),
-    notes: `Skala pengguna: ${input.users || "-"}`,
+    notes: [
+      `Skala pengguna: ${input.users || "-"}`,
+      `Tujuan: ${input.goal || "-"}`,
+      `Kebutuhan admin/team: ${input.adminNeeds || "-"}`,
+    ].join("\n"),
     lead_source: "ai_consultant",
     ai_summary: input.summary,
     ai_recommended_package: input.packageName,
@@ -181,7 +188,7 @@ export async function qualifyConversation(
     const { saveRequirementVersion } = await import("@/lib/requirements.server");
     const saved = await saveRequirementVersion(conversation.id, leadId, {
       business: input.businessCategory,
-      project: projectTypeByPackage[input.packageName] ?? "Lainnya",
+      project: input.projectType?.trim() || projectTypeByPackage[input.packageName] || "Lainnya",
       features: input.features,
       problems: input.problems,
       packageName: input.packageName,
@@ -193,7 +200,13 @@ export async function qualifyConversation(
       contactName: input.contactName ?? null,
       contactEmail: input.contactEmail ?? null,
       contactWhatsapp: input.contactWhatsapp ?? null,
-      summary: input.summary,
+      summary: [
+        input.summary,
+        input.goal ? `Tujuan: ${input.goal}` : "",
+        input.adminNeeds ? `Kebutuhan admin/team: ${input.adminNeeds}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n"),
       source: "ai",
     });
     requirementVersion = saved?.version ?? null;
@@ -206,7 +219,7 @@ export async function qualifyConversation(
     qualification,
     isNew: !conversation?.lead_id,
     requirementVersion,
-    project: projectTypeByPackage[input.packageName] ?? "Lainnya",
+    project: input.projectType?.trim() || projectTypeByPackage[input.packageName] || "Lainnya",
   };
 }
 
