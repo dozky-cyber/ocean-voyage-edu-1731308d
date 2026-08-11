@@ -93,6 +93,20 @@ function SettingsPage() {
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<WorkspaceRole>("sales");
+  const [settings, setSettings] = useState<WorkspaceSettings>(() => loadWorkspaceSettings());
+
+  useEffect(() => {
+    setSettings(loadWorkspaceSettings());
+  }, []);
+
+  function patch(partial: Partial<WorkspaceSettings>) {
+    setSettings((prev) => ({ ...prev, ...partial }));
+  }
+
+  function savePreferences() {
+    saveWorkspaceSettings(settings);
+    toast.success("Preferensi workspace disimpan.");
+  }
 
   const { data } = useQuery({ queryKey: ["admin", "access"], queryFn: () => access() });
   const canManage = Boolean(data?.canManage);
