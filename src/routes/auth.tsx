@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { claimFirstAdmin } from "@/lib/admin.functions";
+import { provisionWorkspaceAccess } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -24,8 +24,7 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const navigate = useNavigate();
-  const claim = useServerFn(claimFirstAdmin);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const provision = useServerFn(provisionWorkspaceAccess);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -40,21 +39,10 @@ function AuthPage() {
     event.preventDefault();
     setLoading(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { emailRedirectTo: `${window.location.origin}/auth` },
-        });
-        if (error) throw error;
-        toast.success("Akun dibuat. Cek email untuk konfirmasi, lalu masuk.");
-        setMode("signin");
-        return;
-      }
-
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      await claim().catch(() => undefined);
+      // Grants the workspace role only when the account is on the approved team list.
+      await provision().catch(() => undefined);
       navigate({ to: "/admin", replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal masuk.");
@@ -69,10 +57,10 @@ function AuthPage() {
         <p className="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground">
           KERJAKU Business OS
         </p>
-        <h1 className="mt-3 text-2xl font-semibold text-foreground">
-          {mode === "signin" ? "Masuk workspace" : "Daftar akun internal"}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">Area internal. Khusus tim KERJAKU.</p>
+        <h1 className="mt-3 text-2xl font-semibold text-foreground">Masuk workspace</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Area internal. Hanya akun tim yang sudah disetujui yang dapat masuk.
+        </p>
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div className="space-y-1.5">
@@ -101,7 +89,7 @@ function AuthPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary/60"
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              autoComplete="current-password"
             />
           </div>
           <button
@@ -109,18 +97,15 @@ function AuthPage() {
             disabled={loading}
             className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
           >
-            {loading ? "Memproses…" : mode === "signin" ? "Masuk" : "Daftar"}
+            {loading ? "Memproses…" : "Masuk"}
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-5 w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
-        >
-          {mode === "signin" ? "Belum punya akun? Daftar" : "Sudah punya akun? Masuk"}
-        </button>
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          Pendaftaran publik dinonaktifkan. Hubungi owner KERJAKU untuk mendapatkan akses.
+        </p>
       </div>
     </main>
   );
 }
+
