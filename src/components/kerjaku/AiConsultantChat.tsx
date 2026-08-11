@@ -275,7 +275,11 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
         },
       });
       setSubmitted(true);
-      analytics.aiConsultationConversion(recommendation.packageName);
+      analytics.aiConsultationConversion({
+        recommended_package: recommendation.packageName,
+        ai_score: score,
+        qualification,
+      });
       toast.success("Konsultasi terkirim. Tim KERJAKU akan menghubungi Anda.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Gagal mengirim. Coba lagi.");
