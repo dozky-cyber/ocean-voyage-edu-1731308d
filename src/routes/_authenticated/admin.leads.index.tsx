@@ -1,11 +1,16 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Search } from "lucide-react";
+import { toast } from "sonner";
 import { useMemo, useState } from "react";
 
 import { Chip, GlassCard, SectionCard } from "@/components/admin/ui";
-import { getAdminLeads } from "@/lib/admin.functions";
+import {
+  deleteLeadPermanently,
+  getAdminLeads,
+  setLeadArchiveState,
+} from "@/lib/admin.functions";
 import {
   PIPELINE_STAGES,
   formatDate,
@@ -21,6 +26,11 @@ export const Route = createFileRoute("/_authenticated/admin/leads/")({
 
 function LeadsPage() {
   const fetchLeads = useServerFn(getAdminLeads);
+  const queryClient = useQueryClient();
+  const archiveFn = useServerFn(setLeadArchiveState);
+  const deleteFn = useServerFn(deleteLeadPermanently);
+  const [view, setView] = useState<"active" | "archived">("active");
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "leads"],
     queryFn: () => fetchLeads(),
@@ -34,6 +44,7 @@ function LeadsPage() {
     const rows = data ?? [];
     const q = search.trim().toLowerCase();
     return rows.filter((lead) => {
+      if (view === "active" ? Boolean(lead.archived_at) : !lead.archived_at) return false;
       if (temperature !== "all" && lead.lead_temperature !== temperature) return false;
       if (stage !== "all" && normalizeStage(lead.status) !== stage) return false;
       if (source !== "all" && lead.lead_source !== source) return false;
@@ -42,7 +53,28 @@ function LeadsPage() {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(q));
     });
-  }, [data, search, temperature, stage, source]);
+  }, [data, search, temperature, stage, source, view]);
+
+  const archive = useMutation({
+    mutationFn: (input: { id: string; archived: boolean }) => archiveFn({ data: input }),
+    onSuccess: async (_r, input) => {
+      toast.success(input.archived ? "Lead diarsipkan." : "Lead dipulihkan.");
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Gagal memperbarui lead."),
+  });
+
+  const remove = useMutation({
+    mutationFn: (id: string) => deleteFn({ data: { id } }),
+    onSuccess: async () => {
+      toast.success("Lead dihapus permanen.");
+      setPendingDelete(null);
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus lead."),
+  });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat leads…</p>;
   if (error) return <p className="text-sm text-destructive">Gagal memuat leads.</p>;
@@ -57,6 +89,26 @@ function LeadsPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           {leads.length} dari {(data ?? []).length} lead ditampilkan.
         </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {([
+          ["active", "Active Leads"],
+          ["archived", "Archived Leads"],
+        ] as const).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setView(value)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              view === value
+                ? "border-primary/50 bg-primary/20 text-primary"
+                : "border-border/50 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       <GlassCard className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -146,14 +198,33 @@ function LeadsPage() {
                   <td className="whitespace-nowrap px-2 py-2.5 text-xs text-muted-foreground">
                     {formatDate(lead.created_at)}
                   </td>
-                  <td className="px-2 py-2.5 text-right">
-                    <Link
-                      to="/admin/leads/$id"
-                      params={{ id: lead.id }}
-                      className="rounded-lg border border-border/50 px-2 py-1 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
-                    >
-                      Buka
-                    </Link>
+                  <td className="px-2 py-2.5">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      <Link
+                        to="/admin/leads/$id"
+                        params={{ id: lead.id }}
+                        className="rounded-lg border border-border/50 px-2 py-1 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+                      >
+                        Buka
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={archive.isPending}
+                        onClick={() =>
+                          archive.mutate({ id: lead.id, archived: !lead.archived_at })
+                        }
+                        className="rounded-lg border border-border/50 px-2 py-1 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground disabled:opacity-60"
+                      >
+                        {lead.archived_at ? "Restore" : "Archive"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPendingDelete({ id: lead.id, name: lead.name })}
+                        className="rounded-lg border border-destructive/40 px-2 py-1 text-xs text-destructive transition hover:bg-destructive/10"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -164,6 +235,35 @@ function LeadsPage() {
           <p className="mt-3 text-sm text-muted-foreground">Tidak ada lead yang cocok.</p>
         ) : null}
       </SectionCard>
+
+      {pendingDelete ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-3xl border border-border/70 bg-card p-5 shadow-2xl">
+            <p className="text-sm font-semibold">Apakah Anda yakin ingin menghapus lead ini?</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {pendingDelete.name} — percakapan, requirement preview, order brief version, dan
+              delivery history akan ikut terhapus permanen.
+            </p>
+            <div className="mt-4 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="rounded-xl border border-border/60 px-3 py-2 text-xs text-muted-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={remove.isPending}
+                onClick={() => remove.mutate(pendingDelete.id)}
+                className="rounded-xl bg-destructive px-3 py-2 text-xs font-semibold text-destructive-foreground disabled:opacity-60"
+              >
+                {remove.isPending ? "Menghapus…" : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
