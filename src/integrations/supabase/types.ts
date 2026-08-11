@@ -190,51 +190,125 @@ export type Database = {
           },
         ]
       }
-      proposals: {
+      proposal_versions: {
         Row: {
-          approved_at: string | null
           content: Json
           created_at: string
           created_by: string | null
           id: string
           investment_note: string | null
-          lead_id: string
+          note: string | null
+          pricing_items: Json
+          proposal_id: string
           recommended_package: string | null
+          timeline_note: string | null
+          title: string
+          version: number
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investment_note?: string | null
+          note?: string | null
+          pricing_items?: Json
+          proposal_id: string
+          recommended_package?: string | null
+          timeline_note?: string | null
+          title: string
+          version: number
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investment_note?: string | null
+          note?: string | null
+          pricing_items?: Json
+          proposal_id?: string
+          recommended_package?: string | null
+          timeline_note?: string | null
+          title?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_versions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          approved_at: string | null
+          client_name: string | null
+          content: Json
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          investment_note: string | null
+          lead_id: string
+          pricing_items: Json
+          recommended_package: string | null
+          rejected_at: string | null
           sent_at: string | null
           status: string
           timeline_note: string | null
           title: string
           updated_at: string
+          valid_until: string | null
+          version: number
+          viewed_at: string | null
         }
         Insert: {
           approved_at?: string | null
+          client_name?: string | null
           content?: Json
           created_at?: string
           created_by?: string | null
+          currency?: string
           id?: string
           investment_note?: string | null
           lead_id: string
+          pricing_items?: Json
           recommended_package?: string | null
+          rejected_at?: string | null
           sent_at?: string | null
           status?: string
           timeline_note?: string | null
           title?: string
           updated_at?: string
+          valid_until?: string | null
+          version?: number
+          viewed_at?: string | null
         }
         Update: {
           approved_at?: string | null
+          client_name?: string | null
           content?: Json
           created_at?: string
           created_by?: string | null
+          currency?: string
           id?: string
           investment_note?: string | null
           lead_id?: string
+          pricing_items?: Json
           recommended_package?: string | null
+          rejected_at?: string | null
           sent_at?: string | null
           status?: string
           timeline_note?: string | null
           title?: string
           updated_at?: string
+          valid_until?: string | null
+          version?: number
+          viewed_at?: string | null
         }
         Relationships: [
           {
