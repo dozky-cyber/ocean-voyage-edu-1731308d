@@ -420,4 +420,3 @@ export function buildSystemPrompt(memoryContext: string, businessSnapshot: strin
     businessSnapshot,
   ].join("\n");
 }
-}
