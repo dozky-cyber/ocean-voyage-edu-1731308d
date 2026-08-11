@@ -28,16 +28,14 @@ import { AiConsultantFab } from "@/components/kerjaku/AiConsultantFab";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
 
-const title = "KERJAKU | Jasa Pembuatan Website Profesional & Digital Solution";
+const title = "KERJAKU — Digital Solution & Business Automation Agency";
 const description =
-  "KERJAKU menyediakan jasa pembuatan website profesional, website bisnis, landing page, dan aplikasi custom dengan desain modern, cepat, dan sesuai kebutuhan bisnis.";
+  "KERJAKU adalah digital solution studio yang membangun website profesional, custom business system, automation, dan AI-powered solutions untuk membantu bisnis modern bekerja lebih efisien.";
 const keywords =
-  "jasa pembuatan website, website development, custom web application, aplikasi custom, AI automation, business system, digital transformation, software development Indonesia, landing page, dashboard bisnis, workflow automation, jasa developer website";
+  "digital solution studio, jasa pembuatan website, custom business system, business automation, AI solutions, web application, dashboard bisnis, workflow automation";
 const ogImage = "https://kerjaku.space/og-image.png";
-const socialTitle =
-  "KERJAKU - Custom Digital Solutions, AI Automation & Business System Development";
-const socialDescription =
-  "KERJAKU membantu bisnis membangun website, custom application, AI automation, dan digital system sesuai kebutuhan operasional.";
+const socialTitle = title;
+const socialDescription = description;
 
 export const Route = createFileRoute("/")({
   head: () => ({
