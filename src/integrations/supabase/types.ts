@@ -14,6 +14,215 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_documents: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          invoice_id: string | null
+          kind: string
+          proposal_id: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          proposal_id?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          proposal_id?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_messages: {
+        Row: {
+          author_name: string | null
+          body: string
+          client_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          sender: string
+        }
+        Insert: {
+          author_name?: string | null
+          body: string
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          sender?: string
+        }
+        Update: {
+          author_name?: string | null
+          body?: string
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          sender?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_projects: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          invoice_id: string | null
+          name: string
+          progress: number
+          start_date: string | null
+          status: string
+          summary: string | null
+          target_date: string | null
+          timeline: Json
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          name: string
+          progress?: number
+          start_date?: string | null
+          status?: string
+          summary?: string | null
+          target_date?: string | null
+          timeline?: Json
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          invoice_id?: string | null
+          name?: string
+          progress?: number
+          start_date?: string | null
+          status?: string
+          summary?: string | null
+          target_date?: string | null
+          timeline?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_projects_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_projects_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          company: string | null
+          converted_at: string
+          created_at: string
+          email: string
+          id: string
+          lead_id: string | null
+          name: string
+          notes: string | null
+          package: string | null
+          portal_token: string
+          status: string
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          company?: string | null
+          converted_at?: string
+          created_at?: string
+          email: string
+          id?: string
+          lead_id?: string | null
+          name: string
+          notes?: string | null
+          package?: string | null
+          portal_token?: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          company?: string | null
+          converted_at?: string
+          created_at?: string
+          email?: string
+          id?: string
+          lead_id?: string | null
+          name?: string
+          notes?: string | null
+          package?: string | null
+          portal_token?: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultations: {
         Row: {
           admin_notes: string | null
@@ -145,6 +354,99 @@ export type Database = {
           whatsapp?: string
         }
         Relationships: []
+      }
+      invoices: {
+        Row: {
+          amount: number
+          client_company: string | null
+          client_email: string | null
+          client_name: string | null
+          client_whatsapp: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          due_date: string | null
+          id: string
+          items: Json
+          lead_id: string
+          notes: string | null
+          number: string
+          package: string | null
+          paid_at: string | null
+          payment_link: string | null
+          proposal_id: string | null
+          provider: string
+          provider_reference: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_company?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_whatsapp?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          items?: Json
+          lead_id: string
+          notes?: string | null
+          number: string
+          package?: string | null
+          paid_at?: string | null
+          payment_link?: string | null
+          proposal_id?: string | null
+          provider?: string
+          provider_reference?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_company?: string | null
+          client_email?: string | null
+          client_name?: string | null
+          client_whatsapp?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          due_date?: string | null
+          id?: string
+          items?: Json
+          lead_id?: string
+          notes?: string | null
+          number?: string
+          package?: string | null
+          paid_at?: string | null
+          payment_link?: string | null
+          proposal_id?: string | null
+          provider?: string
+          provider_reference?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_ai_activities: {
         Row: {
