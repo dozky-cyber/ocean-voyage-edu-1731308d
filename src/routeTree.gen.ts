@@ -35,6 +35,7 @@ import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminAssistantIndexRouteImport } from './routes/_authenticated/admin.assistant.index'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
+import { Route as ApiPublicPaymentsXenditRouteImport } from './routes/api/public/payments/xendit'
 import { Route as ApiPublicHooksAutomationScanRouteImport } from './routes/api/public/hooks/automation-scan'
 import { Route as AuthenticatedAdminProposalsIdRouteImport } from './routes/_authenticated/admin.proposals.$id'
 import { Route as AuthenticatedAdminProjectsIdRouteImport } from './routes/_authenticated/admin.projects.$id'
@@ -187,6 +188,11 @@ const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
   path: '/api/public/telegram/test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicPaymentsXenditRoute = ApiPublicPaymentsXenditRouteImport.update({
+  id: '/api/public/payments/xendit',
+  path: '/api/public/payments/xendit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksAutomationScanRoute =
   ApiPublicHooksAutomationScanRouteImport.update({
     id: '/api/public/hooks/automation-scan',
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/projects/$id': typeof AuthenticatedAdminProjectsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
+  '/api/public/payments/xendit': typeof ApiPublicPaymentsXenditRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/admin/assistant/': typeof AuthenticatedAdminAssistantIndexRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/admin/projects/$id': typeof AuthenticatedAdminProjectsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
+  '/api/public/payments/xendit': typeof ApiPublicPaymentsXenditRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/admin/assistant': typeof AuthenticatedAdminAssistantIndexRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/projects/$id': typeof AuthenticatedAdminProjectsIdRoute
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
+  '/api/public/payments/xendit': typeof ApiPublicPaymentsXenditRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/_authenticated/admin/assistant/': typeof AuthenticatedAdminAssistantIndexRoute
@@ -359,6 +368,7 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
+    | '/api/public/payments/xendit'
     | '/api/public/telegram/test'
     | '/api/public/telegram/webhook'
     | '/admin/assistant/'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/admin/projects/$id'
     | '/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
+    | '/api/public/payments/xendit'
     | '/api/public/telegram/test'
     | '/api/public/telegram/webhook'
     | '/admin/assistant'
@@ -426,6 +437,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/projects/$id'
     | '/_authenticated/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
+    | '/api/public/payments/xendit'
     | '/api/public/telegram/test'
     | '/api/public/telegram/webhook'
     | '/_authenticated/admin/assistant/'
@@ -446,6 +458,7 @@ export interface RootRouteChildren {
   PortalTokenRoute: typeof PortalTokenRoute
   PortfolioSlugRoute: typeof PortfolioSlugRoute
   ApiPublicHooksAutomationScanRoute: typeof ApiPublicHooksAutomationScanRoute
+  ApiPublicPaymentsXenditRoute: typeof ApiPublicPaymentsXenditRoute
   ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
@@ -634,6 +647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/payments/xendit': {
+      id: '/api/public/payments/xendit'
+      path: '/api/public/payments/xendit'
+      fullPath: '/api/public/payments/xendit'
+      preLoaderRoute: typeof ApiPublicPaymentsXenditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/automation-scan': {
       id: '/api/public/hooks/automation-scan'
       path: '/api/public/hooks/automation-scan'
@@ -774,19 +794,10 @@ const rootRouteChildren: RootRouteChildren = {
   PortalTokenRoute: PortalTokenRoute,
   PortfolioSlugRoute: PortfolioSlugRoute,
   ApiPublicHooksAutomationScanRoute: ApiPublicHooksAutomationScanRoute,
+  ApiPublicPaymentsXenditRoute: ApiPublicPaymentsXenditRoute,
   ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
