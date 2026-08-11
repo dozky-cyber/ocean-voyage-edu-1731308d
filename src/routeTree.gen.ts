@@ -21,6 +21,7 @@ import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 import { Route as AuthenticatedAdminProposalsIndexRouteImport } from './routes/_authenticated/admin.proposals.index'
 import { Route as AuthenticatedAdminLeadsIndexRouteImport } from './routes/_authenticated/admin.leads.index'
+import { Route as AuthenticatedAdminInvoicesIndexRouteImport } from './routes/_authenticated/admin.invoices.index'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
 import { Route as AuthenticatedAdminProposalsIdRouteImport } from './routes/_authenticated/admin.proposals.$id'
 import { Route as AuthenticatedAdminLeadsIdRouteImport } from './routes/_authenticated/admin.leads.$id'
@@ -90,6 +91,12 @@ const AuthenticatedAdminLeadsIndexRoute =
     path: '/leads/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminInvoicesIndexRoute =
+  AuthenticatedAdminInvoicesIndexRouteImport.update({
+    id: '/invoices/',
+    path: '/invoices/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
   id: '/api/public/telegram/test',
   path: '/api/public/telegram/test',
@@ -121,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
   '/admin/leads/': typeof AuthenticatedAdminLeadsIndexRoute
   '/admin/proposals/': typeof AuthenticatedAdminProposalsIndexRoute
 }
@@ -136,6 +144,7 @@ export interface FileRoutesByTo {
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/admin/invoices': typeof AuthenticatedAdminInvoicesIndexRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsIndexRoute
   '/admin/proposals': typeof AuthenticatedAdminProposalsIndexRoute
 }
@@ -154,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/_authenticated/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
   '/_authenticated/admin/leads/': typeof AuthenticatedAdminLeadsIndexRoute
   '/_authenticated/admin/proposals/': typeof AuthenticatedAdminProposalsIndexRoute
 }
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/admin/leads/$id'
     | '/admin/proposals/$id'
     | '/api/public/telegram/test'
+    | '/admin/invoices/'
     | '/admin/leads/'
     | '/admin/proposals/'
   fileRoutesByTo: FileRoutesByTo
@@ -187,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin/leads/$id'
     | '/admin/proposals/$id'
     | '/api/public/telegram/test'
+    | '/admin/invoices'
     | '/admin/leads'
     | '/admin/proposals'
   id:
@@ -204,6 +216,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/leads/$id'
     | '/_authenticated/admin/proposals/$id'
     | '/api/public/telegram/test'
+    | '/_authenticated/admin/invoices/'
     | '/_authenticated/admin/leads/'
     | '/_authenticated/admin/proposals/'
   fileRoutesById: FileRoutesById
@@ -303,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeadsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/invoices/': {
+      id: '/_authenticated/admin/invoices/'
+      path: '/invoices'
+      fullPath: '/admin/invoices/'
+      preLoaderRoute: typeof AuthenticatedAdminInvoicesIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/telegram/test': {
       id: '/api/public/telegram/test'
       path: '/api/public/telegram/test'
@@ -334,6 +354,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminLeadsIdRoute: typeof AuthenticatedAdminLeadsIdRoute
   AuthenticatedAdminProposalsIdRoute: typeof AuthenticatedAdminProposalsIdRoute
+  AuthenticatedAdminInvoicesIndexRoute: typeof AuthenticatedAdminInvoicesIndexRoute
   AuthenticatedAdminLeadsIndexRoute: typeof AuthenticatedAdminLeadsIndexRoute
   AuthenticatedAdminProposalsIndexRoute: typeof AuthenticatedAdminProposalsIndexRoute
 }
@@ -345,6 +366,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminLeadsIdRoute: AuthenticatedAdminLeadsIdRoute,
   AuthenticatedAdminProposalsIdRoute: AuthenticatedAdminProposalsIdRoute,
+  AuthenticatedAdminInvoicesIndexRoute: AuthenticatedAdminInvoicesIndexRoute,
   AuthenticatedAdminLeadsIndexRoute: AuthenticatedAdminLeadsIndexRoute,
   AuthenticatedAdminProposalsIndexRoute: AuthenticatedAdminProposalsIndexRoute,
 }
