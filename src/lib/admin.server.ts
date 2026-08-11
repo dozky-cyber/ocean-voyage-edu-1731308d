@@ -221,6 +221,8 @@ export function buildOverview(rows: LeadListRow[]): AdminOverview {
       .sort((a, b) => a.month.localeCompare(b.month))
       .slice(-12),
     recent: rows.slice(0, 8),
+    priority: buildPriorityInbox(rows),
+
   };
 }
 
