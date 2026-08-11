@@ -39,10 +39,13 @@ export function ConsultationStage() {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<ConsultationForm>(empty);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [honeypot, setHoneypot] = useState("");
+  const [mountedAt] = useState(() => Date.now());
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [aiRecord, setAiRecord] = useState<AiConsultationRecord | undefined>(undefined);
   const submit = useServerFn(submitConsultationLead);
+
 
   // Prefill from a completed AI consultation so the visitor never re-enters data.
   useEffect(() => {
@@ -86,8 +89,11 @@ export function ConsultationStage() {
           tracking,
           ...(ai ? { ai } : {}),
           leadSource: ai ? "ai_consultant" : "manual_form",
+          honeypot,
+          elapsedMs: Date.now() - mountedAt,
         },
       });
+
       analytics.consultationFormSubmit({
         project_type: parsed.data.projectType,
         budget: parsed.data.budget,
@@ -163,6 +169,18 @@ export function ConsultationStage() {
 
             {open && !done && (
               <form onSubmit={handleSubmit} className="mt-8 grid gap-5" noValidate>
+                {/* Honeypot: hidden from users, filled only by bots. */}
+                <input
+                  type="text"
+                  name="company_website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+
                 <Field label="Nama Lengkap" error={errors["name"]}>
                   <input
                     className={fieldClass}

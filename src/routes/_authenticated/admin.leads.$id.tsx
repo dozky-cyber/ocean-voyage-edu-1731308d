@@ -26,9 +26,9 @@ import {
 } from "@/lib/admin/pipeline";
 
 export const Route = createFileRoute("/_authenticated/admin/leads/$id")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    ai: typeof search['ai'] === "string" ? search['ai'] : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { ai?: string } =>
+    typeof search['ai'] === "string" ? { ai: search['ai'] } : {},
+
   component: LeadDetailPage,
 });
 

@@ -19,7 +19,18 @@ export const aiConsultantSection = {
   fabLabel: "AI Consultant",
   intro:
     "Halo! Saya asisten digital KERJAKU. Saya bantu identifikasi kebutuhan sistem bisnis Anda dalam 4 langkah singkat.",
+  /** Transparency note shown before the assessment begins. */
+  disclosureTitle: "Guided AI Project Assessment",
+  disclosurePoints: [
+    "Asesmen terpandu berbasis AI — dirancang bersama tim KERJAKU, bukan kuis biasa.",
+    "Menganalisis profil bisnis, hambatan operasional, dan kebutuhan sistem Anda.",
+    "Merekomendasikan paket solusi, estimasi kompleksitas, dan prioritas pengerjaan.",
+    "Bukan chatbot bebas tanya — fokusnya memetakan project Anda secara terstruktur.",
+  ],
+  disclosureFooter:
+    "Hasil asesmen langsung diteruskan ke tim KERJAKU sebagai bahan diskusi project Anda.",
 };
+
 
 export const businessCategories: OptionItem[] = [
   { id: "umkm", label: "UMKM", weight: 1 },

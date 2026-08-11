@@ -72,6 +72,11 @@ export const consultationSubmissionSchema = z.object({
   tracking: leadTrackingSchema.optional(),
   ai: aiConsultationSchema.optional(),
   leadSource: z.enum(["ai_consultant", "manual_form"]).default("manual_form"),
+  /** Hidden honeypot — must stay empty for real visitors. */
+  honeypot: z.string().max(200).optional().default(""),
+  /** Milliseconds between form render and submit (bot heuristic). */
+  elapsedMs: z.number().int().min(0).max(86_400_000).optional().default(0),
 });
 
 export type ConsultationSubmission = z.infer<typeof consultationSubmissionSchema>;
+
