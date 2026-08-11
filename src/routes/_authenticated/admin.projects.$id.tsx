@@ -23,6 +23,8 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/admin/projects";
+import { teamRoleClass } from "@/lib/admin/team";
+import { getTeamMembersFn } from "@/lib/team.functions";
 import {
   applyTemplateFn,
   createTaskFn,
@@ -70,6 +72,12 @@ function ProjectWorkspacePage() {
   const workspace = useQuery({
     queryKey: ["admin", "project", id],
     queryFn: () => fetchWorkspace({ data: { id } }),
+  });
+
+  const fetchTeamMembers = useServerFn(getTeamMembersFn);
+  const teamMembers = useQuery({
+    queryKey: ["admin", "team-members"],
+    queryFn: () => fetchTeamMembers(),
   });
 
   useEffect(() => {
@@ -216,6 +224,24 @@ function ProjectWorkspacePage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {templateMeta(project.template).label} · Fase {project.phase}
           </p>
+          {project.team.length > 0 ? (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+                Tim
+              </span>
+              {project.team.map((name) => {
+                const member = teamMembers.data?.find(
+                  (m) => m.name.toLowerCase() === name.toLowerCase(),
+                );
+                return (
+                  <Chip key={name} className={member ? teamRoleClass(member.role) : undefined}>
+                    {name}
+                    {member ? ` · ${member.role}` : ""}
+                  </Chip>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Chip className="border-primary/30 bg-primary/10 text-primary">{project.status}</Chip>
@@ -284,7 +310,7 @@ function ProjectWorkspacePage() {
                   ))}
                 </select>
               </label>
-              <label className="block">
+              <div className="block sm:col-span-2">
                 <span className="text-xs text-muted-foreground">Tim (pisahkan koma)</span>
                 <input
                   className={cn(inputClass, "mt-1")}
@@ -292,7 +318,50 @@ function ProjectWorkspacePage() {
                   placeholder="Adji, Designer, QA"
                   onChange={(e) => setDraft({ ...draft, team: e.target.value })}
                 />
-              </label>
+                {teamMembers.data && teamMembers.data.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {teamMembers.data.map((member) => {
+                      const names = draft.team
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const assigned = names.some(
+                        (n) => n.toLowerCase() === member.name.toLowerCase(),
+                      );
+                      return (
+                        <button
+                          key={member.id}
+                          type="button"
+                          onClick={() =>
+                            setDraft({
+                              ...draft,
+                              team: (assigned
+                                ? names.filter(
+                                    (n) => n.toLowerCase() !== member.name.toLowerCase(),
+                                  )
+                                : [...names, member.name]
+                              ).join(", "),
+                            })
+                          }
+                          className={cn(
+                            "rounded-full border px-2.5 py-1 text-[0.7rem] transition",
+                            assigned
+                              ? teamRoleClass(member.role)
+                              : "border-border/50 bg-background/30 text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          {member.name} · {member.role}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Link to="/admin/team" className="mt-2 inline-block text-xs text-primary hover:underline">
+                    Tambah anggota tim
+                  </Link>
+                )}
+              </div>
+
               <label className="block">
                 <span className="text-xs text-muted-foreground">Mulai</span>
                 <input

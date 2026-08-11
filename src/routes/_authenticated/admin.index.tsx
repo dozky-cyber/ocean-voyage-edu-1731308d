@@ -2,19 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  AlertTriangle,
   Bot,
   FileText,
   Flame,
+  FolderKanban,
   KanbanSquare,
   MessageCircle,
   Plus,
   Sparkle,
   TrendingUp,
+  UserCheck,
   Users,
+  UsersRound,
 } from "lucide-react";
 
 import { BarRows, Chip, Funnel, MetricTile, SectionCard } from "@/components/admin/ui";
 import { getAdminOverview, getProposalAnalytics } from "@/lib/admin.functions";
+import { getTeamWorkspace } from "@/lib/team.functions";
 import {
   formatDate,
   leadSourceLabel,
@@ -79,6 +84,12 @@ function OverviewPage() {
     queryKey: ["admin", "proposal-analytics"],
     queryFn: () => fetchProposalStats(),
   });
+  const fetchTeam = useServerFn(getTeamWorkspace);
+  const team = useQuery({
+    queryKey: ["admin", "team"],
+    queryFn: () => fetchTeam(),
+  });
+
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat analitik…</p>;
   if (error || !data)
@@ -137,6 +148,42 @@ function OverviewPage() {
           icon={TrendingUp}
         />
       </div>
+
+      <SectionCard
+        title="Team Capacity"
+        description="Kesiapan tim delivery untuk project berjalan."
+        action={
+          <Link to="/admin/team" className="text-xs text-primary hover:underline">
+            Kelola tim
+          </Link>
+        }
+      >
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricTile label="Total Members" value={team.data?.summary.total ?? 0} icon={UsersRound} />
+          <MetricTile
+            label="Active Members"
+            value={team.data?.summary.active ?? 0}
+            hint={`rata-rata ${team.data?.summary.avg_workload ?? 0}% workload`}
+            icon={UserCheck}
+            tone="primary"
+          />
+          <MetricTile
+            label="Projects / Member"
+            value={team.data?.summary.avg_projects ?? 0}
+            hint={`${team.data?.summary.assigned_projects ?? 0} project ter-assign`}
+            icon={FolderKanban}
+          />
+          <MetricTile
+            label="Overloaded"
+            value={team.data?.summary.overloaded ?? 0}
+            hint={`${team.data?.summary.unassigned_projects ?? 0} project tanpa tim`}
+            icon={AlertTriangle}
+            tone={team.data?.summary.overloaded ? "hot" : "default"}
+          />
+        </div>
+      </SectionCard>
+
+
 
       <SectionCard title="Quick Actions" description="Aksi cepat harian.">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
