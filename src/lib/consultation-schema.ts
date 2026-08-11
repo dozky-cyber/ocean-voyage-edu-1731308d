@@ -45,10 +45,29 @@ export const leadTrackingSchema = z.object({
 
 export type LeadTrackingPayload = z.infer<typeof leadTrackingSchema>;
 
+/** AI consultant outcome attached to a submission (best-effort). */
+export const aiConsultationSchema = z.object({
+  businessCategory: z.string().max(120).default(""),
+  problems: z.array(z.string().max(160)).max(20).default([]),
+  requirements: z.array(z.string().max(160)).max(20).default([]),
+  packageName: z.string().max(160).default(""),
+  complexity: z.enum(["Low", "Medium", "High"]).default("Low"),
+  score: z.number().int().min(0).max(100).default(0),
+  qualification: z.enum(["Cold Lead", "Warm Lead", "Hot Lead"]).default("Cold Lead"),
+  summary: z.string().max(4000).default(""),
+  conversation: z
+    .array(z.object({ q: z.string().max(300), a: z.string().max(600) }))
+    .max(20)
+    .default([]),
+});
+
+export type AiConsultationPayload = z.infer<typeof aiConsultationSchema>;
+
 /** Full submission payload: visible form fields + hidden tracking. */
 export const consultationSubmissionSchema = z.object({
   form: consultationFormSchema,
   tracking: leadTrackingSchema.optional(),
+  ai: aiConsultationSchema.optional(),
 });
 
 export type ConsultationSubmission = z.infer<typeof consultationSubmissionSchema>;
