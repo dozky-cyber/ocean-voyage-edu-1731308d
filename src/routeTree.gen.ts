@@ -14,6 +14,7 @@ import { Route as JasaPembuatanWebsiteAplikasiLandingPageRouteImport } from './r
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PortalTokenRouteImport } from './routes/portal.$token'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
@@ -52,6 +53,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalTokenRoute = PortalTokenRouteImport.update({
+  id: '/portal/$token',
+  path: '/portal/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/portal/$token': typeof PortalTokenRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/portal/$token': typeof PortalTokenRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/portal/$token': typeof PortalTokenRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/admin'
+    | '/portal/$token'
     | '/admin/analytics'
     | '/admin/pipeline'
     | '/admin/settings'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
+    | '/portal/$token'
     | '/admin/analytics'
     | '/admin/pipeline'
     | '/admin/settings'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/portal/$token'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/settings'
@@ -266,6 +278,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   JasaPembuatanWebsiteAplikasiLandingPageRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  PortalTokenRoute: typeof PortalTokenRoute
   ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
 }
 
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal/$token': {
+      id: '/portal/$token'
+      path: '/portal/$token'
+      fullPath: '/portal/$token'
+      preLoaderRoute: typeof PortalTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -458,6 +478,7 @@ const rootRouteChildren: RootRouteChildren = {
   JasaPembuatanWebsiteAplikasiLandingPageRoute:
     JasaPembuatanWebsiteAplikasiLandingPageRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  PortalTokenRoute: PortalTokenRoute,
   ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
 }
 export const routeTree = rootRouteImport
