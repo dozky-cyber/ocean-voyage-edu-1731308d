@@ -92,3 +92,49 @@ export const sendClientPortalMessage = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/** Client-side milestone approval from the portal (token-scoped). */
+export const approvePortalMilestone = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    tokenSchema
+      .extend({ projectId: z.string().uuid(), index: z.number().int().min(0).max(60) })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: client } = await supabaseAdmin
+      .from("clients")
+      .select("id, name")
+      .eq("portal_token", data.token)
+      .maybeSingle();
+    if (!client) throw new Error("Portal tidak ditemukan.");
+
+    const { data: project } = await supabaseAdmin
+      .from("client_projects")
+      .select("id, name, timeline")
+      .eq("id", data.projectId)
+      .eq("client_id", client.id)
+      .maybeSingle();
+    if (!project) throw new Error("Project tidak ditemukan.");
+
+    const timeline = parseTimeline(project.timeline);
+    const step = timeline[data.index];
+    if (!step) throw new Error("Milestone tidak ditemukan.");
+    timeline[data.index] = { ...step, approved: true };
+
+    const { error } = await supabaseAdmin
+      .from("client_projects")
+      .update({ timeline })
+      .eq("id", project.id);
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin.from("project_activities").insert({
+      project_id: project.id,
+      actor: client.name,
+      action: "Milestone disetujui klien",
+      detail: step.title,
+    });
+
+    return { ok: true as const, title: step.title };
+  });
