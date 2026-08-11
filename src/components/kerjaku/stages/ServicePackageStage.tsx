@@ -8,12 +8,14 @@ import {
   CarouselPrevious,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Reveal } from "../Reveal";
 
 export function ServicePackageStage() {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [trackHeight, setTrackHeight] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!api) return;
@@ -24,6 +26,26 @@ export function ServicePackageStage() {
       api.off("select", onSelect);
     };
   }, [api]);
+
+  // Track the active slide's own height so the carousel never reserves
+  // space for the tallest package.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const slide = track.children[current] as HTMLElement | undefined;
+    if (!slide) return;
+
+    const measure = () => setTrackHeight(slide.getBoundingClientRect().height);
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(slide);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [current]);
 
   return (
     <section id="paket-layanan" className="relative px-5 py-20 sm:px-8">
@@ -45,7 +67,12 @@ export function ServicePackageStage() {
           opts={{ align: "start", loop: false, dragFree: false, containScroll: "trimSnaps" }}
           className="mt-10"
         >
-          <CarouselContent className="-ml-5 items-start">
+          <CarouselContent
+            ref={trackRef}
+            className="-ml-5 items-start transition-[height] duration-500 ease-out"
+            style={trackHeight ? { height: trackHeight } : undefined}
+          >
+
             {servicePackages.packages.map((pkg, i) => (
               <CarouselItem key={pkg.title} className="pl-5 basis-full lg:basis-4/5">
             <Reveal delay={0.08 * i}>
