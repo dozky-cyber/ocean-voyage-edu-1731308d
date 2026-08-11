@@ -33,6 +33,7 @@ export function RequirementPreviewPanel({ conversationId }: Props) {
   const [featuresText, setFeaturesText] = useState("");
   const [changeNote, setChangeNote] = useState("");
   const [notify, setNotify] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
 
   const versions = useQuery({
     queryKey: ["requirement-versions", conversationId],
