@@ -467,3 +467,178 @@ export async function buildProjectAnalytics(supabase: Client): Promise<ProjectAn
     byStatus: [...byStatus.entries()].map(([label, value]) => ({ label, value })),
   };
 }
+
+/* ------------------------------ Operations -------------------------------- */
+
+export async function setProjectStage(
+  supabase: Client,
+  input: { id: string; stage: DeliveryStage },
+  userId: string | null,
+  actor?: string,
+) {
+  const { error } = await supabase
+    .from("client_projects")
+    .update({ stage: input.stage })
+    .eq("id", input.id);
+  if (error) throw new Error(error.message);
+  await logProjectActivity(
+    supabase,
+    { projectId: input.id, action: "Stage project diubah", detail: input.stage, actor },
+    userId,
+  );
+  return { ok: true as const };
+}
+
+export async function addTaskComment(
+  supabase: Client,
+  input: { taskId: string; body: string },
+  userId: string,
+  actor: string,
+) {
+  const { data: task, error: taskError } = await supabase
+    .from("project_tasks")
+    .select("id, project_id, title")
+    .eq("id", input.taskId)
+    .maybeSingle();
+  if (taskError) throw new Error(taskError.message);
+  if (!task) throw new Error("Task tidak ditemukan.");
+
+  const { data, error } = await supabase
+    .from("task_comments")
+    .insert({
+      task_id: task.id,
+      project_id: task.project_id,
+      body: input.body,
+      author_name: actor,
+      created_by: userId,
+    })
+    .select("id, task_id, author_name, body, created_at")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await logProjectActivity(
+    supabase,
+    {
+      projectId: task.project_id,
+      action: "Komentar task",
+      detail: `${task.title}: ${input.body.slice(0, 120)}`,
+      actor,
+    },
+    userId,
+  );
+  return data;
+}
+
+export async function deleteTaskComment(supabase: Client, id: string) {
+  const { error } = await supabase.from("task_comments").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}
+
+export type OpsTaskItem = {
+  id: string;
+  title: string;
+  status: string;
+  priority: string;
+  assignee: string | null;
+  due_date: string | null;
+  project_id: string;
+  project_name: string;
+  client_name: string;
+  overdue: boolean;
+};
+
+export type OpsToday = {
+  today: OpsTaskItem[];
+  overdue: OpsTaskItem[];
+  upcoming: OpsTaskItem[];
+  deadlines: { id: string; name: string; client: string; target_date: string; days: number }[];
+  counts: { today: number; overdue: number; upcoming: number; unassigned: number };
+  health: { on_track: number; at_risk: number; delayed: number };
+  workload: { label: string; value: number }[];
+};
+
+/** Daily execution feed: what is due today, what slipped, what is next. */
+export async function fetchOpsToday(supabase: Client): Promise<OpsToday> {
+  const board = await fetchProjectBoard(supabase);
+  const projectById = new Map(board.map((p) => [p.id, p]));
+  const { data: tasks, error } = await supabase
+    .from("project_tasks")
+    .select("id, project_id, title, status, priority, assignee, due_date")
+    .neq("status", "Completed")
+    .limit(500);
+  if (error) throw new Error(error.message);
+
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const iso = (d: Date) => d.toISOString().slice(0, 10);
+  const todayKey = iso(now);
+  const weekEnd = new Date(now.getTime() + 7 * 86_400_000);
+
+  const today: OpsTaskItem[] = [];
+  const overdue: OpsTaskItem[] = [];
+  const upcoming: OpsTaskItem[] = [];
+  const workloadMap = new Map<string, number>();
+  let unassigned = 0;
+
+  for (const task of tasks ?? []) {
+    const project = projectById.get(task.project_id);
+    const item: OpsTaskItem = {
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      priority: task.priority,
+      assignee: task.assignee,
+      due_date: task.due_date,
+      project_id: task.project_id,
+      project_name: project?.name ?? "Project",
+      client_name: project?.client_name ?? "Klien KERJAKU",
+      overdue: isOverdue(task.due_date, task.status),
+    };
+    const key = task.assignee?.trim() || "Belum ditugaskan";
+    if (!task.assignee?.trim()) unassigned += 1;
+    workloadMap.set(key, (workloadMap.get(key) ?? 0) + 1);
+
+    if (!task.due_date) continue;
+    if (item.overdue) overdue.push(item);
+    else if (task.due_date === todayKey) today.push(item);
+    else if (task.due_date <= iso(weekEnd)) upcoming.push(item);
+  }
+
+  const deadlines = board
+    .filter((p) => p.stage !== "Completed" && p.target_date)
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      client: p.client_name,
+      target_date: p.target_date!,
+      days: Math.round(
+        (new Date(`${p.target_date}T00:00:00`).getTime() - now.getTime()) / 86_400_000,
+      ),
+    }))
+    .filter((d) => d.days <= 21)
+    .sort((a, b) => a.days - b.days)
+    .slice(0, 6);
+
+  return {
+    today: today.sort((a, b) => a.project_name.localeCompare(b.project_name)),
+    overdue: overdue.sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? "")),
+    upcoming: upcoming.sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? "")).slice(0, 8),
+    deadlines,
+    counts: {
+      today: today.length,
+      overdue: overdue.length,
+      upcoming: upcoming.length,
+      unassigned,
+    },
+    health: {
+      on_track: board.filter((p) => p.health === "On Track").length,
+      at_risk: board.filter((p) => p.health === "At Risk").length,
+      delayed: board.filter((p) => p.health === "Delayed").length,
+    },
+    workload: [...workloadMap.entries()]
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8),
+  };
+}
