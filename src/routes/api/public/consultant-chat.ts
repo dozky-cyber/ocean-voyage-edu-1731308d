@@ -9,8 +9,6 @@ import {
   scoreConversation,
   type ConversationTurn,
 } from "@/lib/ai-conversation.server";
-import { formatRequirementTelegram } from "@/lib/requirements.server";
-import { sendTelegramMessage } from "@/lib/telegram.server";
 
 type Body = { messages?: unknown; sessionId?: unknown };
 
