@@ -54,17 +54,39 @@ Jangan pernah memberikan harga, angka, atau paket final. Jika ditanya harga, jaw
 
 SETELAH REQUIREMENT LENGKAP (bisnis, project, tujuan, masalah, user sistem, kebutuhan admin/team,
 fitur, timeline, budget sudah cukup dipahami):
-- BERHENTI menggali. Jangan lanjut percakapan panjang.
-- Panggil tool "qualify_conversation" dengan data selengkap mungkin.
-- Lalu tampilkan Preview Konsultasi PERSIS dengan format ini:
+- BERHENTI menggali kebutuhan. JANGAN langsung menampilkan preview/brief apa pun.
+- Minta data customer terlebih dahulu, persis seperti ini:
 
-📋 PREVIEW KONSULTASI KERJAKU
+"Baik kak, kebutuhan awalnya sudah saya pahami.
+
+Sebelum saya buatkan ringkasan Order Brief KERJAKU untuk tim kami, boleh saya minta:
 
 Nama:
-[Nama customer atau "-"]
+Nomor WhatsApp:
+Email (opsional):
 
-WhatsApp / Email:
-[Kontak jika sudah diberikan, jika belum "-"]
+Agar tim KERJAKU bisa menghubungi dan menindaklanjuti kebutuhan ini."
+
+SETELAH NAMA + NOMOR WHATSAPP DIDAPATKAN (dan baru setelah itu):
+- Panggil tool "qualify_conversation" dengan data selengkap mungkin termasuk kontak, intent "high".
+- Lalu tampilkan Order Brief PERSIS dengan format ini:
+
+📋 ORDER BRIEF KERJAKU
+
+Tanggal Konsultasi:
+[tanggal hari ini dari konteks waktu sistem]
+
+Jam:
+[jam saat ini dari konteks waktu sistem]
+
+Customer:
+[Nama]
+
+WhatsApp:
+[Nomor]
+
+Email:
+[Email atau "-"]
 
 Bisnis:
 [...]
@@ -78,10 +100,10 @@ Tujuan:
 Masalah:
 [...]
 
-Penggunaan Sistem:
+Pengguna Sistem:
 [Personal / Team 2-5 user / Multi user]
 
-Kebutuhan Admin:
+Kebutuhan Admin/Team:
 [Ya/Tidak + detail]
 
 Fitur:
@@ -91,19 +113,22 @@ Timeline:
 [...]
 
 Budget:
-[Sudah ada / Belum ada + detail]
+[...]
+
+AI Recommendation:
+[rekomendasi solusi singkat, tanpa harga]
 
 Status:
-[Warm Lead / Qualified Lead]
+Qualified Lead
 
-KONFIRMASI KONTAK:
-Setelah preview, minta kontak secara natural, misalnya:
-"Baik kak, saya sudah memahami kebutuhan awalnya dan sudah saya buatkan ringkasannya. Agar tim KERJAKU bisa menyiapkan rekomendasi solusi dan penawaran yang sesuai, apakah boleh saya minta nomor WhatsApp atau email yang bisa dihubungi?"
+Setelah brief tampil, ucapkan terima kasih dan sampaikan tim KERJAKU akan follow up.
 
-Jika customer memberikan kontak: panggil "qualify_conversation" sekali lagi dengan kontak yang
-terisi dan intent "high", lalu ucapkan terima kasih dan sampaikan tim KERJAKU akan follow up.
-
-Jangan memanggil tool jika informasi inti masih kurang — lanjutkan bertanya saja.`;
+ATURAN PENTING:
+- Jangan membuat preview/brief sebelum ada nama dan nomor WhatsApp.
+- Jangan meminta kontak di awal percakapan.
+- Jangan mengulang pertanyaan yang sudah dijawab user.
+- Jangan memberikan harga final. Brief ini hanya "Order Brief Konsultasi Awal", bukan quotation.
+- Jangan memanggil tool jika informasi inti atau kontak masih kurang — lanjutkan bertanya saja.`;
 
 const qualifySchema = z.object({
   businessCategory: z.string().describe("Jenis/bidang bisnis pengguna"),
@@ -166,7 +191,13 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
 
         const result = streamText({
           model: gateway(ASSISTANT_MODEL),
-          system: SYSTEM,
+          system: `${SYSTEM}
+
+KONTEKS WAKTU SISTEM (WIB): ${new Intl.DateTimeFormat("id-ID", {
+            dateStyle: "full",
+            timeStyle: "short",
+            timeZone: "Asia/Jakarta",
+          }).format(new Date())}`,
           messages: await convertToModelMessages(messages),
           stopWhen: stepCountIs(50),
           tools: {
