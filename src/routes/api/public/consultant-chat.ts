@@ -119,7 +119,27 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
                 const score = scoreConversation(input);
                 const outcome = await qualifyConversation(sessionId, input, turns);
                 if (outcome.ok && outcome.isNew) {
-                  void sendTelegramMessage(formatQualifiedTelegram(input, score));
+                  void sendTelegramMessage(
+                    formatRequirementTelegram(
+                      {
+                        business: input.businessCategory,
+                        project: outcome.project,
+                        features: input.features,
+                        problems: input.problems,
+                        packageName: input.packageName,
+                        timeline: input.timeline,
+                        budget: input.budget,
+                        usersScale: input.users,
+                        intent: input.intent,
+                        score,
+                        contactName: input.contactName || null,
+                        contactEmail: input.contactEmail || null,
+                        contactWhatsapp: input.contactWhatsapp || null,
+                        summary: input.summary,
+                      },
+                      outcome.requirementVersion ?? 1,
+                    ),
+                  );
                 }
                 return { ...input, score };
               },
