@@ -47,6 +47,8 @@ function ProposalDetailPage() {
   const setStatus = useServerFn(setProposalStatusFn);
   const duplicate = useServerFn(duplicateProposalFn);
   const remove = useServerFn(deleteProposalFn);
+  const createInvoice = useServerFn(generateInvoice);
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "proposal", id],
