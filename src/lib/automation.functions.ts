@@ -8,6 +8,15 @@ const TASK_COLUMNS =
 const LOG_COLUMNS =
   "id, rule_key, category, event, status, title, detail, entity_type, entity_id, created_at";
 
+function toNumberConfig(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === "number" && Number.isFinite(v)) out[k] = v;
+  }
+  return out;
+}
+
 export const getAutomationCenter = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -39,7 +48,7 @@ export const getAutomationCenter = createServerFn({ method: "GET" })
       role,
       rules: (rules.data ?? []).map((r) => ({
         ...r,
-        config: (r.config ?? {}) as Record<string, unknown>,
+        config: toNumberConfig(r.config),
       })),
       tasks: tasks.data ?? [],
       logs: logs.data ?? [],
