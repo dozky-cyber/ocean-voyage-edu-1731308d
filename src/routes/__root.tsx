@@ -130,10 +130,12 @@ function RootComponent() {
 
   useEffect(() => {
     initAnalytics();
+    initLeadJourney(window.location.pathname);
     return router.subscribe("onResolved", ({ toLocation }) => {
       trackPageView(toLocation.pathname);
     });
   }, [router]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
