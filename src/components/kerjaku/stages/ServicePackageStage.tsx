@@ -74,7 +74,7 @@ export function ServicePackageStage() {
           >
 
             {servicePackages.packages.map((pkg, i) => (
-              <CarouselItem key={pkg.title} className="pl-5 basis-full lg:basis-4/5">
+              <CarouselItem key={pkg.title} className="pl-5 basis-[88%] sm:basis-[86%] lg:basis-4/5">
             <Reveal delay={0.08 * i}>
               <article
                 className="relative overflow-hidden rounded-[1.75rem] glass-panel p-6 sm:p-8"
@@ -176,7 +176,11 @@ export function ServicePackageStage() {
           <CarouselNext className="hidden sm:flex -right-3 border-primary/30 bg-background/40 text-primary hover:bg-primary/10" />
         </Carousel>
 
-        <div className="mt-6 flex justify-center gap-2">
+        <p className="mt-6 text-center text-xs text-muted-foreground/80">
+          Geser untuk explore paket lainnya
+        </p>
+
+        <div className="mt-4 flex justify-center gap-2">
           {servicePackages.packages.map((pkg, i) => (
             <button
               key={pkg.title}
