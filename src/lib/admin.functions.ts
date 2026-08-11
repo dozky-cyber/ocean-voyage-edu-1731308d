@@ -3,25 +3,98 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PIPELINE_STAGES } from "@/lib/admin/pipeline";
+import { WORKSPACE_ROLES, canManageBusiness, canWorkLeads } from "@/lib/admin/roles";
 import { PROPOSAL_STATUSES } from "@/lib/admin/sales-ai";
 
-/** Whether the signed-in user is an admin (used to gate the workspace UI). */
+/** Role + capabilities of the signed-in user (used to gate the workspace UI). */
 export const getAdminAccess = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    return { isAdmin: Boolean(data), userId: context.userId };
+    const { fetchUserRole } = await import("./admin.server");
+    const role = await fetchUserRole(context.supabase, context.userId);
+    return {
+      role,
+      hasAccess: role !== null,
+      canManage: canManageBusiness(role),
+      canWorkLeads: canWorkLeads(role),
+      /** Back-compat flag for existing UI checks. */
+      isAdmin: role !== null,
+      userId: context.userId,
+    };
   });
+
+/**
+ * Whitelist-based access provisioning. Runs after sign-in: if the signed-in
+ * account has a verified email present on the approved team list, the matching
+ * role is granted. No email on the list means no workspace access at all.
+ */
+export const provisionWorkspaceAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: userResult } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    const user = userResult?.user;
+    const email = user?.email?.toLowerCase();
+    if (!email || !user?.email_confirmed_at) return { granted: false as const, role: null };
+
+    const { data: member } = await supabaseAdmin
+      .from("workspace_members")
+      .select("role")
+      .eq("email", email)
+      .maybeSingle();
+    if (!member) return { granted: false as const, role: null };
+
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert(
+        { user_id: context.userId, role: member.role },
+        { onConflict: "user_id,role", ignoreDuplicates: true },
+      );
+
+    return { granted: true as const, role: member.role };
+  });
+
+/* ------------------------------ Team management --------------------------- */
+
+export const getWorkspaceMembers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { assertManage, fetchWorkspaceMembers } = await import("./admin.server");
+    await assertManage(context.supabase, context.userId);
+    return fetchWorkspaceMembers(context.supabase);
+  });
+
+export const upsertWorkspaceMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({ email: z.string().email().max(200), role: z.enum(WORKSPACE_ROLES) })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertManage, addWorkspaceMember } = await import("./admin.server");
+    await assertManage(context.supabase, context.userId);
+    return addWorkspaceMember(context.supabase, { ...data, invitedBy: context.userId });
+  });
+
+export const deleteWorkspaceMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertManage, removeWorkspaceMember } = await import("./admin.server");
+    await assertManage(context.supabase, context.userId);
+    return removeWorkspaceMember(context.supabase, data.id);
+  });
+
+/* --------------------------------- Business -------------------------------- */
 
 /** Business analytics overview built from the existing consultations table. */
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, fetchLeads, buildOverview } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, fetchLeads, buildOverview } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return buildOverview(await fetchLeads(context.supabase));
   });
 
@@ -29,8 +102,8 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 export const getAdminLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, fetchLeads } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, fetchLeads } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return fetchLeads(context.supabase);
   });
 
@@ -39,8 +112,8 @@ export const getAdminLead = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, fetchLead } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, fetchLead } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return fetchLead(context.supabase, data.id);
   });
 
@@ -50,8 +123,8 @@ export const updateLeadStage = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), stage: z.enum(PIPELINE_STAGES) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { assertAdmin, setLeadStage } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertLeadWork, setLeadStage } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
     return setLeadStage(context.supabase, data.id, data.stage);
   });
 
@@ -61,18 +134,9 @@ export const updateLeadNotes = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), notes: z.string().max(4000) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { assertAdmin, setLeadNotes } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertLeadWork, setLeadNotes } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
     return setLeadNotes(context.supabase, data.id, data.notes);
-  });
-
-/** One-time owner bootstrap: first signed-in account claims the admin role. */
-export const claimFirstAdmin = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { data, error } = await context.supabase.rpc("claim_first_admin");
-    if (error) return { claimed: false as const };
-    return { claimed: Boolean(data) };
   });
 
 /* --------------------------- Proposal generator --------------------------- */
@@ -81,16 +145,16 @@ export const getLeadProposals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ leadId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, fetchProposals } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, fetchProposals } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return fetchProposals(context.supabase, data.leadId);
   });
 
 export const getProposals = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, fetchProposals } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, fetchProposals } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return fetchProposals(context.supabase);
   });
 
@@ -98,8 +162,8 @@ export const getProposal = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, fetchProposal } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, fetchProposal } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return fetchProposal(context.supabase, data.id);
   });
 
@@ -107,8 +171,8 @@ export const generateProposal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ leadId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, createProposalForLead } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertLeadWork, createProposalForLead } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
     return createProposalForLead(context.supabase, data.leadId, context.userId);
   });
 
@@ -116,8 +180,8 @@ export const duplicateProposalFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, duplicateProposal } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertLeadWork, duplicateProposal } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
     return duplicateProposal(context.supabase, data.id, context.userId);
   });
 
@@ -136,8 +200,8 @@ export const saveProposalFn = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { assertAdmin, saveProposal } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertLeadWork, saveProposal } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
     return saveProposal(context.supabase, data);
   });
 
@@ -147,8 +211,8 @@ export const setProposalStatusFn = createServerFn({ method: "POST" })
     z.object({ id: z.string().uuid(), status: z.enum(PROPOSAL_STATUSES) }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { assertAdmin, setProposalStatus } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertLeadWork, setProposalStatus } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
     return setProposalStatus(context.supabase, data.id, data.status);
   });
 
@@ -156,15 +220,15 @@ export const deleteProposalFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { assertAdmin, deleteProposal } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertManage, deleteProposal } = await import("./admin.server");
+    await assertManage(context.supabase, context.userId);
     return deleteProposal(context.supabase, data.id);
   });
 
 export const getProposalAnalytics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { assertAdmin, buildProposalAnalytics } = await import("./admin.server");
-    await assertAdmin(context.supabase, context.userId);
+    const { assertWorkspace, buildProposalAnalytics } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
     return buildProposalAnalytics(context.supabase);
   });
