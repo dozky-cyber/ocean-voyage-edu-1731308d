@@ -245,6 +245,23 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
             <p className="rounded-2xl border border-border bg-card/60 p-4 text-sm leading-relaxed text-muted-foreground">
               {aiConsultantSection.intro}
             </p>
+            <div className="rounded-2xl border border-primary/30 bg-primary/[0.06] p-4">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-primary/90">
+                {aiConsultantSection.disclosureTitle}
+              </p>
+              <ul className="mt-3 space-y-2">
+                {aiConsultantSection.disclosurePoints.map((point) => (
+                  <li key={point} className="flex gap-2.5 text-sm leading-relaxed text-muted-foreground">
+                    <Sparkle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.5} />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground/80">
+                {aiConsultantSection.disclosureFooter}
+              </p>
+            </div>
+
             <OceanButton className="w-full sm:w-auto" onClick={start}>
               {aiConsultantSection.cta}
             </OceanButton>
