@@ -21,5 +21,7 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /auth
 
 Sitemap: https://kerjaku.space/sitemap.xml
