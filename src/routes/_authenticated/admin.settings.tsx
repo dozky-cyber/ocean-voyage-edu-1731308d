@@ -1,10 +1,26 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Trash2, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { SectionCard } from "@/components/admin/ui";
+import { Chip, SectionCard } from "@/components/admin/ui";
 import { supabase } from "@/integrations/supabase/client";
-import { getAdminAccess } from "@/lib/admin.functions";
+import {
+  deleteWorkspaceMember,
+  getAdminAccess,
+  getWorkspaceMembers,
+  upsertWorkspaceMember,
+} from "@/lib/admin.functions";
+import {
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+  WORKSPACE_ROLES,
+  isWorkspaceRole,
+  roleBadgeClass,
+  type WorkspaceRole,
+} from "@/lib/admin/roles";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsPage,
@@ -14,9 +30,41 @@ function SettingsPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const access = useServerFn(getAdminAccess);
-  const { data } = useQuery({
-    queryKey: ["admin", "access"],
-    queryFn: () => access(),
+  const listMembers = useServerFn(getWorkspaceMembers);
+  const saveMember = useServerFn(upsertWorkspaceMember);
+  const removeMember = useServerFn(deleteWorkspaceMember);
+
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<WorkspaceRole>("sales");
+
+  const { data } = useQuery({ queryKey: ["admin", "access"], queryFn: () => access() });
+  const canManage = Boolean(data?.canManage);
+
+  const members = useQuery({
+    queryKey: ["admin", "members"],
+    queryFn: () => listMembers(),
+    enabled: canManage,
+  });
+
+  const addMutation = useMutation({
+    mutationFn: () => saveMember({ data: { email, role } }),
+    onSuccess: () => {
+      toast.success("Akses tim diperbarui.");
+      setEmail("");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Gagal menyimpan anggota."),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (id: string) => removeMember({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Anggota dihapus dari whitelist.");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "members"] });
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus anggota."),
   });
 
   async function signOut() {
@@ -26,20 +74,26 @@ function SettingsPage() {
     navigate({ to: "/auth", replace: true });
   }
 
+  const currentRole = isWorkspaceRole(data?.role) ? data.role : null;
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Akun dan preferensi workspace.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Akun, akses tim, dan sesi workspace.</p>
       </div>
 
-      <SectionCard title="Akun" description="Sesi admin yang sedang aktif.">
+      <SectionCard title="Akun" description="Sesi yang sedang aktif.">
         <dl className="grid gap-3 sm:grid-cols-2">
           <div>
             <dt className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
               Role
             </dt>
-            <dd className="mt-1 text-sm">{data?.isAdmin ? "Admin" : "—"}</dd>
+            <dd className="mt-1 text-sm">
+              <Chip className={roleBadgeClass(currentRole)}>
+                {currentRole ? ROLE_LABELS[currentRole] : "—"}
+              </Chip>
+            </dd>
           </div>
           <div className="min-w-0">
             <dt className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
@@ -50,11 +104,102 @@ function SettingsPage() {
         </dl>
       </SectionCard>
 
+      {canManage ? (
+        <SectionCard
+          title="Admin Whitelist"
+          description="Hanya email pada daftar ini yang bisa mendapat akses /admin. Pendaftaran publik dinonaktifkan."
+        >
+          <form
+            className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_10rem_auto]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              addMutation.mutate();
+            }}
+          >
+            <input
+              type="email"
+              required
+              value={email}
+              placeholder="nama@kerjaku.space"
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none transition focus:border-primary/60"
+            />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as WorkspaceRole)}
+              className="w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none transition focus:border-primary/60"
+            >
+              {WORKSPACE_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABELS[r]}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              disabled={addMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            >
+              <UserPlus className="h-4 w-4" /> Tambah
+            </button>
+          </form>
+
+          <p className="mt-2 text-xs text-muted-foreground">{ROLE_DESCRIPTIONS[role]}</p>
+
+          <div className="mt-4 -mx-2 overflow-x-auto">
+            <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
+              <thead>
+                <tr className="text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+                  <th className="px-2 py-2 font-medium">Email</th>
+                  <th className="px-2 py-2 font-medium">Role</th>
+                  <th className="px-2 py-2 text-right font-medium">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(members.data ?? []).map((member) => (
+                  <tr key={member.id} className="border-t border-border/30">
+                    <td className="max-w-[16rem] truncate px-2 py-2.5">{member.email}</td>
+                    <td className="px-2 py-2.5">
+                      <Chip
+                        className={roleBadgeClass(
+                          isWorkspaceRole(member.role) ? member.role : null,
+                        )}
+                      >
+                        {isWorkspaceRole(member.role) ? ROLE_LABELS[member.role] : member.role}
+                      </Chip>
+                    </td>
+                    <td className="px-2 py-2.5 text-right">
+                      <button
+                        type="button"
+                        onClick={() => removeMutation.mutate(member.id)}
+                        className="inline-flex items-center gap-1 rounded-lg border border-border/50 px-2 py-1 text-xs text-muted-foreground transition hover:border-destructive/40 hover:text-destructive"
+                      >
+                        <Trash2 className="h-3 w-3" /> Hapus
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {members.data && members.data.length === 0 ? (
+            <p className="mt-3 text-xs text-muted-foreground">Belum ada anggota.</p>
+          ) : null}
+        </SectionCard>
+      ) : (
+        <SectionCard title="Admin Whitelist" description="Hanya Owner/Admin yang bisa mengelola tim.">
+          <p className="text-xs text-muted-foreground">
+            Role kamu ({currentRole ? ROLE_LABELS[currentRole] : "—"}) tidak memiliki izin mengubah
+            daftar akses.
+          </p>
+        </SectionCard>
+      )}
+
       <SectionCard title="Sesi" description="Keluar dari Business OS pada perangkat ini.">
         <button
           type="button"
           onClick={signOut}
-          className="rounded-xl border border-border/60 px-4 py-2 text-sm text-muted-foreground transition hover:text-foreground"
+          className="rounded-xl border border-border/60 px-4 py-2 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
         >
           Logout
         </button>
