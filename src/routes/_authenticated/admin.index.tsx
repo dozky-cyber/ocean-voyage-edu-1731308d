@@ -138,6 +138,42 @@ function OverviewPage() {
         />
       </div>
 
+      <SectionCard
+        title="Team Capacity"
+        description="Kesiapan tim delivery untuk project berjalan."
+        action={
+          <Link to="/admin/team" className="text-xs text-primary hover:underline">
+            Kelola tim
+          </Link>
+        }
+      >
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricTile label="Total Members" value={team.data?.summary.total ?? 0} icon={UsersRound} />
+          <MetricTile
+            label="Active Members"
+            value={team.data?.summary.active ?? 0}
+            hint={`rata-rata ${team.data?.summary.avg_workload ?? 0}% workload`}
+            icon={UserCheck}
+            tone="primary"
+          />
+          <MetricTile
+            label="Projects / Member"
+            value={team.data?.summary.avg_projects ?? 0}
+            hint={`${team.data?.summary.assigned_projects ?? 0} project ter-assign`}
+            icon={FolderKanban}
+          />
+          <MetricTile
+            label="Overloaded"
+            value={team.data?.summary.overloaded ?? 0}
+            hint={`${team.data?.summary.unassigned_projects ?? 0} project tanpa tim`}
+            icon={AlertTriangle}
+            tone={team.data?.summary.overloaded ? "hot" : "default"}
+          />
+        </div>
+      </SectionCard>
+
+
+
       <SectionCard title="Quick Actions" description="Aksi cepat harian.">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
           {QUICK_ACTIONS.map((action) => (
