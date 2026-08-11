@@ -92,6 +92,23 @@ export const analytics = {
     trackEvent("ai_conversation_complete", params);
     trackJourneyStep(`ai:complete:${params.recommended_package}`);
   },
+  aiPreviewView: (params: { recommended_package: string; ai_score: number }) => {
+    trackEvent("ai_preview_view", params);
+    trackJourneyStep(`ai:preview:${params.recommended_package}`);
+  },
+  aiContactSubmit: (params: { recommended_package: string; ai_score: number }) => {
+    trackEvent("ai_contact_submit", params);
+    trackJourneyStep("ai:contact_submit");
+  },
+  aiConsultationConversion: (params: {
+    recommended_package: string;
+    ai_score: number;
+    qualification: string;
+  }) => {
+    trackEvent("ai_consultation_conversion", params);
+    scoreAction("submit_consultation_form");
+    trackJourneyStep("ai:conversion");
+  },
   aiToConsultation: (recommendedPackage: string) => {
     trackEvent("ai_to_consultation_click", { recommended_package: recommendedPackage });
     trackJourneyStep(`ai:to_consultation:${recommendedPackage}`);
