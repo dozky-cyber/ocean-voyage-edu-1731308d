@@ -28,6 +28,14 @@ export type LeadDashboard = {
   sourcePerformance: { source: string; campaign: string; leads: number; avgScore: number }[];
   monthlyTrend: { month: string; leads: number; avgScore: number }[];
   averageVisitDurationSeconds: number;
+  ai: {
+    leadsWithAiConsultation: number;
+    aiToConsultationRate: number;
+    averageAiScore: number;
+    packageFrequency: { package: string; count: number }[];
+    businessCategories: { category: string; count: number }[];
+    qualification: { cold: number; warm: number; hot: number };
+  };
 };
 
 type ConsultationRow = {
@@ -40,6 +48,10 @@ type ConsultationRow = {
   clicked_ctas: unknown;
   visit_duration_seconds: number | null;
   created_at: string;
+  ai_recommended_package: string | null;
+  ai_business_category: string | null;
+  ai_lead_score: number | null;
+  ai_qualification_status: string | null;
 };
 
 function asStrings(value: unknown): string[] {
@@ -62,7 +74,7 @@ export async function getLeadDashboard(totalVisitors = 0): Promise<LeadDashboard
   const { data, error } = await supabaseAdmin
     .from("consultations")
     .select(
-      "status, lead_score, lead_temperature, visitor_source, utm_campaign, viewed_products, clicked_ctas, visit_duration_seconds, created_at",
+      "status, lead_score, lead_temperature, visitor_source, utm_campaign, viewed_products, clicked_ctas, visit_duration_seconds, created_at, ai_recommended_package, ai_business_category, ai_lead_score, ai_qualification_status",
     )
     .order("created_at", { ascending: false })
     .limit(2000);
@@ -80,6 +92,11 @@ export async function getLeadDashboard(totalVisitors = 0): Promise<LeadDashboard
   const sources = new Map<string, { leads: number; score: number; campaign: string }>();
   const months = new Map<string, { leads: number; score: number }>();
   let durationTotal = 0;
+  const aiPackages = new Map<string, number>();
+  const aiCategories = new Map<string, number>();
+  const aiQualification = { cold: 0, warm: 0, hot: 0 };
+  let aiLeads = 0;
+  let aiScoreTotal = 0;
 
   for (const row of rows) {
     const status = (LEAD_STATUSES as string[]).includes(row.status ?? "")
@@ -111,6 +128,24 @@ export async function getLeadDashboard(totalVisitors = 0): Promise<LeadDashboard
     months.set(month, bucket);
 
     durationTotal += row.visit_duration_seconds ?? 0;
+
+    if (row.ai_recommended_package) {
+      aiLeads += 1;
+      aiScoreTotal += row.ai_lead_score ?? 0;
+      aiPackages.set(
+        row.ai_recommended_package,
+        (aiPackages.get(row.ai_recommended_package) ?? 0) + 1,
+      );
+      if (row.ai_business_category) {
+        aiCategories.set(
+          row.ai_business_category,
+          (aiCategories.get(row.ai_business_category) ?? 0) + 1,
+        );
+      }
+      if (row.ai_qualification_status === "Hot Lead") aiQualification.hot += 1;
+      else if (row.ai_qualification_status === "Warm Lead") aiQualification.warm += 1;
+      else aiQualification.cold += 1;
+    }
   }
 
   const topProduct = topOf(products);
@@ -142,5 +177,19 @@ export async function getLeadDashboard(totalVisitors = 0): Promise<LeadDashboard
     averageVisitDurationSeconds: rows.length
       ? Math.round(durationTotal / rows.length)
       : 0,
+    ai: {
+      leadsWithAiConsultation: aiLeads,
+      aiToConsultationRate: rows.length
+        ? Number(((aiLeads / rows.length) * 100).toFixed(2))
+        : 0,
+      averageAiScore: aiLeads ? Number((aiScoreTotal / aiLeads).toFixed(1)) : 0,
+      packageFrequency: [...aiPackages.entries()]
+        .map(([pkg, count]) => ({ package: pkg, count }))
+        .sort((a, b) => b.count - a.count),
+      businessCategories: [...aiCategories.entries()]
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count),
+      qualification: aiQualification,
+    },
   };
 }
