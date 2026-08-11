@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { Trash2, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Chip, SectionCard } from "@/components/admin/ui";
@@ -21,6 +21,63 @@ import {
   roleBadgeClass,
   type WorkspaceRole,
 } from "@/lib/admin/roles";
+import {
+  AI_TONES,
+  loadWorkspaceSettings,
+  saveWorkspaceSettings,
+  type AiTone,
+  type WorkspaceSettings,
+} from "@/lib/admin/workspace-settings";
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <label className={`block ${className ?? ""}`}>
+      <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+        {label}
+      </span>
+      <input
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none transition focus:border-primary/60"
+      />
+    </label>
+  );
+}
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <label className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border/40 bg-background/30 px-3 py-2.5">
+      <span className="min-w-0 truncate text-sm">{label}</span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 shrink-0 accent-primary"
+      />
+    </label>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsPage,
@@ -36,6 +93,20 @@ function SettingsPage() {
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<WorkspaceRole>("sales");
+  const [settings, setSettings] = useState<WorkspaceSettings>(() => loadWorkspaceSettings());
+
+  useEffect(() => {
+    setSettings(loadWorkspaceSettings());
+  }, []);
+
+  function patch(partial: Partial<WorkspaceSettings>) {
+    setSettings((prev) => ({ ...prev, ...partial }));
+  }
+
+  function savePreferences() {
+    saveWorkspaceSettings(settings);
+    toast.success("Preferensi workspace disimpan.");
+  }
 
   const { data } = useQuery({ queryKey: ["admin", "access"], queryFn: () => access() });
   const canManage = Boolean(data?.canManage);
@@ -102,6 +173,154 @@ function SettingsPage() {
             <dd className="mt-1 break-all text-sm">{data?.userId ?? "—"}</dd>
           </div>
         </dl>
+      </SectionCard>
+
+      <SectionCard
+        title="Company Profile"
+        description="Identitas bisnis yang dipakai di proposal dan komunikasi sales."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextField
+            label="Nama perusahaan"
+            value={settings.companyName}
+            onChange={(v) => patch({ companyName: v })}
+          />
+          <TextField
+            label="Tagline"
+            value={settings.companyTagline}
+            onChange={(v) => patch({ companyTagline: v })}
+          />
+          <TextField
+            label="Email perusahaan"
+            value={settings.companyEmail}
+            onChange={(v) => patch({ companyEmail: v })}
+          />
+          <TextField
+            label="Website"
+            value={settings.companyWebsite}
+            onChange={(v) => patch({ companyWebsite: v })}
+          />
+          <TextField
+            label="Alamat / kota"
+            className="sm:col-span-2"
+            value={settings.companyAddress}
+            onChange={(v) => patch({ companyAddress: v })}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Sales Contact"
+        description="Kontak yang muncul saat follow-up lead dan pengiriman proposal."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextField
+            label="Nama sales"
+            value={settings.salesName}
+            onChange={(v) => patch({ salesName: v })}
+          />
+          <TextField
+            label="WhatsApp"
+            value={settings.salesWhatsapp}
+            placeholder="628xxxxxxxxxx"
+            onChange={(v) => patch({ salesWhatsapp: v })}
+          />
+          <TextField
+            label="Email sales"
+            value={settings.salesEmail}
+            onChange={(v) => patch({ salesEmail: v })}
+          />
+          <TextField
+            label="Jam operasional"
+            value={settings.salesHours}
+            onChange={(v) => patch({ salesHours: v })}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="AI Tone Preference"
+        description="Gaya bahasa default untuk AI Sales Assistant dan draft proposal."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+              Tone
+            </span>
+            <select
+              value={settings.aiTone}
+              onChange={(e) => patch({ aiTone: e.target.value as AiTone })}
+              className="mt-1 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none transition focus:border-primary/60"
+            >
+              {AI_TONES.map((tone) => (
+                <option key={tone} value={tone}>
+                  {tone}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+              Bahasa
+            </span>
+            <select
+              value={settings.aiLanguage}
+              onChange={(e) =>
+                patch({ aiLanguage: e.target.value as "Indonesia" | "English" })
+              }
+              className="mt-1 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none transition focus:border-primary/60"
+            >
+              <option value="Indonesia">Indonesia</option>
+              <option value="English">English</option>
+            </select>
+          </label>
+          <TextField
+            label="Signature"
+            className="sm:col-span-2"
+            value={settings.aiSignature}
+            onChange={(v) => patch({ aiSignature: v })}
+          />
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        title="Notification Preferences"
+        description="Atur kapan workspace mengingatkan tim sales."
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ToggleRow
+            label="Lead baru masuk"
+            checked={settings.notifyNewLead}
+            onChange={(v) => patch({ notifyNewLead: v })}
+          />
+          <ToggleRow
+            label="Hot lead terdeteksi"
+            checked={settings.notifyHotLead}
+            onChange={(v) => patch({ notifyHotLead: v })}
+          />
+          <ToggleRow
+            label="Perubahan status proposal"
+            checked={settings.notifyProposalStatus}
+            onChange={(v) => patch({ notifyProposalStatus: v })}
+          />
+          <ToggleRow
+            label="Ringkasan harian"
+            checked={settings.notifyDailyDigest}
+            onChange={(v) => patch({ notifyDailyDigest: v })}
+          />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={savePreferences}
+            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            Simpan preferensi
+          </button>
+          <span className="text-xs text-muted-foreground">
+            Preferensi tersimpan pada perangkat ini.
+          </span>
+        </div>
       </SectionCard>
 
       {canManage ? (
