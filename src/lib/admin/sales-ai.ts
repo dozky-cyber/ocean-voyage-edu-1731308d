@@ -317,3 +317,255 @@ export function parseSections(value: unknown): ProposalSection[] {
       : [],
   );
 }
+
+/* ---------------------------------------------------------------------------
+ * AI Sales Engine — intent analysis, follow-up generator, objection handler
+ * ------------------------------------------------------------------------ */
+
+export type LeadIntel = {
+  summary: string;
+  painPoints: string[];
+  buyingIntent: { level: "Tinggi" | "Sedang" | "Rendah"; score: number; signals: string[] };
+  recommendedPackage: string;
+  closingProbability: number;
+  probabilityReasons: string[];
+  strategy: string[];
+  nextBestAction: string;
+  priority: string;
+};
+
+const INTENT_MAX = 100;
+
+export function buildLeadIntel(lead: SalesLead): LeadIntel {
+  const brief = buildSalesBrief(lead);
+  const client = clientLabel(lead);
+  const temp = lead.lead_temperature ?? "Cold Lead";
+  const conversation = Array.isArray(lead.ai_conversation) ? lead.ai_conversation.length : 0;
+  const stage = (lead.status ?? "").toLowerCase();
+
+  const signals: string[] = [];
+  let intent = 20;
+  if (temp === "Hot Lead") {
+    intent += 30;
+    signals.push("Lead ditandai Hot berdasarkan perilaku kunjungan");
+  } else if (temp === "Warm Lead") {
+    intent += 18;
+    signals.push("Lead hangat — sudah menunjukkan minat nyata");
+  } else signals.push("Lead masih dingin — butuh edukasi sebelum penawaran");
+  if (conversation > 0) {
+    intent += Math.min(15, conversation * 4);
+    signals.push(`Menyelesaikan ${conversation} tahap percakapan AI Consultant`);
+  }
+  if (lead.budget?.trim()) {
+    intent += 12;
+    signals.push(`Menyebutkan budget: ${lead.budget}`);
+  }
+  if (lead.timeline?.trim()) {
+    intent += 10;
+    signals.push(`Punya target waktu: ${lead.timeline}`);
+  }
+  if ((lead.requirement ?? "").trim().length > 80) {
+    intent += 8;
+    signals.push("Menjelaskan kebutuhan secara detail");
+  }
+  if (lead.whatsapp?.trim()) {
+    intent += 5;
+    signals.push("Meninggalkan nomor WhatsApp aktif");
+  }
+  if (stage.includes("proposal") || stage.includes("negotiation")) {
+    intent += 12;
+    signals.push(`Sudah berada di stage ${lead.status}`);
+  }
+  intent = Math.max(5, Math.min(INTENT_MAX, intent));
+
+  const level: LeadIntel["buyingIntent"]["level"] =
+    intent >= 70 ? "Tinggi" : intent >= 45 ? "Sedang" : "Rendah";
+
+  const probabilityReasons: string[] = [];
+  let probability = Math.round(intent * 0.7);
+  if (lead.budget?.trim()) {
+    probability += 8;
+    probabilityReasons.push("Budget sudah disebutkan — negosiasi lebih cepat.");
+  } else probabilityReasons.push("Budget belum diketahui — gali angka indikatif dulu.");
+  if (stage.includes("negotiation") || stage.includes("proposal")) {
+    probability += 10;
+    probabilityReasons.push("Sudah masuk tahap proposal/negosiasi.");
+  }
+  if (temp === "Cold Lead") {
+    probability -= 10;
+    probabilityReasons.push("Temperatur masih dingin — perlu nurture sebelum closing.");
+  }
+  if (!lead.timeline?.trim()) probabilityReasons.push("Timeline belum jelas — tetapkan next step dengan tanggal.");
+  probability = Math.max(5, Math.min(95, probability));
+
+  const nextBestAction =
+    temp === "Hot Lead"
+      ? "Kirim pesan WhatsApp hari ini dan tawarkan call 20 menit dalam 24 jam."
+      : stage.includes("proposal")
+        ? "Follow up proposal: konfirmasi apakah sudah dibaca dan tanyakan pertanyaan yang tersisa."
+        : temp === "Warm Lead"
+          ? "Kirim studi kasus relevan, lalu ajukan satu pertanyaan kualifikasi soal budget."
+          : "Kirim insight singkat tentang masalah utamanya tanpa menjual paket dulu.";
+
+  const summary = [
+    `${lead.name}${client && client !== lead.name ? ` dari ${client}` : ""} mencari ${lead.project_type || "solusi digital"}.`,
+    lead.ai_summary?.trim() ||
+      `Kebutuhan yang disampaikan: ${lead.requirement?.trim() || "peningkatan efisiensi lewat sistem digital"}.`,
+    `Masalah utama: ${brief.painPoints[0].toLowerCase()}. Rekomendasi paket: ${brief.recommendedPackage}.`,
+  ].join(" ");
+
+  return {
+    summary,
+    painPoints: brief.painPoints,
+    buyingIntent: { level, score: intent, signals },
+    recommendedPackage: brief.recommendedPackage,
+    closingProbability: probability,
+    probabilityReasons,
+    strategy: brief.strategy,
+    nextBestAction,
+    priority: brief.priority,
+  };
+}
+
+export const FOLLOW_UP_TYPES = [
+  "First Response",
+  "Reminder Follow Up",
+  "After Proposal",
+  "Closing Message",
+  "Re-engagement",
+] as const;
+
+export type FollowUpType = (typeof FOLLOW_UP_TYPES)[number];
+
+export function isFollowUpType(value: unknown): value is FollowUpType {
+  return typeof value === "string" && (FOLLOW_UP_TYPES as readonly string[]).includes(value);
+}
+
+export type FollowUpDraft = { type: FollowUpType; whatsapp: string; email: string; emailSubject: string };
+
+export function buildFollowUp(lead: SalesLead, type: FollowUpType): FollowUpDraft {
+  const brief = buildSalesBrief(lead);
+  const name = firstName(lead.name);
+  const client = clientLabel(lead);
+  const pain = brief.painPoints[0].toLowerCase();
+  const pkg = brief.recommendedPackage;
+  const project = lead.project_type || "sistem digital";
+
+  let whatsapp: string;
+  let emailBody: string;
+  let emailSubject: string;
+
+  switch (type) {
+    case "Reminder Follow Up":
+      whatsapp = `Halo ${name}, semoga harinya lancar 🙌\n\nSaya follow up soal kebutuhan ${project} untuk ${client}. Apakah sudah sempat dibaca gambaran solusinya?\n\nKalau ada yang mau didalami, saya bisa jelaskan singkat lewat call 15–20 menit. Kira-kira lebih enak hari apa?`;
+      emailSubject = `Follow up: kebutuhan ${project} untuk ${client}`;
+      emailBody = `Halo ${name},\n\nSaya ingin memastikan informasi dari KERJAKU sebelumnya sudah sampai dan cukup jelas.\n\nFokus kami tetap sama: menyelesaikan ${pain} lewat ${pkg}, sehingga proses harian tim ${client} jadi lebih ringan.\n\nApakah ada bagian yang ingin didalami lebih dulu? Saya siap menyesuaikan scope fase pertama sesuai prioritas Anda.\n\nSalam,\nTim KERJAKU`;
+      break;
+    case "After Proposal":
+      whatsapp = `Halo ${name}, proposal ${pkg} untuk ${client} sudah saya kirim ya 🙏\n\nDi dalamnya ada rincian scope, timeline, dan langkah berikutnya. Kalau ada bagian yang ingin disesuaikan (fitur atau tahapan), tinggal bilang — masih sangat fleksibel.\n\nApakah minggu ini bisa kita bahas 20 menit?`;
+      emailSubject = `Proposal ${pkg} — ${client}`;
+      emailBody = `Halo ${name},\n\nTerima kasih atas waktunya. Proposal ${pkg} untuk ${client} sudah kami susun berdasarkan kebutuhan yang Anda sampaikan.\n\nRingkasnya:\n• Masalah yang dipecahkan: ${pain}\n• Scope fase pertama: ${brief.features.slice(0, 3).join(", ") || "sistem operasional inti"}\n• ${brief.timeline}\n\nSilakan sampaikan jika ada penyesuaian scope. Kami bisa mengatur ulang tahapan agar sesuai prioritas dan anggaran.\n\nSalam,\nTim KERJAKU`;
+      break;
+    case "Closing Message":
+      whatsapp = `Halo ${name}, dari diskusi kita sejauh ini sepertinya ${pkg} sudah paling pas untuk kebutuhan ${client}.\n\nKalau setuju, saya siapkan kesepakatan kerja dan jadwal kick-off minggu ini. Apakah kita lanjut ke tahap itu?`;
+      emailSubject = `Langkah berikutnya: memulai ${pkg} untuk ${client}`;
+      emailBody = `Halo ${name},\n\nBerdasarkan diskusi kita, ${pkg} adalah langkah pertama yang paling masuk akal untuk menyelesaikan ${pain}.\n\nJika Anda setuju, langkah berikutnya:\n1. Konfirmasi scope fase pertama\n2. Kesepakatan kerja & DP\n3. Kick-off dan sesi discovery\n\n${brief.investment}\n\nBoleh saya siapkan dokumennya hari ini?\n\nSalam,\nTim KERJAKU`;
+      break;
+    case "Re-engagement":
+      whatsapp = `Halo ${name}, semoga kabar baik 🙂\n\nSaya cek kembali catatan kami soal rencana ${project} untuk ${client}. Apakah kebutuhan itu masih berjalan, atau sedang ditunda dulu?\n\nKalau masih relevan, saya bisa kirim opsi paling ringan untuk mulai bertahap.`;
+      emailSubject = `Masih relevan? Rencana ${project} untuk ${client}`;
+      emailBody = `Halo ${name},\n\nSudah beberapa waktu sejak diskusi terakhir kita tentang ${project} untuk ${client}.\n\nBanyak klien memulai dari fase kecil dulu: menyelesaikan ${pain}, lalu berkembang bertahap. Jika rencananya masih ada, saya bisa kirim opsi paling ringan untuk memulai.\n\nApakah topik ini masih menjadi prioritas tahun ini?\n\nSalam,\nTim KERJAKU`;
+      break;
+    default:
+      whatsapp = `Halo ${name}, saya dari KERJAKU 👋\n\nTerima kasih sudah menghubungi kami soal ${project} untuk ${client}. Dari yang saya baca, tantangan utamanya di ${pain}.\n\nBiasanya kami menyelesaikan ini lewat ${pkg}, fokusnya ${brief.features.slice(0, 2).join(" dan ") || "otomatisasi proses inti"}.\n\nBoleh saya kirim gambaran solusi + estimasi timeline-nya? Atau kita ngobrol 20 menit minggu ini?`;
+      emailSubject = `KERJAKU — solusi untuk ${project} di ${client}`;
+      emailBody = `Halo ${name},\n\nTerima kasih sudah menghubungi KERJAKU mengenai ${project} untuk ${client}.\n\nDari kebutuhan yang Anda sampaikan, tantangan utamanya adalah ${pain}. Kami merekomendasikan ${pkg} sebagai fase pertama, dengan fokus pada ${brief.features.slice(0, 3).join(", ") || "otomatisasi proses inti"}.\n\n${brief.timeline}\n\nApakah Anda bersedia untuk sesi singkat 20 menit agar saya bisa menjelaskan gambaran solusinya?\n\nSalam,\nTim KERJAKU`;
+      break;
+  }
+
+  return { type, whatsapp, email: emailBody, emailSubject };
+}
+
+export type ObjectionPlan = {
+  objection: string;
+  understanding: string;
+  value: string;
+  alternative: string;
+  closingQuestion: string;
+};
+
+type ObjectionKind = "price" | "timing" | "trust" | "internal" | "competitor" | "generic";
+
+function classifyObjection(text: string): ObjectionKind {
+  const t = text.toLowerCase();
+  if (/mahal|harga|price|budget|biaya|murah/.test(t)) return "price";
+  if (/nanti|tunda|belum|next year|tahun depan|sibuk|waktu/.test(t)) return "timing";
+  if (/ragu|percaya|yakin|garansi|aman|portfolio|bukti/.test(t)) return "trust";
+  if (/tim|karyawan|internal|atasan|bos|diskusi dulu|rapat/.test(t)) return "internal";
+  if (/vendor|kompetitor|bandingkan|banding|lain|freelancer/.test(t)) return "competitor";
+  return "generic";
+}
+
+export function handleObjection(lead: SalesLead, objection: string): ObjectionPlan {
+  const brief = buildSalesBrief(lead);
+  const pkg = brief.recommendedPackage;
+  const pain = brief.painPoints[0].toLowerCase();
+  const kind = classifyObjection(objection);
+  const name = firstName(lead.name);
+
+  const lighter =
+    pkg === "Enterprise System"
+      ? "Business System"
+      : pkg === "Business System"
+        ? "Professional System"
+        : pkg === "Professional System"
+          ? "Basic Digital Presence"
+          : "paket dasar dengan scope fase pertama yang lebih kecil";
+
+  const plans: Record<ObjectionKind, Omit<ObjectionPlan, "objection">> = {
+    price: {
+      understanding: `Saya mengerti, ${name}. Wajar kalau angkanya perlu dipertimbangkan matang — ini keputusan investasi, bukan sekadar biaya.`,
+      value: `Coba kita lihat dari sisi lain: ${pain} saat ini memakan jam kerja tim setiap minggu. Dalam 3 bulan, biaya waktu yang hilang itu biasanya lebih besar daripada investasi sistemnya. ${brief.investment}`,
+      alternative: `Kalau mau lebih ringan, kita bisa mulai dari ${lighter} — ambil bagian yang paling menyakitkan dulu, sisanya jadi roadmap fase 2.`,
+      closingQuestion: `Kalau kita susun fase pertama yang masuk anggaran Anda, apakah kita bisa mulai bulan ini?`,
+    },
+    timing: {
+      understanding: `Paham sekali, ${name}. Timing memang penting dan tidak semua hal harus dikerjakan sekarang.`,
+      value: `Yang perlu dipertimbangkan: selama ${pain} dibiarkan, biayanya berjalan terus setiap minggu. Memulai lebih awal justru membuat fase berikutnya lebih murah karena datanya sudah rapi.`,
+      alternative: `Alternatifnya, kita mulai dari fase discovery kecil dulu — pemetaan proses saja, tanpa komitmen pengembangan penuh.`,
+      closingQuestion: `Bagaimana kalau kita jadwalkan discovery singkat, lalu Anda putuskan setelah melihat hasilnya?`,
+    },
+    trust: {
+      understanding: `Sangat masuk akal, ${name}. Memilih partner teknologi itu soal kepercayaan, bukan hanya fitur.`,
+      value: `KERJAKU membangun sistem yang dipakai harian oleh tim operasional — bukan sekadar demo. Setiap tahap ada UAT bersama tim Anda, jadi Anda melihat hasilnya sebelum go-live.`,
+      alternative: `Kalau ingin lebih aman, kita bisa mulai dari satu modul kecil dulu sebagai bukti kerja sebelum lanjut ke ${pkg}.`,
+      closingQuestion: `Kalau saya tunjukkan contoh sistem serupa yang sudah berjalan, apakah itu cukup untuk melangkah ke tahap berikutnya?`,
+    },
+    internal: {
+      understanding: `Tentu, ${name}. Keputusan seperti ini memang sebaiknya dibahas bersama tim.`,
+      value: `Supaya diskusi internalnya lebih mudah, saya bisa siapkan ringkasan satu halaman: masalah, solusi, timeline, dan dampak ke operasional harian.`,
+      alternative: `Kalau perlu, saya juga bisa ikut sesi singkat bersama tim Anda untuk menjawab pertanyaan teknis langsung.`,
+      closingQuestion: `Kira-kira kapan rapat internalnya, supaya saya siapkan materinya sebelum itu?`,
+    },
+    competitor: {
+      understanding: `Bagus justru, ${name} — membandingkan itu langkah yang sehat sebelum memutuskan.`,
+      value: `Saran saya, bandingkan berdasarkan scope dan dukungan setelah go-live, bukan harga saja. Banyak sistem murah berhenti di serah terima, lalu biaya perbaikannya muncul belakangan.`,
+      alternative: `Saya bisa kirim rincian deliverable ${pkg} agar Anda punya kerangka pembanding yang jelas antar vendor.`,
+      closingQuestion: `Kalau rincian scope kami paling lengkap, apakah kita bisa lanjut ke tahap kesepakatan?`,
+    },
+    generic: {
+      understanding: `Terima kasih sudah terbuka, ${name}. Saya ingin memastikan solusinya benar-benar sesuai, bukan memaksakan paket.`,
+      value: `Yang kami tawarkan fokus pada satu hal: menyelesaikan ${pain} agar tim Anda tidak kehilangan waktu di proses manual.`,
+      alternative: `Kalau ${pkg} terasa belum pas, kita bisa mulai dari ${lighter} dan berkembang bertahap.`,
+      closingQuestion: `Boleh saya tahu bagian mana yang paling membuat Anda ragu, supaya saya bisa bantu jawab spesifik?`,
+    },
+  };
+
+  return { objection: objection.trim(), ...plans[kind] };
+}
+
+export const AI_ACTIONS = {
+  intel: "Lead Analysis",
+  followUp: "Follow Up Generator",
+  objection: "Objection Handler",
+} as const;

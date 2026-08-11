@@ -439,3 +439,55 @@ export async function buildProposalAnalytics(supabase: Client): Promise<Proposal
     avgLeadToProposalHours: hoursCount ? Number((hoursTotal / hoursCount).toFixed(1)) : 0,
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * AI Sales Memory — generated suggestions stored on the lead timeline
+ * ------------------------------------------------------------------------ */
+
+export const AI_ACTIVITY_COLUMNS =
+  "id, lead_id, action, label, content, meta, created_by, created_by_email, created_at";
+
+export async function fetchLeadAiActivities(supabase: Client, leadId: string) {
+  const { data, error } = await supabase
+    .from("lead_ai_activities")
+    .select(AI_ACTIVITY_COLUMNS)
+    .eq("lead_id", leadId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function createLeadAiActivity(
+  supabase: Client,
+  input: {
+    leadId: string;
+    action: string;
+    label: string | null;
+    content: string;
+    meta?: unknown;
+  },
+  user: { id: string; email: string | null },
+) {
+  const { data, error } = await supabase
+    .from("lead_ai_activities")
+    .insert({
+      lead_id: input.leadId,
+      action: input.action,
+      label: input.label,
+      content: input.content,
+      meta: (input.meta ?? {}) as never,
+      created_by: user.id,
+      created_by_email: user.email,
+    })
+    .select(AI_ACTIVITY_COLUMNS)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function deleteLeadAiActivity(supabase: Client, id: string) {
+  const { error } = await supabase.from("lead_ai_activities").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const };
+}

@@ -146,6 +146,50 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_ai_activities: {
+        Row: {
+          action: string
+          content: string
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          id: string
+          label: string | null
+          lead_id: string
+          meta: Json
+        }
+        Insert: {
+          action: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          id?: string
+          label?: string | null
+          lead_id: string
+          meta?: Json
+        }
+        Update: {
+          action?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          id?: string
+          label?: string | null
+          lead_id?: string
+          meta?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_ai_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposals: {
         Row: {
           approved_at: string | null
