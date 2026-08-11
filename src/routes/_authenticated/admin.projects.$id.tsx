@@ -224,6 +224,24 @@ function ProjectWorkspacePage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {templateMeta(project.template).label} · Fase {project.phase}
           </p>
+          {project.team.length > 0 ? (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              <span className="text-[0.65rem] uppercase tracking-[0.18em] text-muted-foreground">
+                Tim
+              </span>
+              {project.team.map((name) => {
+                const member = teamMembers.data?.find(
+                  (m) => m.name.toLowerCase() === name.toLowerCase(),
+                );
+                return (
+                  <Chip key={name} className={member ? teamRoleClass(member.role) : undefined}>
+                    {name}
+                    {member ? ` · ${member.role}` : ""}
+                  </Chip>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Chip className="border-primary/30 bg-primary/10 text-primary">{project.status}</Chip>
