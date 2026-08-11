@@ -232,3 +232,54 @@ export const getProposalAnalytics = createServerFn({ method: "GET" })
     await assertWorkspace(context.supabase, context.userId);
     return buildProposalAnalytics(context.supabase);
   });
+
+/* ------------------------------ AI sales memory --------------------------- */
+
+export const getLeadAiActivity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ leadId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertWorkspace, fetchLeadAiActivities } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
+    return fetchLeadAiActivities(context.supabase, data.leadId);
+  });
+
+export const logLeadAiActivity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        leadId: z.string().uuid(),
+        action: z.string().min(1).max(80),
+        label: z.string().max(160).nullable().default(null),
+        content: z.string().min(1).max(12000),
+        meta: z.record(z.string(), z.unknown()).default({}),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertLeadWork, createLeadAiActivity } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
+    const email =
+      (context.claims as { email?: unknown } | undefined)?.email;
+    return createLeadAiActivity(
+      context.supabase,
+      {
+        leadId: data.leadId,
+        action: data.action,
+        label: data.label,
+        content: data.content,
+        meta: data.meta,
+      },
+      { id: context.userId, email: typeof email === "string" ? email : null },
+    );
+  });
+
+export const deleteLeadAiActivityFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertManage, deleteLeadAiActivity } = await import("./admin.server");
+    await assertManage(context.supabase, context.userId);
+    return deleteLeadAiActivity(context.supabase, data.id);
+  });
