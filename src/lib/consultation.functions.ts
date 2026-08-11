@@ -13,12 +13,12 @@ export const submitConsultationLead = createServerFn({ method: "POST" })
       await import("./consultation.server");
     const { sendTelegramMessage } = await import("./telegram.server");
 
-    const { form, tracking } = data;
-    const row = await storeConsultation(form, tracking);
+    const { form, tracking, ai } = data;
+    const row = await storeConsultation(form, tracking, ai);
     const createdAt = new Date(row?.created_at ?? Date.now()).toISOString();
 
-    const telegram = await sendTelegramMessage(formatLeadTelegram(form, createdAt, tracking));
-    const email = await sendLeadEmail(form, createdAt, tracking);
+    const telegram = await sendTelegramMessage(formatLeadTelegram(form, createdAt, tracking, ai));
+    const email = await sendLeadEmail(form, createdAt, tracking, ai);
 
     return {
       success: true as const,

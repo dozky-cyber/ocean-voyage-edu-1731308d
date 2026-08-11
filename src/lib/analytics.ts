@@ -74,6 +74,28 @@ export const analytics = {
     trackJourneyStep("form:open");
   },
   sectionView: (section: string) => trackJourneyStep(`section:${section}`),
+  aiConsultationStart: (source: string) => {
+    trackEvent("ai_conversation_start", { source });
+    trackJourneyStep(`ai:start:${source}`);
+  },
+  aiConsultationStep: (step: string, answer: string) => {
+    trackEvent("ai_conversation_step", { step, answer });
+    trackJourneyStep(`ai:step:${step}`);
+  },
+  aiConsultationComplete: (params: {
+    recommended_package: string;
+    business_category: string;
+    complexity: string;
+    ai_score: number;
+    qualification: string;
+  }) => {
+    trackEvent("ai_conversation_complete", params);
+    trackJourneyStep(`ai:complete:${params.recommended_package}`);
+  },
+  aiToConsultation: (recommendedPackage: string) => {
+    trackEvent("ai_to_consultation_click", { recommended_package: recommendedPackage });
+    trackJourneyStep(`ai:to_consultation:${recommendedPackage}`);
+  },
   consultationFormSubmit: (params: {
     project_type: string;
     budget: string;
