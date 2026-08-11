@@ -43,7 +43,7 @@ export const Route = createFileRoute("/")({
       { title },
       { name: "description", content: description },
       { name: "keywords", content: keywords },
-      { name: "author", content: "Adji Taufiq — KERJAKU" },
+      { name: "author", content: "KERJAKU" },
       { name: "language", content: "id-ID" },
       { name: "robots", content: "index, follow" },
       { property: "og:title", content: socialTitle },
