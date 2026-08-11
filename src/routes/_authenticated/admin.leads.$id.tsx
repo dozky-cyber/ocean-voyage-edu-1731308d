@@ -25,8 +25,12 @@ import {
 } from "@/lib/admin/pipeline";
 
 export const Route = createFileRoute("/_authenticated/admin/leads/$id")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    ai: typeof search['ai'] === "string" ? search['ai'] : undefined,
+  }),
   component: LeadDetailPage,
 });
+
 
 function asStrings(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
@@ -80,7 +84,9 @@ function LeadDetailPage() {
     onError: () => toast.error("Gagal membuat proposal."),
   });
 
-  const [assistantOpen, setAssistantOpen] = useState(false);
+  const { ai: aiParam } = Route.useSearch();
+  const [assistantOpen, setAssistantOpen] = useState(Boolean(aiParam));
+
   const [notes, setNotes] = useState("");
 
   useEffect(() => {

@@ -16,6 +16,12 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminAccess } from "@/lib/admin.functions";
+import {
+  ROLE_LABELS,
+  isWorkspaceRole,
+  roleBadgeClass,
+  type WorkspaceRole,
+} from "@/lib/admin/roles";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -42,6 +48,7 @@ function AdminLayout() {
   const queryClient = useQueryClient();
   const access = useServerFn(getAdminAccess);
   const [state, setState] = useState<"loading" | "ok" | "denied">("loading");
+  const [role, setRole] = useState<WorkspaceRole | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = useRouterState({ select: (r) => r.location.pathname });
 
@@ -53,7 +60,9 @@ function AdminLayout() {
     let active = true;
     void access()
       .then((result) => {
-        if (active) setState(result.isAdmin ? "ok" : "denied");
+        if (!active) return;
+        setRole(isWorkspaceRole(result.role) ? result.role : null);
+        setState(result.hasAccess ? "ok" : "denied");
       })
       .catch(() => {
         if (active) setState("denied");
@@ -62,6 +71,7 @@ function AdminLayout() {
       active = false;
     };
   }, [access]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -72,7 +82,18 @@ function AdminLayout() {
 
   const navList = (
     <nav className="flex flex-col gap-1">
+      {role ? (
+        <span
+          className={cn(
+            "mb-2 inline-flex w-fit items-center rounded-full border px-2.5 py-0.5 text-[0.65rem] font-medium uppercase tracking-[0.18em]",
+            roleBadgeClass(role),
+          )}
+        >
+          {ROLE_LABELS[role]}
+        </span>
+      ) : null}
       {NAV.map((item) => (
+
         <Link
           key={item.to}
           to={item.to}
