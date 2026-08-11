@@ -192,18 +192,55 @@ export const saveProposalFn = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         title: z.string().min(1).max(200),
+        client_name: z.string().max(200).nullable().optional(),
         recommended_package: z.string().max(120).nullable(),
         content: z
           .array(z.object({ heading: z.string().max(200), body: z.string().max(8000) }))
           .max(30),
+        pricing_items: z
+          .array(
+            z.object({
+              item: z.string().max(200),
+              detail: z.string().max(500),
+              amount: z.number().min(0).max(1_000_000_000_000),
+            }),
+          )
+          .max(30)
+          .optional(),
+        currency: z.string().max(8).nullable().optional(),
+        valid_until: z.string().max(20).nullable().optional(),
+        investment_note: z.string().max(4000).nullable().optional(),
+        timeline_note: z.string().max(4000).nullable().optional(),
+        version_note: z.string().max(300).nullable().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { assertLeadWork, saveProposal } = await import("./admin.server");
     await assertLeadWork(context.supabase, context.userId);
-    return saveProposal(context.supabase, data);
+    return saveProposal(context.supabase, data, context.userId);
   });
+
+export const getProposalVersions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ proposalId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertWorkspace, fetchProposalVersions } = await import("./admin.server");
+    await assertWorkspace(context.supabase, context.userId);
+    return fetchProposalVersions(context.supabase, data.proposalId);
+  });
+
+export const restoreProposalVersionFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ proposalId: z.string().uuid(), versionId: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertLeadWork, restoreProposalVersion } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
+    return restoreProposalVersion(context.supabase, data, context.userId);
+  });
+
 
 export const setProposalStatusFn = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

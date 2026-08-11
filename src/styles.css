@@ -247,3 +247,44 @@
   font-weight: 700;
 }
 
+
+/* --- Proposal print / PDF export view ------------------------------------ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0b1220 !important;
+  }
+
+  .print\:hidden,
+  nav,
+  aside,
+  header.app-header {
+    display: none !important;
+  }
+
+  .proposal-print-doc {
+    background: #ffffff !important;
+    color: #0b1220 !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  .proposal-print-doc * {
+    color: #0b1220 !important;
+    background: transparent !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .proposal-print-doc .proposal-section {
+    break-inside: avoid;
+  }
+}

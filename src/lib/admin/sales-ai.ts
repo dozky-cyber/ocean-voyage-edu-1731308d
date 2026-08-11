@@ -252,57 +252,174 @@ export function buildSalesBrief(lead: SalesLead): SalesBrief {
 }
 
 export type ProposalSection = { heading: string; body: string };
+export type PricingItem = { item: string; detail: string; amount: number };
 
+/** Indicative price anchors per package (IDR), used as an editable starting point. */
+const PACKAGE_BASE: Record<string, number> = {
+  "Basic Digital Presence": 4_500_000,
+  "Professional System": 12_000_000,
+  "Business System": 28_000_000,
+  "Enterprise System": 65_000_000,
+};
+
+export function buildPricingItems(lead: SalesLead): PricingItem[] {
+  const pkg = recommendPackage(lead);
+  const base = PACKAGE_BASE[pkg] ?? 12_000_000;
+  return [
+    {
+      item: "Discovery & Blueprint",
+      detail: "Pemetaan proses, struktur data, dan alur kerja",
+      amount: Math.round(base * 0.15),
+    },
+    {
+      item: `Pengembangan ${pkg}`,
+      detail: "Desain UI, pengembangan fitur inti, dan integrasi",
+      amount: Math.round(base * 0.6),
+    },
+    {
+      item: "Testing, UAT & Deployment",
+      detail: "Pengujian bersama tim klien, migrasi data, go-live",
+      amount: Math.round(base * 0.15),
+    },
+    {
+      item: "Pelatihan & Pendampingan 30 Hari",
+      detail: "Onboarding tim dan perbaikan minor pasca go-live",
+      amount: Math.round(base * 0.1),
+    },
+  ];
+}
+
+export function formatIDR(amount: number, currency = "IDR"): string {
+  try {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount || 0);
+  } catch {
+    return `${currency} ${Math.round(amount || 0).toLocaleString("id-ID")}`;
+  }
+}
+
+export function pricingTotal(items: PricingItem[]): number {
+  return items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+}
+
+export function parsePricingItems(value: unknown): PricingItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) =>
+    item && typeof item === "object"
+      ? [
+          {
+            item: String((item as { item?: unknown }).item ?? ""),
+            detail: String((item as { detail?: unknown }).detail ?? ""),
+            amount: Number((item as { amount?: unknown }).amount ?? 0) || 0,
+          },
+        ]
+      : [],
+  );
+}
+
+/** Professional KERJAKU proposal template — 9 client-facing sections. */
 export function buildProposalSections(lead: SalesLead): ProposalSection[] {
   const brief = buildSalesBrief(lead);
   const client = clientLabel(lead);
   const bullets = (items: string[]) => items.map((i) => `• ${i}`).join("\n");
+  const today = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   return [
     {
-      heading: "1. Client Information",
+      heading: "Cover",
       body: [
-        `Nama klien: ${lead.name}`,
-        `Bisnis: ${client}`,
-        lead.email ? `Email: ${lead.email}` : null,
-        lead.whatsapp ? `WhatsApp: ${lead.whatsapp}` : null,
-        lead.ai_business_category ? `Kategori bisnis: ${lead.ai_business_category}` : null,
-        lead.project_type ? `Jenis project: ${lead.project_type}` : null,
+        `Proposal Solusi Digital untuk ${client}`,
+        `Disiapkan untuk: ${lead.name}`,
+        lead.project_type ? `Kebutuhan: ${lead.project_type}` : null,
+        `Rekomendasi paket: ${brief.recommendedPackage}`,
+        `Tanggal: ${today}`,
+        "Disiapkan oleh: KERJAKU — Work, made your way.",
       ]
         .filter(Boolean)
         .join("\n"),
     },
     {
-      heading: "2. Business Challenge",
-      body:
+      heading: "About KERJAKU",
+      body: [
+        "KERJAKU membangun produk digital yang benar-benar dipakai setiap hari: website, aplikasi bisnis, otomatisasi alur kerja, dan integrasi AI.",
+        "Pendekatan kami sederhana — pahami proses bisnisnya dulu, baru bangun sistemnya. Setiap project dikerjakan bertahap agar hasilnya terukur dan risikonya terkendali.",
+        "Beberapa sistem yang kami bangun: RO Memory (sistem operasional enterprise), Dompet Gue (manajemen keuangan), Material Estimator, dan QResto.",
+      ].join("\n\n"),
+    },
+    {
+      heading: "Client Problem Understanding",
+      body: [
         lead.ai_summary?.trim() ||
-        `${client} sedang menghadapi hambatan pada proses operasional harian. Kebutuhan yang disampaikan: ${
-          lead.requirement?.trim() || "peningkatan efisiensi lewat sistem digital"
-        }.`,
+          `${client} membutuhkan ${lead.requirement?.trim() || "sistem digital untuk meningkatkan efisiensi operasional"}.`,
+        "",
+        "Masalah utama yang kami identifikasi:",
+        bullets(brief.painPoints),
+      ].join("\n"),
     },
-    { heading: "3. Current Problems", body: bullets(brief.painPoints) },
     {
-      heading: "4. Proposed Solution",
-      body: `KERJAKU merekomendasikan ${brief.recommendedPackage}. Solusi ini dirancang untuk menyelesaikan ${brief.painPoints[0].toLowerCase()} dengan alur kerja terpusat, data yang rapi, dan laporan yang terbentuk otomatis.`,
+      heading: "Proposed Solution",
+      body: [
+        `KERJAKU merekomendasikan ${brief.recommendedPackage} sebagai fase pertama.`,
+        `Solusi ini menyelesaikan ${brief.painPoints[0].toLowerCase()} melalui alur kerja terpusat, data yang rapi, dan laporan yang terbentuk otomatis.`,
+        "",
+        "Komponen solusi:",
+        bullets(brief.features),
+      ].join("\n"),
     },
-    { heading: "5. Recommended Features", body: bullets(brief.features) },
-    { heading: "6. Project Scope", body: bullets(brief.scope) },
+    { heading: "Scope of Work", body: bullets(brief.scope) },
     {
-      heading: "7. Timeline Estimate",
-      body: `${brief.timeline}${lead.timeline ? `\nTarget klien: ${lead.timeline}.` : ""}`,
+      heading: "Timeline",
+      body: [
+        brief.timeline,
+        lead.timeline ? `Target klien: ${lead.timeline}.` : null,
+        "",
+        bullets([
+          "Minggu 1 — Discovery, blueprint, dan persetujuan alur",
+          "Minggu 2–4 — Pengembangan modul inti",
+          "Minggu 5 — Integrasi, migrasi data, dan testing",
+          "Minggu 6 — UAT, pelatihan tim, dan go-live",
+        ]),
+      ]
+        .filter((v) => v !== null)
+        .join("\n"),
     },
-    { heading: "8. Investment Recommendation", body: brief.investment },
     {
-      heading: "9. Next Steps",
+      heading: "Investment",
+      body: [
+        brief.investment,
+        "",
+        "Rincian investasi tercantum pada tabel investasi di bawah. Pembayaran dapat dibagi bertahap: 40% saat kick-off, 40% saat UAT, 20% saat go-live.",
+      ].join("\n"),
+    },
+    {
+      heading: "Benefits",
+      body: bullets([
+        "Proses manual berkurang drastis — tim fokus ke pekerjaan bernilai tinggi",
+        "Data terpusat dan konsisten, siap dipakai untuk pengambilan keputusan",
+        "Laporan otomatis tanpa rekap manual",
+        "Sistem dapat dikembangkan bertahap mengikuti pertumbuhan bisnis",
+        "Pendampingan setelah go-live agar tim benar-benar memakai sistemnya",
+      ]),
+    },
+    {
+      heading: "Next Steps",
       body: bullets([
         "Konfirmasi scope fase pertama bersama tim KERJAKU",
         "Penjadwalan sesi discovery (60 menit)",
-        "Penandatanganan kesepakatan kerja & DP",
+        "Penandatanganan kesepakatan kerja & pembayaran kick-off",
         "Kick-off pengembangan",
       ]),
     },
   ];
 }
+
 
 export function parseSections(value: unknown): ProposalSection[] {
   if (!Array.isArray(value)) return [];
