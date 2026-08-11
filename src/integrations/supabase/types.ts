@@ -223,6 +223,30 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_members: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       lead_cta_performance: {
@@ -259,7 +283,8 @@ export type Database = {
       }
     }
     Functions: {
-      claim_first_admin: { Args: never; Returns: boolean }
+      can_manage_business: { Args: { _user_id: string }; Returns: boolean }
+      can_work_leads: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -267,6 +292,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_workspace_access: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "staff" | "user" | "owner" | "sales" | "viewer"
