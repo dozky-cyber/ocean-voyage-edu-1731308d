@@ -39,6 +39,7 @@ import { Route as AuthenticatedAdminProjectsIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminLeadsIdRouteImport } from './routes/_authenticated/admin.leads.$id'
 import { Route as AuthenticatedAdminInvoicesIdRouteImport } from './routes/_authenticated/admin.invoices.$id'
 import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authenticated/admin.clients.$id'
+import { Route as AuthenticatedAdminAssistantThreadIdRouteImport } from './routes/_authenticated/admin.assistant.$threadId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -208,6 +209,12 @@ const AuthenticatedAdminClientsIdRoute =
     path: '/clients/$id',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAssistantThreadIdRoute =
+  AuthenticatedAdminAssistantThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedAdminAssistantRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
@@ -255,6 +263,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
@@ -288,6 +297,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
@@ -321,6 +331,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/team'
     | '/admin/'
+    | '/admin/assistant/$threadId'
     | '/admin/clients/$id'
     | '/admin/invoices/$id'
     | '/admin/leads/$id'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/team'
     | '/admin'
+    | '/admin/assistant/$threadId'
     | '/admin/clients/$id'
     | '/admin/invoices/$id'
     | '/admin/leads/$id'
@@ -382,6 +394,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/assistant/$threadId'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/invoices/$id'
     | '/_authenticated/admin/leads/$id'
@@ -622,15 +635,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientsIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/assistant/$threadId': {
+      id: '/_authenticated/admin/assistant/$threadId'
+      path: '/$threadId'
+      fullPath: '/admin/assistant/$threadId'
+      preLoaderRoute: typeof AuthenticatedAdminAssistantThreadIdRouteImport
+      parentRoute: typeof AuthenticatedAdminAssistantRoute
+    }
   }
 }
 
 interface AuthenticatedAdminAssistantRouteChildren {
+  AuthenticatedAdminAssistantThreadIdRoute: typeof AuthenticatedAdminAssistantThreadIdRoute
   AuthenticatedAdminAssistantIndexRoute: typeof AuthenticatedAdminAssistantIndexRoute
 }
 
 const AuthenticatedAdminAssistantRouteChildren: AuthenticatedAdminAssistantRouteChildren =
   {
+    AuthenticatedAdminAssistantThreadIdRoute:
+      AuthenticatedAdminAssistantThreadIdRoute,
     AuthenticatedAdminAssistantIndexRoute:
       AuthenticatedAdminAssistantIndexRoute,
   }
