@@ -268,9 +268,10 @@ export async function saveProposal(
 }
 
 export async function setProposalStatus(supabase: Client, id: string, status: ProposalStatus) {
-  const patch: Record<string, unknown> = { status };
-  if (status === "Sent") patch['sent_at'] = new Date().toISOString();
-  if (status === "Approved") patch['approved_at'] = new Date().toISOString();
+  const now = new Date().toISOString();
+  const patch: { status: string; sent_at?: string; approved_at?: string } = { status };
+  if (status === "Sent") patch.sent_at = now;
+  if (status === "Approved") patch.approved_at = now;
   const { error } = await supabase.from("proposals").update(patch).eq("id", id);
   if (error) throw new Error(error.message);
   return { ok: true as const };
