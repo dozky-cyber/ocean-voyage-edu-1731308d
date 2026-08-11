@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { convertToModelMessages, streamText, generateText, type UIMessage } from "ai";
+import { convertToModelMessages, streamText, generateText, stepCountIs, type UIMessage } from "ai";
 
 import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
@@ -21,11 +21,13 @@ export const Route = createFileRoute("/api/assistant-chat")({
         if (!auth) return new Response("Unauthorized", { status: 401 });
 
         const { assertWorkspace } = await import("@/lib/admin.server");
+        let role: import("@/lib/admin/roles").WorkspaceRole;
         try {
-          await assertWorkspace(auth.supabase, auth.userId);
+          role = await assertWorkspace(auth.supabase, auth.userId);
         } catch {
           return new Response("Forbidden", { status: 403 });
         }
+
 
         const body = (await request.json()) as Body;
         const messages = Array.isArray(body.messages) ? (body.messages as UIMessage[]) : null;
@@ -49,7 +51,14 @@ export const Route = createFileRoute("/api/assistant-chat")({
           assistant.buildMemoryContext(auth.supabase, threadId),
           assistant.buildBusinessSnapshot(auth.supabase),
         ]);
-        const system = assistant.buildSystemPrompt(memoryContext, businessSnapshot);
+        const { ASSISTANT_ACTION_GUIDE, buildAssistantTools } = await import(
+          "@/lib/assistant-tools.server"
+        );
+        const system = [
+          assistant.buildSystemPrompt(memoryContext, businessSnapshot),
+          "",
+          ASSISTANT_ACTION_GUIDE,
+        ].join("\n");
 
         const lastUser = [...messages].reverse().find((m) => m.role === "user");
         const question = lastUser ? textOf(lastUser) : "";
@@ -70,8 +79,11 @@ export const Route = createFileRoute("/api/assistant-chat")({
         const result = streamText({
           model,
           system,
+          tools: buildAssistantTools({ supabase: auth.supabase, userId: auth.userId, role }),
+          stopWhen: stepCountIs(50),
           messages: await convertToModelMessages(messages),
         });
+
 
         return result.toUIMessageStreamResponse({
           originalMessages: messages,

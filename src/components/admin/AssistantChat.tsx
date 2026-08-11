@@ -109,14 +109,30 @@ export function AssistantChat({
             const text = message.parts
               .map((part) => (part.type === "text" ? part.text : ""))
               .join("");
+            const actions = message.parts
+              .filter((part) => part.type.startsWith("tool-"))
+              .map((part) => part.type.replace("tool-", "").replace(/_/g, " "));
             return (
               <Message from={message.role} key={message.id}>
                 <MessageContent>
                   <MessageResponse>{text}</MessageResponse>
+                  {actions.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {actions.map((action, index) => (
+                        <span
+                          key={`${action}-${index}`}
+                          className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[0.65rem] uppercase tracking-wide text-primary"
+                        >
+                          {action}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </MessageContent>
               </Message>
             );
           })}
+
 
           {status === "submitted" ? (
             <Shimmer className="text-sm">Menganalisis konteks bisnis…</Shimmer>

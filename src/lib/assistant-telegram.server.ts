@@ -184,8 +184,15 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       loadThreadMessages(supabaseAdmin, thread.id),
     ]);
 
+    const { ASSISTANT_ACTION_GUIDE, buildAssistantTools } = await import(
+      "@/lib/assistant-tools.server"
+    );
+    const { stepCountIs } = await import("ai");
+
     const system = [
       buildSystemPrompt(memoryContext, businessSnapshot),
+      "",
+      ASSISTANT_ACTION_GUIDE,
       "",
       "KANAL SAAT INI: Telegram. Jawab maksimal ~1200 karakter, gunakan bullet pendek, tanpa tabel, tanpa markdown heading.",
     ].join("\n");
@@ -194,6 +201,8 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
     const { text: answer } = await generateText({
       model,
       system,
+      tools: buildAssistantTools({ supabase: supabaseAdmin, userId, role: "owner" }),
+      stopWhen: stepCountIs(50),
       messages: [
         ...history.slice(-16).map((row) => ({
           role: row.role === "assistant" ? ("assistant" as const) : ("user" as const),
@@ -202,6 +211,7 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
         { role: "user" as const, content: text },
       ],
     });
+
 
     const reply = answer.trim() || "Maaf, saya belum bisa menjawab itu.";
 
