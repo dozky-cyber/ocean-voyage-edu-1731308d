@@ -89,8 +89,11 @@ export function ConsultationStage() {
           tracking,
           ...(ai ? { ai } : {}),
           leadSource: ai ? "ai_consultant" : "manual_form",
+          honeypot,
+          elapsedMs: Date.now() - mountedAt,
         },
       });
+
       analytics.consultationFormSubmit({
         project_type: parsed.data.projectType,
         budget: parsed.data.budget,
