@@ -269,6 +269,12 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
         .join("\n"),
   );
 
+  const teamRows = team.data ?? [];
+  lines.push(
+    `\n[TIM AKTIF] (${teamRows.length})\n` +
+      teamRows.map((t) => `- ${t.name} · ${t.role} · kapasitas ${t.capacity}`).join("\n"),
+  );
+
   return lines.join("\n");
 }
 
