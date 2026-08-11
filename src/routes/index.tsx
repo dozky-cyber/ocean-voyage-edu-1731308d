@@ -28,16 +28,14 @@ import { AiConsultantFab } from "@/components/kerjaku/AiConsultantFab";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
 
-const title = "KERJAKU | Jasa Pembuatan Website Profesional & Digital Solution";
+const title = "KERJAKU — Digital Solution & Business Automation Agency";
 const description =
-  "KERJAKU menyediakan jasa pembuatan website profesional, website bisnis, landing page, dan aplikasi custom dengan desain modern, cepat, dan sesuai kebutuhan bisnis.";
+  "KERJAKU adalah digital solution studio yang membangun website profesional, custom business system, automation, dan AI-powered solutions untuk membantu bisnis modern bekerja lebih efisien.";
 const keywords =
-  "jasa pembuatan website, website development, custom web application, aplikasi custom, AI automation, business system, digital transformation, software development Indonesia, landing page, dashboard bisnis, workflow automation, jasa developer website";
+  "digital solution studio, jasa pembuatan website, custom business system, business automation, AI solutions, web application, dashboard bisnis, workflow automation";
 const ogImage = "https://kerjaku.space/og-image.png";
-const socialTitle =
-  "KERJAKU - Custom Digital Solutions, AI Automation & Business System Development";
-const socialDescription =
-  "KERJAKU membantu bisnis membangun website, custom application, AI automation, dan digital system sesuai kebutuhan operasional.";
+const socialTitle = title;
+const socialDescription = description;
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -45,7 +43,7 @@ export const Route = createFileRoute("/")({
       { title },
       { name: "description", content: description },
       { name: "keywords", content: keywords },
-      { name: "author", content: "Adji Taufiq — KERJAKU" },
+      { name: "author", content: "KERJAKU" },
       { name: "language", content: "id-ID" },
       { name: "robots", content: "index, follow" },
       { property: "og:title", content: socialTitle },
@@ -81,8 +79,10 @@ export const Route = createFileRoute("/")({
           "@graph": [
             {
               "@type": "WebSite",
+              "@id": "https://kerjaku.space/#website",
               name: "KERJAKU",
               url: "https://kerjaku.space/",
+              description,
               inLanguage: "id-ID",
               publisher: { "@id": "https://kerjaku.space/#organization" },
             },
@@ -90,6 +90,7 @@ export const Route = createFileRoute("/")({
               "@type": "Organization",
               "@id": "https://kerjaku.space/#organization",
               name: "KERJAKU",
+              alternateName: "KERJAKU Digital Solution Studio",
               url: "https://kerjaku.space/",
               email: "cs@kerjaku.space",
               slogan: "Work, made your way.",
@@ -99,14 +100,13 @@ export const Route = createFileRoute("/")({
               knowsLanguage: "id-ID",
               makesOffer: [
                 "Jasa pembuatan website profesional",
-                "Landing page bisnis",
+                "Custom business system",
                 "Web application & dashboard custom",
-                "AI & automation system",
+                "AI & automation solutions",
               ].map((name) => ({
                 "@type": "Offer",
                 itemOffered: { "@type": "Service", name, serviceType: name },
               })),
-              founder: { "@id": "https://kerjaku.space/#adji-taufiq" },
             },
             {
               "@type": "FAQPage",
@@ -116,14 +116,6 @@ export const Route = createFileRoute("/")({
                 name: item.q,
                 acceptedAnswer: { "@type": "Answer", text: item.a },
               })),
-            },
-            {
-              "@type": "Person",
-              "@id": "https://kerjaku.space/#adji-taufiq",
-              name: "Adji Taufiq",
-              jobTitle: "Digital Product Builder",
-              url: "https://kerjaku.space/",
-              worksFor: { "@id": "https://kerjaku.space/#organization" },
             },
           ],
         }),
