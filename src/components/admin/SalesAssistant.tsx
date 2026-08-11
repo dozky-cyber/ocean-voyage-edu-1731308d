@@ -13,9 +13,23 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-export function SalesAssistant({ lead }: { lead: SalesLead }) {
-  const [open, setOpen] = useState(false);
+export function SalesAssistant({
+  lead,
+  open: controlledOpen,
+  onOpenChange,
+}: {
+  lead: SalesLead;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (onOpenChange) onOpenChange(next);
+    else setUncontrolledOpen(next);
+  };
   const brief = open ? buildSalesBrief(lead) : null;
+
 
   async function copyFollowUp(message: string) {
     try {
