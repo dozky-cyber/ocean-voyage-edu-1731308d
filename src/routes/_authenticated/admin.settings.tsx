@@ -21,6 +21,63 @@ import {
   roleBadgeClass,
   type WorkspaceRole,
 } from "@/lib/admin/roles";
+import {
+  AI_TONES,
+  loadWorkspaceSettings,
+  saveWorkspaceSettings,
+  type AiTone,
+  type WorkspaceSettings,
+} from "@/lib/admin/workspace-settings";
+
+function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  return (
+    <label className={`block ${className ?? ""}`}>
+      <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+        {label}
+      </span>
+      <input
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none transition focus:border-primary/60"
+      />
+    </label>
+  );
+}
+
+function ToggleRow({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <label className="grid cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border/40 bg-background/30 px-3 py-2.5">
+      <span className="min-w-0 truncate text-sm">{label}</span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-4 w-4 shrink-0 accent-primary"
+      />
+    </label>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   component: SettingsPage,
