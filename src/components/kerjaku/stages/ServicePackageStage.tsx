@@ -1,8 +1,30 @@
 import { analytics } from "@/lib/analytics";
 import { servicePackageCta, servicePackages } from "@/lib/consultation-content";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { useEffect, useState } from "react";
 import { Reveal } from "../Reveal";
 
 export function ServicePackageStage() {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
   return (
     <section id="paket-layanan" className="relative px-5 py-20 sm:px-8">
       <div className="mx-auto max-w-5xl">
