@@ -129,7 +129,7 @@ function AutomationPage() {
           label="Jatuh tempo"
           value={String(overdue.length)}
           icon={AlarmClock}
-          tone={overdue.length ? "danger" : "default"}
+          tone={overdue.length ? "hot" : "default"}
         />
         <MetricTile label="Selesai" value={String(completed.length)} icon={CheckCircle2} />
       </div>
