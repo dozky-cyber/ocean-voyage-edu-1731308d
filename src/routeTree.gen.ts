@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortfolioSlugRouteImport } from './routes/portfolio.$slug'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
+import { Route as ApiAssistantChatRouteImport } from './routes/api/assistant-chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin.team'
@@ -70,6 +71,11 @@ const PortfolioSlugRoute = PortfolioSlugRouteImport.update({
 const PortalTokenRoute = PortalTokenRouteImport.update({
   id: '/portal/$token',
   path: '/portal/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAssistantChatRoute = ApiAssistantChatRouteImport.update({
+  id: '/api/assistant-chat',
+  path: '/api/assistant-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -252,6 +260,7 @@ export interface FileRoutesById {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/admin'
+    | '/api/assistant-chat'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
+    | '/api/assistant-chat'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/api/assistant-chat'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/_authenticated/admin/analytics'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   JasaPembuatanWebsiteAplikasiLandingPageRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiAssistantChatRoute: typeof ApiAssistantChatRoute
   PortalTokenRoute: typeof PortalTokenRoute
   PortfolioSlugRoute: typeof PortfolioSlugRoute
   ApiPublicHooksAutomationScanRoute: typeof ApiPublicHooksAutomationScanRoute
@@ -422,6 +435,13 @@ declare module '@tanstack/react-router' {
       path: '/portal/$token'
       fullPath: '/portal/$token'
       preLoaderRoute: typeof PortalTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/assistant-chat': {
+      id: '/api/assistant-chat'
+      path: '/api/assistant-chat'
+      fullPath: '/api/assistant-chat'
+      preLoaderRoute: typeof ApiAssistantChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin': {
@@ -628,6 +648,7 @@ const rootRouteChildren: RootRouteChildren = {
   JasaPembuatanWebsiteAplikasiLandingPageRoute:
     JasaPembuatanWebsiteAplikasiLandingPageRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiAssistantChatRoute: ApiAssistantChatRoute,
   PortalTokenRoute: PortalTokenRoute,
   PortfolioSlugRoute: PortfolioSlugRoute,
   ApiPublicHooksAutomationScanRoute: ApiPublicHooksAutomationScanRoute,
@@ -636,13 +657,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
