@@ -18,6 +18,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminLeadsIndexRouteImport } from './routes/_authenticated/admin.leads.index'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
+import { Route as AuthenticatedAdminLeadsIdRouteImport } from './routes/_authenticated/admin.leads.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -65,6 +66,12 @@ const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
   path: '/api/public/telegram/test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminLeadsIdRoute =
+  AuthenticatedAdminLeadsIdRouteImport.update({
+    id: '/leads/$id',
+    path: '/leads/$id',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/admin/leads/': typeof AuthenticatedAdminLeadsIndexRoute
 }
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsIndexRoute
 }
@@ -94,6 +103,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/_authenticated/admin/leads/': typeof AuthenticatedAdminLeadsIndexRoute
 }
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/admin/'
+    | '/admin/leads/$id'
     | '/api/public/telegram/test'
     | '/admin/leads/'
   fileRoutesByTo: FileRoutesByTo
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/admin'
+    | '/admin/leads/$id'
     | '/api/public/telegram/test'
     | '/admin/leads'
   id:
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/leads/$id'
     | '/api/public/telegram/test'
     | '/_authenticated/admin/leads/'
   fileRoutesById: FileRoutesById
@@ -204,16 +217,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/leads/$id': {
+      id: '/_authenticated/admin/leads/$id'
+      path: '/leads/$id'
+      fullPath: '/admin/leads/$id'
+      preLoaderRoute: typeof AuthenticatedAdminLeadsIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminLeadsIdRoute: typeof AuthenticatedAdminLeadsIdRoute
   AuthenticatedAdminLeadsIndexRoute: typeof AuthenticatedAdminLeadsIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminLeadsIdRoute: AuthenticatedAdminLeadsIdRoute,
   AuthenticatedAdminLeadsIndexRoute: AuthenticatedAdminLeadsIndexRoute,
 }
 
