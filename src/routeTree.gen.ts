@@ -14,6 +14,7 @@ import { Route as JasaPembuatanWebsiteAplikasiLandingPageRouteImport } from './r
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PortfolioSlugRouteImport } from './routes/portfolio.$slug'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -57,6 +58,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortfolioSlugRoute = PortfolioSlugRouteImport.update({
+  id: '/portfolio/$slug',
+  path: '/portfolio/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortalTokenRoute = PortalTokenRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/portal/$token': typeof PortalTokenRoute
+  '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/portal/$token': typeof PortalTokenRoute
+  '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/portal/$token': typeof PortalTokenRoute
+  '/portfolio/$slug': typeof PortfolioSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/admin'
     | '/portal/$token'
+    | '/portfolio/$slug'
     | '/admin/analytics'
     | '/admin/pipeline'
     | '/admin/portfolio'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/portal/$token'
+    | '/portfolio/$slug'
     | '/admin/analytics'
     | '/admin/pipeline'
     | '/admin/portfolio'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/portal/$token'
+    | '/portfolio/$slug'
     | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/portfolio'
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
   JasaPembuatanWebsiteAplikasiLandingPageRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   PortalTokenRoute: typeof PortalTokenRoute
+  PortfolioSlugRoute: typeof PortfolioSlugRoute
   ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
 }
 
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portfolio/$slug': {
+      id: '/portfolio/$slug'
+      path: '/portfolio/$slug'
+      fullPath: '/portfolio/$slug'
+      preLoaderRoute: typeof PortfolioSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portal/$token': {
@@ -566,6 +586,7 @@ const rootRouteChildren: RootRouteChildren = {
     JasaPembuatanWebsiteAplikasiLandingPageRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   PortalTokenRoute: PortalTokenRoute,
+  PortfolioSlugRoute: PortfolioSlugRoute,
   ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
 }
 export const routeTree = rootRouteImport

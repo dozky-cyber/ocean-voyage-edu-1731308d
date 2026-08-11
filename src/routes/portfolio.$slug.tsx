@@ -3,6 +3,7 @@ import { ArrowLeft, CheckCircle2, Quote } from "lucide-react";
 
 import { OceanScene } from "@/components/kerjaku/OceanScene";
 import { SiteNav } from "@/components/kerjaku/SiteNav";
+import type { PortfolioProject } from "@/lib/admin/portfolio";
 import { getPublicPortfolioProject } from "@/lib/portfolio.functions";
 
 const BASE = "https://kerjaku.space";
@@ -87,7 +88,7 @@ function Block({ label, body }: { label: string; body: string | null }) {
 }
 
 function CaseStudyPage() {
-  const { project } = Route.useLoaderData();
+  const { project } = Route.useLoaderData() as { project: PortfolioProject };
 
   return (
     <div className="relative min-h-screen bg-abyss text-foreground">
