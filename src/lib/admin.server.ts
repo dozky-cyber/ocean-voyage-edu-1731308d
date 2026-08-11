@@ -157,6 +157,8 @@ export type AdminOverview = {
   categories: { name: string; count: number }[];
   monthly: { month: string; leads: number; hot: number }[];
   recent: LeadListRow[];
+  priority: PriorityLead[];
+
 };
 
 export function buildOverview(rows: LeadListRow[]): AdminOverview {
