@@ -2,19 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  AlertTriangle,
   Bot,
   FileText,
   Flame,
+  FolderKanban,
   KanbanSquare,
   MessageCircle,
   Plus,
   Sparkle,
   TrendingUp,
+  UserCheck,
   Users,
+  UsersRound,
 } from "lucide-react";
 
 import { BarRows, Chip, Funnel, MetricTile, SectionCard } from "@/components/admin/ui";
 import { getAdminOverview, getProposalAnalytics } from "@/lib/admin.functions";
+import { getTeamWorkspace } from "@/lib/team.functions";
 import {
   formatDate,
   leadSourceLabel,
