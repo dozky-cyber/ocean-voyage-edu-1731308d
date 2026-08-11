@@ -33,6 +33,7 @@ import { Route as AuthenticatedAdminLeadsIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminInvoicesIndexRouteImport } from './routes/_authenticated/admin.invoices.index'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
 import { Route as AuthenticatedAdminAssistantIndexRouteImport } from './routes/_authenticated/admin.assistant.index'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
 import { Route as ApiPublicHooksAutomationScanRouteImport } from './routes/api/public/hooks/automation-scan'
 import { Route as AuthenticatedAdminProposalsIdRouteImport } from './routes/_authenticated/admin.proposals.$id'
@@ -175,6 +176,12 @@ const AuthenticatedAdminAssistantIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdminAssistantRoute,
   } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
   id: '/api/public/telegram/test',
   path: '/api/public/telegram/test',
@@ -249,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/admin/assistant/': typeof AuthenticatedAdminAssistantIndexRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
@@ -280,6 +288,7 @@ export interface FileRoutesByTo {
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/admin/assistant': typeof AuthenticatedAdminAssistantIndexRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/invoices': typeof AuthenticatedAdminInvoicesIndexRoute
@@ -315,6 +324,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
   '/_authenticated/admin/assistant/': typeof AuthenticatedAdminAssistantIndexRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/_authenticated/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
+    | '/api/public/telegram/webhook'
     | '/admin/assistant/'
     | '/admin/clients/'
     | '/admin/invoices/'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
+    | '/api/public/telegram/webhook'
     | '/admin/assistant'
     | '/admin/clients'
     | '/admin/invoices'
@@ -415,6 +427,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
+    | '/api/public/telegram/webhook'
     | '/_authenticated/admin/assistant/'
     | '/_authenticated/admin/clients/'
     | '/_authenticated/admin/invoices/'
@@ -434,6 +447,7 @@ export interface RootRouteChildren {
   PortfolioSlugRoute: typeof PortfolioSlugRoute
   ApiPublicHooksAutomationScanRoute: typeof ApiPublicHooksAutomationScanRoute
   ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -606,6 +620,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAssistantIndexRouteImport
       parentRoute: typeof AuthenticatedAdminAssistantRoute
     }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/test': {
       id: '/api/public/telegram/test'
       path: '/api/public/telegram/test'
@@ -754,6 +775,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioSlugRoute: PortfolioSlugRoute,
   ApiPublicHooksAutomationScanRoute: ApiPublicHooksAutomationScanRoute,
   ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
