@@ -48,7 +48,10 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
   const [result, setResult] = useState<ConsultantResult | null>(null);
   const [contact, setContact] = useState({ name: "", email: "", whatsapp: "" });
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
+  const [honeypot, setHoneypot] = useState("");
+  const [mountedAt] = useState(() => Date.now());
   const [sending, setSending] = useState(false);
+
   const [submitted, setSubmitted] = useState(false);
   const submitLead = useServerFn(submitConsultationLead);
 
