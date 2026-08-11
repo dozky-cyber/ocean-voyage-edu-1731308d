@@ -21,11 +21,13 @@ export const Route = createFileRoute("/api/assistant-chat")({
         if (!auth) return new Response("Unauthorized", { status: 401 });
 
         const { assertWorkspace } = await import("@/lib/admin.server");
+        let role: import("@/lib/admin/roles").WorkspaceRole;
         try {
-          await assertWorkspace(auth.supabase, auth.userId);
+          role = await assertWorkspace(auth.supabase, auth.userId);
         } catch {
           return new Response("Forbidden", { status: 403 });
         }
+
 
         const body = (await request.json()) as Body;
         const messages = Array.isArray(body.messages) ? (body.messages as UIMessage[]) : null;
