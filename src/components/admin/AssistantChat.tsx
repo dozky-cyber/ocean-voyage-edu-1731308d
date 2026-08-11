@@ -55,11 +55,10 @@ export function AssistantChat({
     transport: new DefaultChatTransport({
       api: "/api/assistant-chat",
       body: { threadId },
-      headers: async () => {
+      headers: async (): Promise<Record<string, string>> => {
         const { data } = await supabase.auth.getSession();
-        return data.session?.access_token
-          ? { Authorization: `Bearer ${data.session.access_token}` }
-          : {};
+        const token = data.session?.access_token;
+        return token ? { Authorization: `Bearer ${token}` } : {};
       },
     }),
     onFinish: () => onExchange?.(),
@@ -112,7 +111,7 @@ export function AssistantChat({
               .join("");
             return (
               <Message from={message.role} key={message.id}>
-                <MessageContent variant={message.role === "user" ? "contained" : "flat"}>
+                <MessageContent>
                   <MessageResponse>{text}</MessageResponse>
                 </MessageContent>
               </Message>
