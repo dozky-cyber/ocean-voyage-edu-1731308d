@@ -224,3 +224,46 @@ export function getLeadTracking(): LeadTracking {
     leadTemperature: temperatureFor(score),
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * AI consultant outcome (kept alongside the journey for the same session)
+ * ------------------------------------------------------------------------ */
+
+export type AiConsultationRecord = {
+  businessCategory: string;
+  problems: string[];
+  requirements: string[];
+  packageName: string;
+  complexity: "Low" | "Medium" | "High";
+  score: number;
+  qualification: "Cold Lead" | "Warm Lead" | "Hot Lead";
+  summary: string;
+  conversation: { q: string; a: string }[];
+};
+
+export function saveAiConsultation(record: AiConsultationRecord) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(AI_STORAGE_KEY, JSON.stringify(record));
+  } catch {
+    /* storage unavailable — best-effort */
+  }
+  update((state) => {
+    state.journey.push({
+      step: `ai:recommended:${record.packageName}`,
+      at: new Date().toISOString(),
+    });
+    if (!state.selectedPackage) state.selectedPackage = record.packageName;
+  });
+  scoreAction("complete_ai_consultation");
+}
+
+export function getAiConsultation(): AiConsultationRecord | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.sessionStorage.getItem(AI_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as AiConsultationRecord) : undefined;
+  } catch {
+    return undefined;
+  }
+}
