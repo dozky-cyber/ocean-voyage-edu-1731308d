@@ -131,6 +131,7 @@ export type FeatureGroup = {
 export type Project = {
   name: string;
   category: string;
+  tagline?: string;
   description: string;
   problem?: string;
   solution?: string;
@@ -146,12 +147,13 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "RO MEMORY",
       category: "FIELD ACTIVITY INTELLIGENCE SYSTEM",
+      tagline: "Sistem Intelijen Aktivitas Lapangan",
       problem:
         "Sebagai Relationship Officer pada industri material interior, aktivitas lapangan membutuhkan pengelolaan data yang cepat, terstruktur, dan mudah dianalisa.\n\nTantangan yang terjadi:\n- Sulit mengetahui progres target dan pencapaian secara real-time.\n- Data workshop, customer, dan aktivitas visit masih tersebar.\n- Membutuhkan waktu lama untuk membuat laporan pekerjaan.\n- Informasi penting sering terlupakan karena tidak langsung terdokumentasi.\n- Sulit menentukan prioritas lokasi visit berikutnya.\n- Kesulitan mempresentasikan performa kerja karena data belum tervisualisasi dengan baik.",
       solution:
         "Sistem Field Activity Intelligence berbasis AI yang mengubah aktivitas lapangan menjadi informasi bisnis terstruktur melalui dashboard visual, analisa data, dan otomatisasi laporan.\n\nRO Memory membantu mengelola aktivitas visit, database workshop/customer, monitoring performa, hingga pembuatan laporan otomatis dalam satu platform terintegrasi.",
       description:
-        "Enterprise Field Intelligence Platform yang mengubah aktivitas lapangan menjadi informasi bisnis terstruktur melalui dashboard visual, analisa data, dan otomatisasi laporan.",
+        "Dari data lapangan yang tercecer menjadi pusat kendali bisnis dalam satu genggaman. RO Memory mengubah aktivitas, data customer, dan laporan menjadi informasi yang terstruktur melalui dashboard pintar berbasis AI. Temukan informasi lebih cepat, buat laporan tanpa proses yang rumit, bagikan insight ke atasan hanya dengan satu klik, dan biarkan AI Assistant membantu tim mengambil keputusan yang lebih tepat.",
       featureGroups: [
         {
           title: "Smart Business Dashboard",
@@ -217,18 +219,20 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "QResto",
       category: "Smart Order Management System",
+      tagline: "Sistem Pemesanan Restoran Digital",
       problem:
         "Cafe dan restoran membutuhkan cara lebih mulus untuk menghubungkan pelanggan, kasir, dan operasional dapur dalam satu alur pesanan.",
       solution:
-        "Platform smart order management berbasis QR meja yang memungkinkan pelanggan memesan mandiri, sementara admin mengelola pesanan, transaksi, dan laporan real-time.",
+        "Pemesanan berbasis QR Code di setiap meja: pelanggan cukup scan, memilih menu, dan mengirim pesanan langsung dari ponsel tanpa antre di kasir.\n\nProses pemesanan menjadi lebih cepat dan minim salah catat, sementara operasional restoran berjalan lebih rapi karena pesanan, transaksi, dan laporan penjualan terkelola dalam satu dashboard.",
       description:
-        "Platform smart order management berbasis QR meja yang memungkinkan pelanggan memesan mandiri, sementara admin mengelola pesanan, transaksi, dan laporan real-time.",
+        "QResto membantu pelanggan memilih menu dan melakukan pemesanan dengan mudah tanpa harus antre di kasir. Tidak perlu khawatir kehilangan kursi pilihan anda, cukup scan barcode di meja, pesanan makanan dan minuman datang, dan nikmati layanan yang lebih cepat dan pintar. Di sisi bisnis, satu dashboard membantu restoran mengelola transaksi, penjualan, dan laporan secara lebih terstruktur dan update.",
       features: [
-        "Customer QR ordering",
-        "Admin dashboard",
-        "Transaction management",
-        "Receipt printing",
-        "Real-time sales reporting",
+        "QR Code Menu di setiap meja",
+        "Digital ordering langsung dari ponsel pelanggan",
+        "Order management untuk kasir dan dapur",
+        "Transaction dashboard terpusat",
+        "Sales reporting real-time",
+        "Cetak struk pesanan",
       ],
       status: "LIVE",
       icon: "workflow",
@@ -237,12 +241,13 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "DOMPET GUE",
       category: "Personal Finance Workspace",
+      tagline: "Sistem Manajemen Keuangan Pribadi",
       problem:
         "Pencatatan keuangan pribadi tersebar di catatan, aplikasi, dan spreadsheet sehingga sulit mendapatkan gambaran keuangan yang utuh.",
       solution:
         "Aplikasi keuangan pribadi untuk mencatat aset, pemasukan, pengeluaran, hutang, cicilan, dan aktivitas keuangan dalam satu tempat.",
       description:
-        "Aplikasi keuangan pribadi untuk mencatat aset, pemasukan, pengeluaran, hutang, cicilan, dan aktivitas keuangan dalam satu tempat.",
+        "Mengatur keuangan pribadi seharusnya sederhana. Dompet Gue merapikan pemasukan, pengeluaran, dan aset dalam satu workspace, sehingga setiap rupiah terlihat jelas ke mana perginya. Dalam sekali lihat, kondisi keuangan Anda hari ini menjadi mudah dipahami dan lebih mudah dikendalikan.",
       features: [
         "Asset tracking",
         "Cash flow monitoring",
@@ -256,12 +261,13 @@ export const projects: Record<ProjectMode, Project[]> = {
     {
       name: "MATERIAL ESTIMATOR",
       category: "Furniture & Interior Material Planning",
+      tagline: "Sistem Estimasi Material Furniture & Interior",
       problem:
         "Perhitungan kebutuhan material furniture dan interior sering dilakukan manual sehingga rentan salah dan memakan waktu.",
       solution:
         "Sistem untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan agar perencanaan bahan lebih cepat dan terstruktur.",
       description:
-        "Sistem untuk membantu menghitung kebutuhan material furniture dan interior berdasarkan ukuran pekerjaan agar perencanaan bahan lebih cepat dan terstruktur.",
+        "Menghitung kebutuhan material tidak perlu lagi menyita waktu. Material Estimator menerjemahkan ukuran pekerjaan furniture dan interior menjadi estimasi bahan yang rapi dan konsisten. Perencanaan proyek jadi lebih cepat, lebih terstruktur, dan lebih mudah dipertanggungjawabkan.",
       features: [
         "Material calculation",
         "Furniture planning",
