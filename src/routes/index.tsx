@@ -23,6 +23,8 @@ import { ServicePackageStage } from "@/components/kerjaku/stages/ServicePackageS
 import { FaqStage } from "@/components/kerjaku/stages/FaqStage";
 import { WhyStage } from "@/components/kerjaku/stages/WhyStage";
 import { ConsultationStage } from "@/components/kerjaku/stages/ConsultationStage";
+import { AiConsultantStage } from "@/components/kerjaku/stages/AiConsultantStage";
+import { AiConsultantFab } from "@/components/kerjaku/AiConsultantFab";
 import { FinalStage } from "@/components/kerjaku/stages/FinalStage";
 
 
@@ -156,9 +158,11 @@ function Index() {
 
         <TrustCtaStage />
         <TrustReasonsStage />
+        <AiConsultantStage />
         <ConsultationStage />
         <FinalStage />
       </main>
+      <AiConsultantFab />
       <JourneyPanels />
     </JourneyProvider>
   );

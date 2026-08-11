@@ -10,7 +10,7 @@ import {
 import { consultationFormSchema, type ConsultationForm } from "@/lib/consultation-schema";
 import { submitConsultationLead } from "@/lib/consultation.functions";
 import { analytics } from "@/lib/analytics";
-import { getLeadTracking } from "@/lib/lead-journey";
+import { getAiConsultation, getLeadTracking } from "@/lib/lead-journey";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
@@ -60,7 +60,8 @@ export function ConsultationStage() {
     setSending(true);
     try {
       const tracking = getLeadTracking();
-      await submit({ data: { form: parsed.data, tracking } });
+      const ai = getAiConsultation();
+      await submit({ data: { form: parsed.data, tracking, ...(ai ? { ai } : {}) } });
       analytics.consultationFormSubmit({
         project_type: parsed.data.projectType,
         budget: parsed.data.budget,
