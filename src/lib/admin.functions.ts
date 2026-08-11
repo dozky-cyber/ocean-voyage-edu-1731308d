@@ -139,6 +139,28 @@ export const updateLeadNotes = createServerFn({ method: "POST" })
     return setLeadNotes(context.supabase, data.id, data.notes);
   });
 
+/** Archive or restore a lead (data is kept, hidden from the active list). */
+export const setLeadArchiveState = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ id: z.string().uuid(), archived: z.boolean() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertLeadWork, setLeadArchived } = await import("./admin.server");
+    await assertLeadWork(context.supabase, context.userId);
+    return setLeadArchived(context.supabase, data.id, data.archived);
+  });
+
+/** Permanently delete a lead with all conversations, requirements and history. */
+export const deleteLeadPermanently = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { assertManage, purgeLead } = await import("./admin.server");
+    await assertManage(context.supabase, context.userId);
+    return purgeLead(data.id);
+  });
+
 /* --------------------------- Proposal generator --------------------------- */
 
 export const getLeadProposals = createServerFn({ method: "GET" })

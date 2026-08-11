@@ -45,6 +45,33 @@ export async function loadOrderBrief(
   return { brief, leadId: (row["lead_id"] as string) ?? null };
 }
 
+/** Same mapping, but resolved from the CRM lead id instead of a conversation. */
+export async function loadOrderBriefByLead(
+  supabase: Client,
+  leadId: string,
+): Promise<{ brief: OrderBriefData; leadId: string | null } | null> {
+  const { data, error } = await supabase
+    .from("conversation_requirements")
+    .select("conversation_id")
+    .eq("lead_id", leadId)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data?.conversation_id) return null;
+  return loadOrderBrief(supabase, data.conversation_id as string);
+}
+
+/** Resolve a brief from either a conversation id or a CRM lead id. */
+export async function loadOrderBriefFor(
+  supabase: Client,
+  target: { conversationId?: string; leadId?: string },
+) {
+  if (target.conversationId) return loadOrderBrief(supabase, target.conversationId);
+  if (target.leadId) return loadOrderBriefByLead(supabase, target.leadId);
+  return null;
+}
+
 function htmlFromMessage(message: string) {
   const esc = (value: string) =>
     value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
