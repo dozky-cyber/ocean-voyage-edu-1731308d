@@ -51,7 +51,14 @@ export const Route = createFileRoute("/api/assistant-chat")({
           assistant.buildMemoryContext(auth.supabase, threadId),
           assistant.buildBusinessSnapshot(auth.supabase),
         ]);
-        const system = assistant.buildSystemPrompt(memoryContext, businessSnapshot);
+        const { ASSISTANT_ACTION_GUIDE, buildAssistantTools } = await import(
+          "@/lib/assistant-tools.server"
+        );
+        const system = [
+          assistant.buildSystemPrompt(memoryContext, businessSnapshot),
+          "",
+          ASSISTANT_ACTION_GUIDE,
+        ].join("\n");
 
         const lastUser = [...messages].reverse().find((m) => m.role === "user");
         const question = lastUser ? textOf(lastUser) : "";
@@ -72,8 +79,11 @@ export const Route = createFileRoute("/api/assistant-chat")({
         const result = streamText({
           model,
           system,
+          tools: buildAssistantTools({ supabase: auth.supabase, userId: auth.userId, role }),
+          stopWhen: stepCountIs(50),
           messages: await convertToModelMessages(messages),
         });
+
 
         return result.toUIMessageStreamResponse({
           originalMessages: messages,
