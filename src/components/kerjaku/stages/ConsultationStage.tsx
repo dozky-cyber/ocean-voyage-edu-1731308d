@@ -39,10 +39,13 @@ export function ConsultationStage() {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<ConsultationForm>(empty);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [honeypot, setHoneypot] = useState("");
+  const [mountedAt] = useState(() => Date.now());
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [aiRecord, setAiRecord] = useState<AiConsultationRecord | undefined>(undefined);
   const submit = useServerFn(submitConsultationLead);
+
 
   // Prefill from a completed AI consultation so the visitor never re-enters data.
   useEffect(() => {
