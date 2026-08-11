@@ -507,6 +507,87 @@ export type Database = {
           },
         ]
       }
+      portfolio_projects: {
+        Row: {
+          category: string
+          client_type: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          features: Json
+          gallery: Json
+          id: string
+          og_image: string | null
+          position: number
+          problem: string | null
+          published: boolean
+          result: string | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          solution: string | null
+          tech_stack: Json
+          testimonial_author: string | null
+          testimonial_quote: string | null
+          testimonial_role: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          client_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          features?: Json
+          gallery?: Json
+          id?: string
+          og_image?: string | null
+          position?: number
+          problem?: string | null
+          published?: boolean
+          result?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          solution?: string | null
+          tech_stack?: Json
+          testimonial_author?: string | null
+          testimonial_quote?: string | null
+          testimonial_role?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          client_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          features?: Json
+          gallery?: Json
+          id?: string
+          og_image?: string | null
+          position?: number
+          problem?: string | null
+          published?: boolean
+          result?: string | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          solution?: string | null
+          tech_stack?: Json
+          testimonial_author?: string | null
+          testimonial_quote?: string | null
+          testimonial_role?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       project_activities: {
         Row: {
           action: string
