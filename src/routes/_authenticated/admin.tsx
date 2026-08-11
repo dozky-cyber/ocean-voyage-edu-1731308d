@@ -20,6 +20,7 @@ const NAV = [
   { to: "/admin", label: "Overview", exact: true },
   { to: "/admin/leads", label: "AI Lead CRM", exact: false },
   { to: "/admin/pipeline", label: "Sales Pipeline", exact: false },
+  { to: "/admin/proposals", label: "Proposals", exact: false },
 ] as const;
 
 function AdminLayout() {
