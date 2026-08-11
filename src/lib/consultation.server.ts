@@ -146,6 +146,7 @@ export async function storeConsultation(
   data: ConsultationForm,
   tracking?: LeadTrackingPayload,
   ai?: AiConsultationPayload,
+  leadSource: "ai_consultant" | "manual_form" = "manual_form",
 ) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row, error } = await supabaseAdmin
@@ -187,6 +188,7 @@ export async function storeConsultation(
       ai_qualification_status: ai?.qualification || null,
       ai_complexity: ai?.complexity || null,
       ai_conversation: ai?.conversation ?? [],
+      lead_source: leadSource,
     })
     .select("id, created_at")
     .single();

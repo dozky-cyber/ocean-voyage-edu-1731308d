@@ -59,6 +59,9 @@ export const aiConsultationSchema = z.object({
     .array(z.object({ q: z.string().max(300), a: z.string().max(600) }))
     .max(20)
     .default([]),
+  budget: z.string().max(120).optional(),
+  timeline: z.string().max(120).optional(),
+  users: z.string().max(120).optional(),
 });
 
 export type AiConsultationPayload = z.infer<typeof aiConsultationSchema>;
@@ -68,6 +71,7 @@ export const consultationSubmissionSchema = z.object({
   form: consultationFormSchema,
   tracking: leadTrackingSchema.optional(),
   ai: aiConsultationSchema.optional(),
+  leadSource: z.enum(["ai_consultant", "manual_form"]).default("manual_form"),
 });
 
 export type ConsultationSubmission = z.infer<typeof consultationSubmissionSchema>;

@@ -239,6 +239,9 @@ export type AiConsultationRecord = {
   qualification: "Cold Lead" | "Warm Lead" | "Hot Lead";
   summary: string;
   conversation: { q: string; a: string }[];
+  budget?: string;
+  timeline?: string;
+  users?: string;
 };
 
 export function saveAiConsultation(record: AiConsultationRecord) {
