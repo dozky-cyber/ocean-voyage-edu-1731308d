@@ -41,7 +41,7 @@ export function AiConsultantFab() {
           type="button"
           onClick={() => setOpen(true)}
           aria-label={aiConsultantSection.fabLabel}
-          className="fixed bottom-5 right-4 z-50 flex h-13 items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-3 text-sm text-foreground backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/70 sm:bottom-7 sm:right-7"
+          className="fixed bottom-5 right-4 z-[70] flex h-13 items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-3 text-sm text-foreground backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/70 sm:bottom-7 sm:right-7"
         >
           <Bot className="h-4.5 w-4.5 text-primary" strokeWidth={1.5} />
           <span className="hidden sm:inline">{aiConsultantSection.fabLabel}</span>
@@ -59,7 +59,7 @@ export function AiConsultantFab() {
             role="dialog"
             aria-modal="true"
             aria-label="KERJAKU AI Consultant"
-            className="fixed inset-0 z-[60] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background/95 p-4 backdrop-blur-xl sm:inset-auto sm:bottom-7 sm:right-7 sm:h-[38rem] sm:max-h-[80vh] sm:w-[26rem] sm:rounded-[1.75rem] sm:bg-transparent sm:p-5 sm:glass-panel"
+            className="fixed inset-0 z-[100] flex h-[100dvh] w-screen flex-col overflow-hidden bg-background/95 p-4 backdrop-blur-xl sm:inset-auto sm:bottom-7 sm:right-7 sm:h-[38rem] sm:max-h-[80vh] sm:w-[26rem] sm:rounded-[1.75rem] sm:bg-transparent sm:p-5 sm:glass-panel"
             style={{ paddingTop: "max(1rem, env(safe-area-inset-top))", paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
           >
             <AiConsultantChat source="floating" onClose={() => setOpen(false)} fill />
