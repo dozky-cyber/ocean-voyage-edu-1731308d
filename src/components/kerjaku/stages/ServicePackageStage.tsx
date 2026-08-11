@@ -40,9 +40,15 @@ export function ServicePackageStage() {
           </p>
         </Reveal>
 
-        <div className="mt-10 grid gap-5">
-          {servicePackages.packages.map((pkg, i) => (
-            <Reveal key={pkg.title} delay={0.08 * i}>
+        <Carousel
+          setApi={setApi}
+          opts={{ align: "start", loop: false, dragFree: false, containScroll: "trimSnaps" }}
+          className="mt-10"
+        >
+          <CarouselContent className="-ml-5 items-start">
+            {servicePackages.packages.map((pkg, i) => (
+              <CarouselItem key={pkg.title} className="pl-5 basis-full lg:basis-4/5">
+            <Reveal delay={0.08 * i}>
               <article
                 className="relative overflow-hidden rounded-[1.75rem] glass-panel p-6 sm:p-8"
                 onClick={() => analytics.servicePackageClick(pkg.level)}
