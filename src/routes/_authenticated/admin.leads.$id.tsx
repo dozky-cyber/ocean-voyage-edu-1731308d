@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { LeadOrderBriefCard } from "@/components/admin/LeadOrderBriefCard";
 import { SalesAssistant } from "@/components/admin/SalesAssistant";
 import { Chip, GlassCard } from "@/components/admin/ui";
 import {
@@ -189,6 +190,8 @@ function LeadDetailPage() {
           </button>
         </div>
       </header>
+
+      <LeadOrderBriefCard leadId={id} />
 
       <GlassCard>
         <p className="text-sm font-medium">Sales Pipeline</p>

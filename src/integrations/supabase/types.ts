@@ -631,6 +631,7 @@ export type Database = {
           ai_recommended_package: string | null
           ai_requirements: Json
           ai_summary: string | null
+          archived_at: string | null
           budget: string
           business_name: string | null
           clicked_ctas: Json
@@ -674,6 +675,7 @@ export type Database = {
           ai_recommended_package?: string | null
           ai_requirements?: Json
           ai_summary?: string | null
+          archived_at?: string | null
           budget: string
           business_name?: string | null
           clicked_ctas?: Json
@@ -717,6 +719,7 @@ export type Database = {
           ai_recommended_package?: string | null
           ai_requirements?: Json
           ai_summary?: string | null
+          archived_at?: string | null
           budget?: string
           business_name?: string | null
           clicked_ctas?: Json
