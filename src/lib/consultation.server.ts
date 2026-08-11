@@ -1,5 +1,9 @@
 // Server-only consultation handling: persistence + notification formatting.
-import type { ConsultationForm, LeadTrackingPayload } from "./consultation-schema";
+import type {
+  AiConsultationPayload,
+  ConsultationForm,
+  LeadTrackingPayload,
+} from "./consultation-schema";
 
 export const LEAD_EMAIL = "admin.kerjaku@gmail.com";
 
@@ -7,10 +11,25 @@ function line(label: string, value?: string | null) {
   return `${label}\n${value && value.trim() ? value.trim() : "-"}\n`;
 }
 
+function aiTextLines(ai?: AiConsultationPayload) {
+  if (!ai) return [] as string[];
+  return [
+    "--- AI CONSULTANT ---",
+    line("Kategori Bisnis:", ai.businessCategory),
+    line("Masalah:", ai.problems.join(", ")),
+    line("Kebutuhan:", ai.requirements.join(", ")),
+    line("Rekomendasi Paket:", ai.packageName),
+    line("Kompleksitas:", ai.complexity),
+    line("AI Score:", `${ai.score}/100 (${ai.qualification})`),
+    line("Ringkasan AI:", ai.summary),
+  ];
+}
+
 export function formatLeadEmail(
   data: ConsultationForm,
   createdAt: string,
   tracking?: LeadTrackingPayload,
+  ai?: AiConsultationPayload,
 ) {
   return {
     subject: `[Konsultasi KERJAKU] Project Baru - ${data.name}`,
@@ -55,6 +74,7 @@ export function formatLeadTelegram(
   data: ConsultationForm,
   createdAt: string,
   tracking?: LeadTrackingPayload,
+  ai?: AiConsultationPayload,
 ) {
   const row = (label: string, value?: string) =>
     `<b>${label}:</b>\n${value && value.trim() ? esc(value.trim()) : "-"}`;
@@ -100,6 +120,24 @@ export function formatLeadTelegram(
           row("Durasi Kunjungan", `${tracking.visitDurationSeconds} detik`),
         ]
       : []),
+    ...(ai
+      ? [
+          "",
+          "🤖 <b>AI CONSULTANT</b>",
+          "",
+          row("Kategori Bisnis", ai.businessCategory),
+          "",
+          row("Masalah", ai.problems.join(", ")),
+          "",
+          row("Kebutuhan", ai.requirements.join(", ")),
+          "",
+          row("Rekomendasi Paket", ai.packageName),
+          "",
+          row("Kompleksitas", ai.complexity),
+          "",
+          `<b>AI Score:</b> ${ai.score}/100 (${esc(ai.qualification)})`,
+        ]
+      : []),
   ].join("\n");
 }
 
@@ -107,6 +145,7 @@ export function formatLeadTelegram(
 export async function storeConsultation(
   data: ConsultationForm,
   tracking?: LeadTrackingPayload,
+  ai?: AiConsultationPayload,
 ) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row, error } = await supabaseAdmin
@@ -139,6 +178,15 @@ export async function storeConsultation(
       device_type: tracking?.deviceType || null,
       lead_score: tracking?.leadScore ?? 0,
       lead_temperature: tracking?.leadTemperature || "Cold Lead",
+      ai_summary: ai?.summary || null,
+      ai_recommended_package: ai?.packageName || null,
+      ai_business_category: ai?.businessCategory || null,
+      ai_problems: ai?.problems ?? [],
+      ai_requirements: ai?.requirements ?? [],
+      ai_lead_score: ai?.score ?? 0,
+      ai_qualification_status: ai?.qualification || null,
+      ai_complexity: ai?.complexity || null,
+      ai_conversation: ai?.conversation ?? [],
     })
     .select("id, created_at")
     .single();
@@ -150,7 +198,12 @@ export async function storeConsultation(
   return row;
 }
 
-function htmlBody(data: ConsultationForm, createdAt: string, tracking?: LeadTrackingPayload) {
+function htmlBody(
+  data: ConsultationForm,
+  createdAt: string,
+  tracking?: LeadTrackingPayload,
+  ai?: AiConsultationPayload,
+) {
   const row = (label: string, value?: string | null) =>
     `<tr><td style="padding:6px 12px 6px 0;font-weight:600;vertical-align:top;white-space:nowrap">${esc(
       label,
@@ -183,6 +236,17 @@ function htmlBody(data: ConsultationForm, createdAt: string, tracking?: LeadTrac
           row("Durasi Kunjungan", `${tracking.visitDurationSeconds} detik`),
         ]
       : []),
+    ...(ai
+      ? [
+          row("AI — Kategori Bisnis", ai.businessCategory),
+          row("AI — Masalah", ai.problems.join(", ")),
+          row("AI — Kebutuhan", ai.requirements.join(", ")),
+          row("AI — Rekomendasi", ai.packageName),
+          row("AI — Kompleksitas", ai.complexity),
+          row("AI — Skor", `${ai.score}/100 (${ai.qualification})`),
+          row("AI — Ringkasan", ai.summary),
+        ]
+      : []),
   ].join("")}</table></div>`;
 }
 
@@ -194,6 +258,7 @@ export async function sendLeadEmail(
   data: ConsultationForm,
   createdAt: string,
   tracking?: LeadTrackingPayload,
+  ai?: AiConsultationPayload,
 ) {
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const resendKey = process.env["RESEND_API_KEY"];
@@ -202,7 +267,7 @@ export async function sendLeadEmail(
     return { sent: false, reason: "email_not_configured" as const };
   }
 
-  const { subject, text } = formatLeadEmail(data, createdAt, tracking);
+  const { subject, text } = formatLeadEmail(data, createdAt, tracking, ai);
   const from = process.env["RESEND_FROM"] ?? "KERJAKU <onboarding@resend.dev>";
 
   try {
@@ -219,7 +284,7 @@ export async function sendLeadEmail(
         reply_to: data.email,
         subject,
         text,
-        html: htmlBody(data, createdAt, tracking),
+        html: htmlBody(data, createdAt, tracking, ai),
       }),
     });
 
