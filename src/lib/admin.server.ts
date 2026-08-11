@@ -454,11 +454,18 @@ export async function restoreProposalVersion(
 
 export async function setProposalStatus(supabase: Client, id: string, status: ProposalStatus) {
   const now = new Date().toISOString();
-  const patch: Record<string, string> = { status };
-  if (status === "Sent") patch['sent_at'] = now;
-  if (status === "Viewed") patch['viewed_at'] = now;
-  if (status === "Approved") patch['approved_at'] = now;
-  if (status === "Rejected") patch['rejected_at'] = now;
+  const patch: {
+    status: string;
+    sent_at?: string;
+    viewed_at?: string;
+    approved_at?: string;
+    rejected_at?: string;
+  } = { status };
+  if (status === "Sent") patch.sent_at = now;
+  if (status === "Viewed") patch.viewed_at = now;
+  if (status === "Approved") patch.approved_at = now;
+  if (status === "Rejected") patch.rejected_at = now;
+
   const { error } = await supabase.from("proposals").update(patch).eq("id", id);
   if (error) throw new Error(error.message);
   return { ok: true as const };
