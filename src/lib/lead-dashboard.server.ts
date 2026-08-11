@@ -7,15 +7,29 @@
  * call it from trusted server code only.
  */
 
-export type LeadStatus = "New" | "Contacted" | "Proposal Sent" | "Negotiation" | "Closed";
+export type LeadStatus =
+  | "New Lead"
+  | "Contacted"
+  | "Consultation"
+  | "Proposal Sent"
+  | "Negotiation"
+  | "Payment"
+  | "Project Development"
+  | "Completed"
+  | "Closed";
 
 export const LEAD_STATUSES: LeadStatus[] = [
-  "New",
+  "New Lead",
   "Contacted",
+  "Consultation",
   "Proposal Sent",
   "Negotiation",
+  "Payment",
+  "Project Development",
+  "Completed",
   "Closed",
 ];
+
 
 export type LeadDashboard = {
   totalVisitors: number;
@@ -101,7 +115,7 @@ export async function getLeadDashboard(totalVisitors = 0): Promise<LeadDashboard
   for (const row of rows) {
     const status = (LEAD_STATUSES as string[]).includes(row.status ?? "")
       ? (row.status as LeadStatus)
-      : "New";
+      : "New Lead";
     statusBreakdown[status] += 1;
 
     if (row.lead_temperature === "Hot Lead") temperature.hot += 1;
