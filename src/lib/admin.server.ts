@@ -268,13 +268,15 @@ export function buildOverview(rows: LeadListRow[]): AdminOverview {
 
 import {
   buildProposalSections,
+  buildPricingItems,
   recommendPackage,
   buildSalesBrief,
+  type PricingItem,
   type ProposalStatus,
 } from "@/lib/admin/sales-ai";
 
 export const PROPOSAL_COLUMNS =
-  "id, lead_id, title, status, recommended_package, content, investment_note, timeline_note, sent_at, approved_at, created_at, updated_at";
+  "id, lead_id, title, status, recommended_package, content, pricing_items, currency, valid_until, version, client_name, investment_note, timeline_note, sent_at, viewed_at, approved_at, rejected_at, created_at, updated_at";
 
 export async function fetchProposals(supabase: Client, leadId?: string) {
   let query = supabase
@@ -298,10 +300,25 @@ export async function fetchProposal(supabase: Client, id: string) {
   return data;
 }
 
+export async function fetchProposalVersions(supabase: Client, proposalId: string) {
+  const { data, error } = await supabase
+    .from("proposal_versions")
+    .select(
+      "id, proposal_id, version, title, recommended_package, content, pricing_items, investment_note, timeline_note, note, created_by, created_at",
+    )
+    .eq("proposal_id", proposalId)
+    .order("version", { ascending: false })
+    .limit(50);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 export async function createProposalForLead(supabase: Client, leadId: string, userId: string) {
   const lead = await fetchLead(supabase, leadId);
   if (!lead) throw new Error("Lead tidak ditemukan.");
   const brief = buildSalesBrief(lead);
+  const validUntil = new Date();
+  validUntil.setDate(validUntil.getDate() + 30);
   const { data, error } = await supabase
     .from("proposals")
     .insert({
@@ -310,6 +327,11 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       status: "Draft",
       recommended_package: recommendPackage(lead),
       content: buildProposalSections(lead),
+      pricing_items: buildPricingItems(lead),
+      currency: "IDR",
+      valid_until: validUntil.toISOString().slice(0, 10),
+      version: 1,
+      client_name: lead.business_name || lead.company || lead.name,
       investment_note: brief.investment,
       timeline_note: brief.timeline,
       created_by: userId,
@@ -331,6 +353,11 @@ export async function duplicateProposal(supabase: Client, id: string, userId: st
       status: "Draft",
       recommended_package: source.recommended_package,
       content: source.content,
+      pricing_items: source.pricing_items,
+      currency: source.currency,
+      valid_until: source.valid_until,
+      version: 1,
+      client_name: source.client_name,
       investment_note: source.investment_note,
       timeline_note: source.timeline_note,
       created_by: userId,
@@ -341,32 +368,97 @@ export async function duplicateProposal(supabase: Client, id: string, userId: st
   return { id: data.id as string };
 }
 
-export async function saveProposal(
-  supabase: Client,
-  input: {
-    id: string;
-    title: string;
-    recommended_package: string | null;
-    content: { heading: string; body: string }[];
-  },
-) {
+export type SaveProposalInput = {
+  id: string;
+  title: string;
+  client_name?: string | null;
+  recommended_package: string | null;
+  content: { heading: string; body: string }[];
+  pricing_items?: PricingItem[];
+  currency?: string | null;
+  valid_until?: string | null;
+  investment_note?: string | null;
+  timeline_note?: string | null;
+  version_note?: string | null;
+};
+
+/** Saves the proposal and snapshots the previous state as a restorable version. */
+export async function saveProposal(supabase: Client, input: SaveProposalInput, userId: string) {
+  const current = await fetchProposal(supabase, input.id);
+  if (!current) throw new Error("Proposal tidak ditemukan.");
+
+  const nextVersion = (Number(current.version) || 1) + 1;
+
+  const { error: versionError } = await supabase.from("proposal_versions").insert({
+    proposal_id: input.id,
+    version: Number(current.version) || 1,
+    title: current.title,
+    recommended_package: current.recommended_package,
+    content: current.content,
+    pricing_items: current.pricing_items ?? [],
+    investment_note: current.investment_note,
+    timeline_note: current.timeline_note,
+    note: input.version_note ?? null,
+    created_by: userId,
+  });
+  if (versionError) throw new Error(versionError.message);
+
   const { error } = await supabase
     .from("proposals")
     .update({
       title: input.title,
+      client_name: input.client_name ?? current.client_name,
       recommended_package: input.recommended_package,
       content: input.content,
+      pricing_items: input.pricing_items ?? current.pricing_items,
+      currency: input.currency ?? current.currency,
+      valid_until: input.valid_until ?? null,
+      investment_note: input.investment_note ?? current.investment_note,
+      timeline_note: input.timeline_note ?? current.timeline_note,
+      version: nextVersion,
     })
     .eq("id", input.id);
   if (error) throw new Error(error.message);
-  return { ok: true as const };
+  return { ok: true as const, version: nextVersion };
+}
+
+/** Restores a snapshot into the live proposal (keeping the snapshot history). */
+export async function restoreProposalVersion(
+  supabase: Client,
+  input: { proposalId: string; versionId: string },
+  userId: string,
+) {
+  const { data: snapshot, error: snapshotError } = await supabase
+    .from("proposal_versions")
+    .select("*")
+    .eq("id", input.versionId)
+    .maybeSingle();
+  if (snapshotError) throw new Error(snapshotError.message);
+  if (!snapshot) throw new Error("Versi proposal tidak ditemukan.");
+
+  return saveProposal(
+    supabase,
+    {
+      id: input.proposalId,
+      title: snapshot.title,
+      recommended_package: snapshot.recommended_package,
+      content: (snapshot.content ?? []) as { heading: string; body: string }[],
+      pricing_items: (snapshot.pricing_items ?? []) as PricingItem[],
+      investment_note: snapshot.investment_note,
+      timeline_note: snapshot.timeline_note,
+      version_note: `Restore dari versi ${snapshot.version}`,
+    },
+    userId,
+  );
 }
 
 export async function setProposalStatus(supabase: Client, id: string, status: ProposalStatus) {
   const now = new Date().toISOString();
-  const patch: { status: string; sent_at?: string; approved_at?: string } = { status };
-  if (status === "Sent") patch.sent_at = now;
-  if (status === "Approved") patch.approved_at = now;
+  const patch: Record<string, string> = { status };
+  if (status === "Sent") patch['sent_at'] = now;
+  if (status === "Viewed") patch['viewed_at'] = now;
+  if (status === "Approved") patch['approved_at'] = now;
+  if (status === "Rejected") patch['rejected_at'] = now;
   const { error } = await supabase.from("proposals").update(patch).eq("id", id);
   if (error) throw new Error(error.message);
   return { ok: true as const };
@@ -377,6 +469,7 @@ export async function deleteProposal(supabase: Client, id: string) {
   if (error) throw new Error(error.message);
   return { ok: true as const };
 }
+
 
 export type ProposalAnalytics = {
   total: number;
