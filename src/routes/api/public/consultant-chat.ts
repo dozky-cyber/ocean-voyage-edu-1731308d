@@ -9,8 +9,6 @@ import {
   scoreConversation,
   type ConversationTurn,
 } from "@/lib/ai-conversation.server";
-import { formatRequirementTelegram } from "@/lib/requirements.server";
-import { sendTelegramMessage } from "@/lib/telegram.server";
 
 type Body = { messages?: unknown; sessionId?: unknown };
 
@@ -208,32 +206,10 @@ KONTEKS WAKTU SISTEM (WIB): ${new Intl.DateTimeFormat("id-ID", {
               execute: async (input) => {
                 const turns = toTurns(messages);
                 const score = scoreConversation(input);
-                const outcome = await qualifyConversation(sessionId, input, turns);
-                if (outcome.ok && outcome.isNew) {
-                  void sendTelegramMessage(
-                    formatRequirementTelegram(
-                      {
-                        business: input.businessCategory,
-                        project: outcome.project,
-                        features: input.features,
-                        problems: input.problems,
-                        packageName: input.packageName,
-                        timeline: input.timeline,
-                        budget: input.budget,
-                        usersScale: input.users,
-                        intent: input.intent,
-                        score,
-                        contactName: input.contactName || null,
-                        contactEmail: input.contactEmail || null,
-                        contactWhatsapp: input.contactWhatsapp || null,
-                        summary: input.summary,
-                      },
-                      outcome.requirementVersion ?? 1,
-                    ),
-                  );
-                }
+                await qualifyConversation(sessionId, input, turns);
                 return { ...input, score };
               },
+
             }),
           },
           onFinish: async ({ text }) => {
