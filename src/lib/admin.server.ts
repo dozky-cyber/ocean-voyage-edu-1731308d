@@ -171,6 +171,23 @@ export async function purgeLead(id: string) {
     };
   };
 
+  const guard = supabaseAdmin as unknown as {
+    from: (table: string) => {
+      select: (cols: string, opts: { count: "exact"; head: true }) => {
+        eq: (col: string, value: string) => Promise<{ count: number | null }>;
+      };
+    };
+  };
+  for (const [table, label] of [
+    ["proposals", "proposal"],
+    ["invoices", "invoice"],
+  ] as const) {
+    const { count } = await guard.from(table).select("id", { count: "exact", head: true }).eq("lead_id", id);
+    if ((count ?? 0) > 0) {
+      throw new Error(`Lead tidak bisa dihapus: masih ada ${label} terkait. Hapus ${label} terlebih dahulu.`);
+    }
+  }
+
   // Children first, then loose references, then the lead itself.
   for (const table of [
     "conversation_requirements",
