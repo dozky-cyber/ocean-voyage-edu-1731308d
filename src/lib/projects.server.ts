@@ -217,6 +217,12 @@ export async function updateProjectDetails(
   },
   userId: string | null,
 ) {
+  const { data: before } = await supabase
+    .from("client_projects")
+    .select("client_id, timeline")
+    .eq("id", input.id)
+    .maybeSingle();
+
   const { error } = await supabase
     .from("client_projects")
     .update({
@@ -243,6 +249,34 @@ export async function updateProjectDetails(
     },
     userId,
   );
+
+  // Automation layer: report the update and any milestone finished by this save.
+  const progress = timelineProgress(input.timeline);
+  const { runAutomation } = await import("@/lib/automation.server");
+  await runAutomation({
+    type: "project.updated",
+    projectId: input.id,
+    clientId: before?.client_id ?? null,
+    name: input.name,
+    stage: input.stage,
+    status: input.status,
+    progress,
+  });
+
+  const previous = parseTimeline(before?.timeline);
+  for (const [index, step] of input.timeline.entries()) {
+    if (step.done && !previous[index]?.done) {
+      await runAutomation({
+        type: "project.milestone_completed",
+        projectId: input.id,
+        clientId: before?.client_id ?? null,
+        projectName: input.name,
+        milestone: step.title,
+        progress,
+      });
+    }
+  }
+
   return { ok: true as const };
 }
 
