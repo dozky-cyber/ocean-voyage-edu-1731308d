@@ -163,12 +163,18 @@ export async function createInvoicePaymentLink(
     returnUrl: input.returnUrl ?? null,
   });
 
-  const patch: Record<string, unknown> = {
+  const patch: {
+    provider: string;
+    payment_link: string | null;
+    provider_reference: string | null;
+    status?: string;
+  } = {
     provider: input.provider,
     payment_link: result.url,
     provider_reference: result.reference,
   };
-  if (result.url && invoice.status === "Pending") patch["status"] = "Payment Link Sent";
+  if (result.url && invoice.status === "Pending") patch.status = "Payment Link Sent";
+
 
   const { error } = await supabase.from("invoices").update(patch).eq("id", invoice.id);
   if (error) throw new Error(error.message);
