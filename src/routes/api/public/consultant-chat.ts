@@ -73,7 +73,7 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
         const result = streamText({
           model: gateway(ASSISTANT_MODEL),
           system: SYSTEM,
-          messages: convertToModelMessages(messages),
+          messages: await convertToModelMessages(messages),
           stopWhen: stepCountIs(50),
           tools: {
             finalize_consultation: tool({

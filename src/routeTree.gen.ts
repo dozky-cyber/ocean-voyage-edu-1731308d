@@ -19,6 +19,7 @@ import { Route as PortalTokenRouteImport } from './routes/portal.$token'
 import { Route as ApiAssistantChatRouteImport } from './routes/api/assistant-chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as ApiPublicConsultantChatRouteImport } from './routes/api/public/consultant-chat'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin.team'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminPortfolioRouteImport } from './routes/_authenticated/admin.portfolio'
@@ -93,6 +94,11 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const ApiPublicConsultantChatRoute = ApiPublicConsultantChatRouteImport.update({
+  id: '/api/public/consultant-chat',
+  path: '/api/public/consultant-chat',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAdminTeamRoute = AuthenticatedAdminTeamRouteImport.update({
   id: '/team',
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/api/public/consultant-chat': typeof ApiPublicConsultantChatRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/api/public/consultant-chat': typeof ApiPublicConsultantChatRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
+  '/api/public/consultant-chat': typeof ApiPublicConsultantChatRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
@@ -360,6 +369,7 @@ export interface FileRouteTypes {
     | '/admin/portfolio'
     | '/admin/settings'
     | '/admin/team'
+    | '/api/public/consultant-chat'
     | '/admin/'
     | '/admin/assistant/$threadId'
     | '/admin/clients/$id'
@@ -393,6 +403,7 @@ export interface FileRouteTypes {
     | '/admin/portfolio'
     | '/admin/settings'
     | '/admin/team'
+    | '/api/public/consultant-chat'
     | '/admin'
     | '/admin/assistant/$threadId'
     | '/admin/clients/$id'
@@ -429,6 +440,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/portfolio'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/team'
+    | '/api/public/consultant-chat'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/assistant/$threadId'
     | '/_authenticated/admin/clients/$id'
@@ -457,6 +469,7 @@ export interface RootRouteChildren {
   ApiAssistantChatRoute: typeof ApiAssistantChatRoute
   PortalTokenRoute: typeof PortalTokenRoute
   PortfolioSlugRoute: typeof PortfolioSlugRoute
+  ApiPublicConsultantChatRoute: typeof ApiPublicConsultantChatRoute
   ApiPublicHooksAutomationScanRoute: typeof ApiPublicHooksAutomationScanRoute
   ApiPublicPaymentsXenditRoute: typeof ApiPublicPaymentsXenditRoute
   ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
@@ -534,6 +547,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/consultant-chat': {
+      id: '/api/public/consultant-chat'
+      path: '/api/public/consultant-chat'
+      fullPath: '/api/public/consultant-chat'
+      preLoaderRoute: typeof ApiPublicConsultantChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/team': {
       id: '/_authenticated/admin/team'
@@ -793,6 +813,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAssistantChatRoute: ApiAssistantChatRoute,
   PortalTokenRoute: PortalTokenRoute,
   PortfolioSlugRoute: PortfolioSlugRoute,
+  ApiPublicConsultantChatRoute: ApiPublicConsultantChatRoute,
   ApiPublicHooksAutomationScanRoute: ApiPublicHooksAutomationScanRoute,
   ApiPublicPaymentsXenditRoute: ApiPublicPaymentsXenditRoute,
   ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
