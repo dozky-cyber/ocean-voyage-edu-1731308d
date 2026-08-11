@@ -10,6 +10,8 @@ import {
   Users,
   FileText,
   KanbanSquare,
+  Receipt,
+  Building2,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -39,6 +41,8 @@ const NAV = [
   { to: "/admin/leads", label: "AI Lead CRM", exact: false, icon: Users },
   { to: "/admin/pipeline", label: "Pipeline", exact: false, icon: KanbanSquare },
   { to: "/admin/proposals", label: "Proposals", exact: false, icon: FileText },
+  { to: "/admin/invoices", label: "Payments", exact: false, icon: Receipt },
+  { to: "/admin/clients", label: "Clients", exact: false, icon: Building2 },
   { to: "/admin/analytics", label: "Analytics", exact: false, icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", exact: false, icon: Settings },
 ] as const;

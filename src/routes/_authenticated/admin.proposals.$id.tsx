@@ -15,7 +15,9 @@ import {
   saveProposalFn,
   setProposalStatusFn,
 } from "@/lib/admin.functions";
+import { generateInvoice } from "@/lib/billing.functions";
 import { formatDate } from "@/lib/admin/pipeline";
+
 import {
   PROPOSAL_STATUSES,
   formatIDR,
@@ -47,6 +49,8 @@ function ProposalDetailPage() {
   const setStatus = useServerFn(setProposalStatusFn);
   const duplicate = useServerFn(duplicateProposalFn);
   const remove = useServerFn(deleteProposalFn);
+  const createInvoice = useServerFn(generateInvoice);
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "proposal", id],
@@ -133,6 +137,17 @@ function ProposalDetailPage() {
     },
     onError: () => toast.error("Gagal memperbarui status."),
   });
+
+  const invoiceMutation = useMutation({
+    mutationFn: () => createInvoice({ data: { proposalId: id } }),
+    onSuccess: async (invoice) => {
+      toast.success(`Invoice ${invoice.number} dibuat.`);
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+      navigate({ to: "/admin/invoices/$id", params: { id: invoice.id } });
+    },
+    onError: () => toast.error("Gagal membuat invoice."),
+  });
+
 
   const duplicateMutation = useMutation({
     mutationFn: () => duplicate({ data: { id } }),
@@ -239,11 +254,20 @@ function ProposalDetailPage() {
           </button>
           <button
             type="button"
+            onClick={() => invoiceMutation.mutate()}
+            disabled={invoiceMutation.isPending}
+            className="rounded-xl border border-primary/50 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20 disabled:opacity-60"
+          >
+            {invoiceMutation.isPending ? "Membuat…" : "Buat Invoice"}
+          </button>
+          <button
+            type="button"
             onClick={() => window.print()}
             className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
           >
             Export PDF / Print
           </button>
+
           <a
             href={mailtoHref}
             className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
