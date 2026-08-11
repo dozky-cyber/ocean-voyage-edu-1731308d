@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -10,7 +10,11 @@ import {
 import { consultationFormSchema, type ConsultationForm } from "@/lib/consultation-schema";
 import { submitConsultationLead } from "@/lib/consultation.functions";
 import { analytics } from "@/lib/analytics";
-import { getAiConsultation, getLeadTracking } from "@/lib/lead-journey";
+import {
+  getAiConsultation,
+  getLeadTracking,
+  type AiConsultationRecord,
+} from "@/lib/lead-journey";
 import { OceanButton } from "../OceanButton";
 import { Reveal } from "../Reveal";
 
@@ -37,7 +41,22 @@ export function ConsultationStage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [aiRecord, setAiRecord] = useState<AiConsultationRecord | undefined>(undefined);
   const submit = useServerFn(submitConsultationLead);
+
+  // Prefill from a completed AI consultation so the visitor never re-enters data.
+  useEffect(() => {
+    const ai = getAiConsultation();
+    if (!ai) return;
+    setAiRecord(ai);
+    setValues((prev) => ({
+      ...prev,
+      requirement: prev.requirement || ai.summary,
+      budget: prev.budget || ai.budget || "",
+      timeline: prev.timeline || ai.timeline || "",
+      features: prev.features || ai.requirements.join(", "),
+    }));
+  }, []);
 
   const set = (key: keyof ConsultationForm) => (value: string) =>
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -61,7 +80,14 @@ export function ConsultationStage() {
     try {
       const tracking = getLeadTracking();
       const ai = getAiConsultation();
-      await submit({ data: { form: parsed.data, tracking, ...(ai ? { ai } : {}) } });
+      await submit({
+        data: {
+          form: parsed.data,
+          tracking,
+          ...(ai ? { ai } : {}),
+          leadSource: ai ? "ai_consultant" : "manual_form",
+        },
+      });
       analytics.consultationFormSubmit({
         project_type: parsed.data.projectType,
         budget: parsed.data.budget,
@@ -93,6 +119,27 @@ export function ConsultationStage() {
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {consultationSection.body}
             </p>
+
+            {aiRecord && !done && (
+              <div className="mt-7 rounded-2xl border border-primary/40 bg-primary/[0.07] p-5">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-primary/90">
+                  Ringkasan AI Consultant
+                </p>
+                <p className="mt-3 text-sm text-foreground">
+                  {aiRecord.businessCategory || "-"} · {aiRecord.packageName} ·{" "}
+                  {aiRecord.qualification} ({aiRecord.score}/100)
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  Masalah: {aiRecord.problems.join(", ") || "-"}
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Kebutuhan: {aiRecord.requirements.join(", ") || "-"}
+                </p>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Data ini otomatis terkirim bersama form, Anda tidak perlu mengulang input.
+                </p>
+              </div>
+            )}
 
             {!open && (
               <OceanButton
