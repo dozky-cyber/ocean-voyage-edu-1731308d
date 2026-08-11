@@ -13,9 +13,23 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-export function SalesAssistant({ lead }: { lead: SalesLead }) {
-  const [open, setOpen] = useState(false);
+export function SalesAssistant({
+  lead,
+  open: controlledOpen,
+  onOpenChange,
+}: {
+  lead: SalesLead;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    if (onOpenChange) onOpenChange(next);
+    else setUncontrolledOpen(next);
+  };
   const brief = open ? buildSalesBrief(lead) : null;
+
 
   async function copyFollowUp(message: string) {
     try {
@@ -37,7 +51,7 @@ export function SalesAssistant({ lead }: { lead: SalesLead }) {
         </div>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(!open)}
           className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
         >
           {open ? "Sembunyikan analisa" : "Ask AI About This Lead"}
