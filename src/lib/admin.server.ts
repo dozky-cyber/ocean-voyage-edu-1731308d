@@ -143,7 +143,43 @@ export async function setLeadNotes(supabase: Client, id: string, notes: string) 
   return { ok: true as const };
 }
 
+export type PriorityLead = LeadListRow & { staleDays: number; reason: string };
+
+/**
+ * Leads that need action today: still open in the pipeline, ranked by
+ * temperature, score and how long they have been sitting in their stage.
+ */
+export function buildPriorityInbox(rows: LeadListRow[]): PriorityLead[] {
+  const now = Date.now();
+  const open = rows.filter((row) => {
+    const stage = normalizeStage(row.status);
+    return stage !== "Completed" && stage !== "Closed";
+  });
+
+  return open
+    .map((row) => {
+      const last = new Date(row.status_updated_at ?? row.created_at).getTime();
+      const staleDays = Math.max(0, Math.floor((now - last) / 86_400_000));
+      const hot = row.lead_temperature === "Hot Lead";
+      const warm = row.lead_temperature === "Warm Lead";
+      const weight =
+        (hot ? 120 : warm ? 60 : 10) + (row.lead_score ?? 0) + Math.min(staleDays, 30) * 4;
+      const reason = hot
+        ? "Hot lead — hubungi hari ini"
+        : staleDays >= 3
+          ? `Tidak ada update ${staleDays} hari`
+          : normalizeStage(row.status) === "New Lead"
+            ? "Lead baru belum dikontak"
+            : "Perlu follow up";
+      return { ...row, staleDays, reason, weight };
+    })
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 6)
+    .map(({ weight: _weight, ...lead }) => lead);
+}
+
 export type AdminOverview = {
+
   totalLeads: number;
   hot: number;
   warm: number;
