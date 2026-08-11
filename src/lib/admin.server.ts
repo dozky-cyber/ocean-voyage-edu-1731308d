@@ -465,7 +465,7 @@ export async function createLeadAiActivity(
     action: string;
     label: string | null;
     content: string;
-    meta?: Record<string, unknown>;
+    meta?: unknown;
   },
   user: { id: string; email: string | null },
 ) {
@@ -476,7 +476,7 @@ export async function createLeadAiActivity(
       action: input.action,
       label: input.label,
       content: input.content,
-      meta: input.meta ?? {},
+      meta: (input.meta ?? {}) as never,
       created_by: user.id,
       created_by_email: user.email,
     })

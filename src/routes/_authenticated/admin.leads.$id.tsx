@@ -259,7 +259,7 @@ function LeadDetailPage() {
 
 
       <div id="ai-assistant" className="scroll-mt-24">
-        <SalesAssistant lead={lead} open={assistantOpen} onOpenChange={setAssistantOpen} />
+        <SalesAssistant lead={lead} leadId={id} open={assistantOpen} onOpenChange={setAssistantOpen} />
       </div>
 
 
