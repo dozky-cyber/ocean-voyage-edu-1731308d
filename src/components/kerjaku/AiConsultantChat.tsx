@@ -402,10 +402,22 @@ export function AiConsultantChat({ source, onDiscuss, compact = false }: Props) 
               </div>
             ) : (
               <form onSubmit={submitContact} className="space-y-3" noValidate>
+                {/* Honeypot: hidden from users, filled only by bots. */}
+                <input
+                  type="text"
+                  name="company_website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  className="hidden"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   Analisa kebutuhan Anda sudah selesai. Masukkan kontak agar tim KERJAKU dapat
                   menyiapkan rekomendasi dan estimasi project.
                 </p>
+
                 <div className="grid gap-3">
                   <ContactField label="Nama" error={contactErrors["name"]}>
                     <input
