@@ -146,6 +146,62 @@ export type Database = {
         }
         Relationships: []
       }
+      proposals: {
+        Row: {
+          approved_at: string | null
+          content: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          investment_note: string | null
+          lead_id: string
+          recommended_package: string | null
+          sent_at: string | null
+          status: string
+          timeline_note: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investment_note?: string | null
+          lead_id: string
+          recommended_package?: string | null
+          sent_at?: string | null
+          status?: string
+          timeline_note?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          content?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          investment_note?: string | null
+          lead_id?: string
+          recommended_package?: string | null
+          sent_at?: string | null
+          status?: string
+          timeline_note?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
