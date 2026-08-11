@@ -35,12 +35,14 @@ export const LEAD_SCORE_RULES = {
   open_consultation_form: 10,
   click_service_package: 20,
   view_portfolio_product: 30,
+  complete_ai_consultation: 40,
   submit_consultation_form: 50,
 } as const;
 
 export type ScoreAction = keyof typeof LEAD_SCORE_RULES;
 
 const STORAGE_KEY = "kerjaku_lead_journey";
+const AI_STORAGE_KEY = "kerjaku_ai_consultation";
 
 const emptyState: LeadTracking = {
   utmSource: "",
