@@ -80,7 +80,9 @@ function LeadDetailPage() {
     onError: () => toast.error("Gagal membuat proposal."),
   });
 
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [notes, setNotes] = useState("");
+
   useEffect(() => {
     setNotes(lead?.admin_notes ?? "");
   }, [lead?.admin_notes]);
