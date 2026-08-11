@@ -15,6 +15,7 @@ import {
   UsersRound,
   FolderKanban,
   Images,
+  Workflow,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -48,6 +49,7 @@ const NAV = [
   { to: "/admin/clients", label: "Clients", exact: false, icon: Building2 },
   { to: "/admin/projects", label: "Projects", exact: false, icon: FolderKanban },
   { to: "/admin/portfolio", label: "Portfolio", exact: false, icon: Images },
+  { to: "/admin/automation", label: "Automation", exact: false, icon: Workflow },
   { to: "/admin/team", label: "Team", exact: false, icon: UsersRound },
   { to: "/admin/analytics", label: "Analytics", exact: false, icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", exact: false, icon: Settings },

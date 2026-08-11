@@ -30,6 +30,7 @@ import { Route as AuthenticatedAdminLeadsIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminInvoicesIndexRouteImport } from './routes/_authenticated/admin.invoices.index'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
+import { Route as ApiPublicHooksAutomationScanRouteImport } from './routes/api/public/hooks/automation-scan'
 import { Route as AuthenticatedAdminProposalsIdRouteImport } from './routes/_authenticated/admin.proposals.$id'
 import { Route as AuthenticatedAdminProjectsIdRouteImport } from './routes/_authenticated/admin.projects.$id'
 import { Route as AuthenticatedAdminLeadsIdRouteImport } from './routes/_authenticated/admin.leads.$id'
@@ -151,6 +152,12 @@ const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
   path: '/api/public/telegram/test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAutomationScanRoute =
+  ApiPublicHooksAutomationScanRouteImport.update({
+    id: '/api/public/hooks/automation-scan',
+    path: '/api/public/hooks/automation-scan',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminProposalsIdRoute =
   AuthenticatedAdminProposalsIdRouteImport.update({
     id: '/proposals/$id',
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/projects/$id': typeof AuthenticatedAdminProjectsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
+  '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
@@ -228,6 +236,7 @@ export interface FileRoutesByTo {
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/projects/$id': typeof AuthenticatedAdminProjectsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
+  '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/invoices': typeof AuthenticatedAdminInvoicesIndexRoute
@@ -257,6 +266,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/_authenticated/admin/projects/$id': typeof AuthenticatedAdminProjectsIdRoute
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
+  '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/_authenticated/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/admin/leads/$id'
     | '/admin/projects/$id'
     | '/admin/proposals/$id'
+    | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
     | '/admin/clients/'
     | '/admin/invoices/'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin/leads/$id'
     | '/admin/projects/$id'
     | '/admin/proposals/$id'
+    | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
     | '/admin/clients'
     | '/admin/invoices'
@@ -340,6 +352,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/leads/$id'
     | '/_authenticated/admin/projects/$id'
     | '/_authenticated/admin/proposals/$id'
+    | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
     | '/_authenticated/admin/clients/'
     | '/_authenticated/admin/invoices/'
@@ -356,6 +369,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   PortalTokenRoute: typeof PortalTokenRoute
   PortfolioSlugRoute: typeof PortfolioSlugRoute
+  ApiPublicHooksAutomationScanRoute: typeof ApiPublicHooksAutomationScanRoute
   ApiPublicTelegramTestRoute: typeof ApiPublicTelegramTestRoute
 }
 
@@ -508,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelegramTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/automation-scan': {
+      id: '/api/public/hooks/automation-scan'
+      path: '/api/public/hooks/automation-scan'
+      fullPath: '/api/public/hooks/automation-scan'
+      preLoaderRoute: typeof ApiPublicHooksAutomationScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/proposals/$id': {
       id: '/_authenticated/admin/proposals/$id'
       path: '/proposals/$id'
@@ -609,6 +630,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   PortalTokenRoute: PortalTokenRoute,
   PortfolioSlugRoute: PortfolioSlugRoute,
+  ApiPublicHooksAutomationScanRoute: ApiPublicHooksAutomationScanRoute,
   ApiPublicTelegramTestRoute: ApiPublicTelegramTestRoute,
 }
 export const routeTree = rootRouteImport
