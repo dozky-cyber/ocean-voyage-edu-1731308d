@@ -21,7 +21,10 @@ export function ServicePackageStage() {
         <div className="mt-10 grid gap-5">
           {servicePackages.packages.map((pkg, i) => (
             <Reveal key={pkg.title} delay={0.08 * i}>
-              <article className="relative overflow-hidden rounded-[1.75rem] glass-panel p-6 sm:p-8">
+              <article
+                className="relative overflow-hidden rounded-[1.75rem] glass-panel p-6 sm:p-8"
+                onClick={() => analytics.servicePackageClick(pkg.level)}
+              >
                 <div
                   className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-primary/70 via-primary/30 to-transparent"
                   aria-hidden="true"

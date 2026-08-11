@@ -4,6 +4,7 @@ import { JourneyProvider } from "@/components/kerjaku/JourneyProvider";
 import { JourneyPanels } from "@/components/kerjaku/JourneyPanels";
 import { OceanScene } from "@/components/kerjaku/OceanScene";
 import { SiteNav } from "@/components/kerjaku/SiteNav";
+import { SectionJourneyTracker } from "@/components/kerjaku/SectionJourneyTracker";
 import { SmoothScrollProvider } from "@/components/kerjaku/SmoothScrollProvider";
 import { HeroStage } from "@/components/kerjaku/stages/HeroStage";
 import { PastelStage } from "@/components/kerjaku/stages/PastelStage";
@@ -136,6 +137,7 @@ function Index() {
       <SmoothScrollProvider />
       <OceanScene />
       <SiteNav />
+      <SectionJourneyTracker />
       <main className="relative z-10">
         <HeroStage />
         <PastelStage />
