@@ -239,11 +239,20 @@ function ProposalDetailPage() {
           </button>
           <button
             type="button"
+            onClick={() => invoiceMutation.mutate()}
+            disabled={invoiceMutation.isPending}
+            className="rounded-xl border border-primary/50 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20 disabled:opacity-60"
+          >
+            {invoiceMutation.isPending ? "Membuat…" : "Buat Invoice"}
+          </button>
+          <button
+            type="button"
             onClick={() => window.print()}
             className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
           >
             Export PDF / Print
           </button>
+
           <a
             href={mailtoHref}
             className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
