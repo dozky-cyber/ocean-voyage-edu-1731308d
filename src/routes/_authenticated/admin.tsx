@@ -12,6 +12,7 @@ import {
   KanbanSquare,
   Receipt,
   Building2,
+  FolderKanban,
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -43,6 +44,7 @@ const NAV = [
   { to: "/admin/proposals", label: "Proposals", exact: false, icon: FileText },
   { to: "/admin/invoices", label: "Payments", exact: false, icon: Receipt },
   { to: "/admin/clients", label: "Clients", exact: false, icon: Building2 },
+  { to: "/admin/projects", label: "Projects", exact: false, icon: FolderKanban },
   { to: "/admin/analytics", label: "Analytics", exact: false, icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", exact: false, icon: Settings },
 ] as const;

@@ -149,7 +149,14 @@ export const PROJECT_STATUSES = [
 
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
-export type TimelineStep = { title: string; detail: string; done: boolean; date?: string | null };
+export type TimelineStep = {
+  title: string;
+  detail: string;
+  done: boolean;
+  date?: string | null;
+  /** Set when the client approves the milestone from the portal. */
+  approved?: boolean;
+};
 
 export function parseTimeline(value: unknown): TimelineStep[] {
   if (!Array.isArray(value)) return [];
@@ -161,6 +168,7 @@ export function parseTimeline(value: unknown): TimelineStep[] {
             detail: String((step as { detail?: unknown }).detail ?? ""),
             done: Boolean((step as { done?: unknown }).done),
             date: ((step as { date?: unknown }).date as string | null) ?? null,
+            approved: Boolean((step as { approved?: unknown }).approved),
           },
         ]
       : [],

@@ -114,11 +114,15 @@ export type Database = {
           id: string
           invoice_id: string | null
           name: string
+          phase: string
           progress: number
+          scope: string | null
           start_date: string | null
           status: string
           summary: string | null
           target_date: string | null
+          team: Json
+          template: string
           timeline: Json
           updated_at: string
         }
@@ -128,11 +132,15 @@ export type Database = {
           id?: string
           invoice_id?: string | null
           name: string
+          phase?: string
           progress?: number
+          scope?: string | null
           start_date?: string | null
           status?: string
           summary?: string | null
           target_date?: string | null
+          team?: Json
+          template?: string
           timeline?: Json
           updated_at?: string
         }
@@ -142,11 +150,15 @@ export type Database = {
           id?: string
           invoice_id?: string | null
           name?: string
+          phase?: string
           progress?: number
+          scope?: string | null
           start_date?: string | null
           status?: string
           summary?: string | null
           target_date?: string | null
+          team?: Json
+          template?: string
           timeline?: Json
           updated_at?: string
         }
@@ -488,6 +500,100 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_activities: {
+        Row: {
+          action: string
+          actor: string
+          created_at: string
+          created_by: string | null
+          detail: string | null
+          id: string
+          project_id: string
+        }
+        Insert: {
+          action: string
+          actor?: string
+          created_at?: string
+          created_by?: string | null
+          detail?: string | null
+          id?: string
+          project_id: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          created_at?: string
+          created_by?: string | null
+          detail?: string | null
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_activities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "client_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          assignee: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          notes: string | null
+          position: number
+          priority: string
+          project_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          position?: number
+          priority?: string
+          project_id: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          position?: number
+          priority?: string
+          project_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "client_projects"
             referencedColumns: ["id"]
           },
         ]

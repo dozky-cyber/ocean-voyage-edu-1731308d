@@ -6,7 +6,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { formatMoney, paymentStatusClass } from "@/lib/admin/payments";
-import { getClientPortal, sendClientPortalMessage } from "@/lib/portal.functions";
+import {
+  approvePortalMilestone,
+  getClientPortal,
+  sendClientPortalMessage,
+} from "@/lib/portal.functions";
 
 export const Route = createFileRoute("/portal/$token")({
   head: () => ({
@@ -24,6 +28,7 @@ function ClientPortalPage() {
   const queryClient = useQueryClient();
   const fetchPortal = useServerFn(getClientPortal);
   const sendMessage = useServerFn(sendClientPortalMessage);
+  const approveMilestone = useServerFn(approvePortalMilestone);
   const [body, setBody] = useState("");
 
   const portal = useQuery({
@@ -39,6 +44,16 @@ function ClientPortalPage() {
       void queryClient.invalidateQueries({ queryKey: ["portal", token] });
     },
     onError: () => toast.error("Gagal mengirim pesan."),
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (input: { projectId: string; index: number }) =>
+      approveMilestone({ data: { token, ...input } }),
+    onSuccess: (result) => {
+      toast.success(`Milestone "${result.title}" disetujui.`);
+      void queryClient.invalidateQueries({ queryKey: ["portal", token] });
+    },
+    onError: () => toast.error("Gagal menyetujui milestone."),
   });
 
   if (portal.isLoading) {
@@ -104,9 +119,27 @@ function ClientPortalPage() {
                     ) : (
                       <Circle className="mt-0.5 h-4 w-4 shrink-0 text-white/25" />
                     )}
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm">{step.title}</p>
                       <p className="text-xs text-white/50">{step.detail}</p>
+                      {step.done ? (
+                        step.approved ? (
+                          <span className="mt-1 inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2 py-0.5 text-[0.65rem] text-cyan-200">
+                            Disetujui klien
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={approveMutation.isPending}
+                            onClick={() =>
+                              approveMutation.mutate({ projectId: project.id, index })
+                            }
+                            className="mt-1 inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-[0.65rem] text-white/70 transition hover:border-cyan-400/50 hover:text-cyan-200 disabled:opacity-50"
+                          >
+                            Setujui milestone
+                          </button>
+                        )
+                      ) : null}
                     </div>
                   </li>
                 ))}

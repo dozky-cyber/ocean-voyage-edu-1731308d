@@ -9,7 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import {
   buildInvoiceNumber,
-  defaultTimeline,
+
   dueDateFromNow,
   invoiceTotal,
   parseTimeline,
@@ -250,19 +250,65 @@ export async function convertInvoiceToClient(supabase: Client, invoiceId: string
     .maybeSingle();
 
   if (!project) {
-    const timeline = defaultTimeline();
-    await supabase.from("client_projects").insert({
-      client_id: client.id,
-      invoice_id: invoice.id,
-      name: invoice.package
-        ? `${invoice.package} — ${lead?.project_type ?? "Project Digital"}`
-        : (lead?.project_type ?? "Project Digital"),
-      status: "Onboarding",
-      progress: timelineProgress(timeline),
-      summary: `Project dimulai setelah pembayaran invoice ${invoice.number} dikonfirmasi.`,
-      timeline,
-      start_date: new Date().toISOString().slice(0, 10),
-    });
+    // Project automation: pick a delivery template from the lead context and
+    // seed its milestones so delivery can start immediately after payment.
+    const { currentPhase, suggestTemplate, templateMeta, templateTimeline } = await import(
+      "@/lib/admin/projects"
+    );
+    const templateId = suggestTemplate(
+      lead?.project_type,
+      invoice.package,
+      invoice.title,
+      lead?.business_name,
+    );
+    const timeline = templateTimeline(templateId);
+    const projectName = invoice.package
+      ? `${invoice.package} — ${lead?.project_type ?? "Project Digital"}`
+      : (lead?.project_type ?? "Project Digital");
+
+    const { data: createdProject } = await supabase
+      .from("client_projects")
+      .insert({
+        client_id: client.id,
+        invoice_id: invoice.id,
+        name: projectName,
+        status: "Onboarding",
+        template: templateId,
+        phase: currentPhase(timeline),
+        scope: templateMeta(templateId).steps.map((s) => `• ${s.title}: ${s.detail}`).join("\n"),
+        progress: timelineProgress(timeline),
+        summary: `Project dimulai setelah pembayaran invoice ${invoice.number} dikonfirmasi.`,
+        timeline,
+        start_date: new Date().toISOString().slice(0, 10),
+      })
+      .select("id")
+      .single();
+
+    if (createdProject) {
+      await supabase.from("project_activities").insert([
+        {
+          project_id: createdProject.id,
+          action: "Project dibuat otomatis",
+          detail: `Invoice ${invoice.number} dikonfirmasi lunas.`,
+        },
+        {
+          project_id: createdProject.id,
+          action: "Template diterapkan",
+          detail: templateMeta(templateId).label,
+        },
+      ]);
+
+      const { sendTelegramMessage } = await import("./telegram.server");
+      void sendTelegramMessage(
+        [
+          "🚀 <b>PROJECT BARU DIMULAI</b>",
+          `Klien: ${client.name}`,
+          `Project: ${projectName}`,
+          `Template: ${templateMeta(templateId).label}`,
+          `Invoice: ${invoice.number}`,
+        ].join("\n"),
+      ).catch(() => undefined);
+    }
 
     await supabase.from("client_documents").insert(
       [
