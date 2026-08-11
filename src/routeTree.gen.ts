@@ -16,19 +16,23 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortfolioSlugRouteImport } from './routes/portfolio.$slug'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
+import { Route as ApiAssistantChatRouteImport } from './routes/api/assistant-chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminTeamRouteImport } from './routes/_authenticated/admin.team'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminPortfolioRouteImport } from './routes/_authenticated/admin.portfolio'
 import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authenticated/admin.pipeline'
+import { Route as AuthenticatedAdminMemoryRouteImport } from './routes/_authenticated/admin.memory'
 import { Route as AuthenticatedAdminAutomationRouteImport } from './routes/_authenticated/admin.automation'
+import { Route as AuthenticatedAdminAssistantRouteImport } from './routes/_authenticated/admin.assistant'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 import { Route as AuthenticatedAdminProposalsIndexRouteImport } from './routes/_authenticated/admin.proposals.index'
 import { Route as AuthenticatedAdminProjectsIndexRouteImport } from './routes/_authenticated/admin.projects.index'
 import { Route as AuthenticatedAdminLeadsIndexRouteImport } from './routes/_authenticated/admin.leads.index'
 import { Route as AuthenticatedAdminInvoicesIndexRouteImport } from './routes/_authenticated/admin.invoices.index'
 import { Route as AuthenticatedAdminClientsIndexRouteImport } from './routes/_authenticated/admin.clients.index'
+import { Route as AuthenticatedAdminAssistantIndexRouteImport } from './routes/_authenticated/admin.assistant.index'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
 import { Route as ApiPublicHooksAutomationScanRouteImport } from './routes/api/public/hooks/automation-scan'
 import { Route as AuthenticatedAdminProposalsIdRouteImport } from './routes/_authenticated/admin.proposals.$id'
@@ -36,6 +40,7 @@ import { Route as AuthenticatedAdminProjectsIdRouteImport } from './routes/_auth
 import { Route as AuthenticatedAdminLeadsIdRouteImport } from './routes/_authenticated/admin.leads.$id'
 import { Route as AuthenticatedAdminInvoicesIdRouteImport } from './routes/_authenticated/admin.invoices.$id'
 import { Route as AuthenticatedAdminClientsIdRouteImport } from './routes/_authenticated/admin.clients.$id'
+import { Route as AuthenticatedAdminAssistantThreadIdRouteImport } from './routes/_authenticated/admin.assistant.$threadId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -72,6 +77,11 @@ const PortalTokenRoute = PortalTokenRouteImport.update({
   path: '/portal/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAssistantChatRoute = ApiAssistantChatRouteImport.update({
+  id: '/api/assistant-chat',
+  path: '/api/assistant-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -105,10 +115,22 @@ const AuthenticatedAdminPipelineRoute =
     path: '/pipeline',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminMemoryRoute =
+  AuthenticatedAdminMemoryRouteImport.update({
+    id: '/memory',
+    path: '/memory',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAutomationRoute =
   AuthenticatedAdminAutomationRouteImport.update({
     id: '/automation',
     path: '/automation',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAssistantRoute =
+  AuthenticatedAdminAssistantRouteImport.update({
+    id: '/assistant',
+    path: '/assistant',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAnalyticsRoute =
@@ -146,6 +168,12 @@ const AuthenticatedAdminClientsIndexRoute =
     id: '/clients/',
     path: '/clients/',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAssistantIndexRoute =
+  AuthenticatedAdminAssistantIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAdminAssistantRoute,
   } as any)
 const ApiPublicTelegramTestRoute = ApiPublicTelegramTestRouteImport.update({
   id: '/api/public/telegram/test',
@@ -188,6 +216,12 @@ const AuthenticatedAdminClientsIdRoute =
     path: '/clients/$id',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAssistantThreadIdRoute =
+  AuthenticatedAdminAssistantThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedAdminAssistantRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -195,15 +229,19 @@ export interface FileRoutesByFullPath {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/assistant': typeof AuthenticatedAdminAssistantRouteWithChildren
   '/admin/automation': typeof AuthenticatedAdminAutomationRoute
+  '/admin/memory': typeof AuthenticatedAdminMemoryRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
@@ -211,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/admin/assistant/': typeof AuthenticatedAdminAssistantIndexRoute
   '/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
   '/admin/leads/': typeof AuthenticatedAdminLeadsIndexRoute
@@ -222,15 +261,18 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/automation': typeof AuthenticatedAdminAutomationRoute
+  '/admin/memory': typeof AuthenticatedAdminMemoryRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/team': typeof AuthenticatedAdminTeamRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
@@ -238,6 +280,7 @@ export interface FileRoutesByTo {
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/admin/assistant': typeof AuthenticatedAdminAssistantIndexRoute
   '/admin/clients': typeof AuthenticatedAdminClientsIndexRoute
   '/admin/invoices': typeof AuthenticatedAdminInvoicesIndexRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsIndexRoute
@@ -252,15 +295,19 @@ export interface FileRoutesById {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/_authenticated/admin/assistant': typeof AuthenticatedAdminAssistantRouteWithChildren
   '/_authenticated/admin/automation': typeof AuthenticatedAdminAutomationRoute
+  '/_authenticated/admin/memory': typeof AuthenticatedAdminMemoryRoute
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/team': typeof AuthenticatedAdminTeamRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/assistant/$threadId': typeof AuthenticatedAdminAssistantThreadIdRoute
   '/_authenticated/admin/clients/$id': typeof AuthenticatedAdminClientsIdRoute
   '/_authenticated/admin/invoices/$id': typeof AuthenticatedAdminInvoicesIdRoute
   '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
@@ -268,6 +315,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
   '/api/public/hooks/automation-scan': typeof ApiPublicHooksAutomationScanRoute
   '/api/public/telegram/test': typeof ApiPublicTelegramTestRoute
+  '/_authenticated/admin/assistant/': typeof AuthenticatedAdminAssistantIndexRoute
   '/_authenticated/admin/clients/': typeof AuthenticatedAdminClientsIndexRoute
   '/_authenticated/admin/invoices/': typeof AuthenticatedAdminInvoicesIndexRoute
   '/_authenticated/admin/leads/': typeof AuthenticatedAdminLeadsIndexRoute
@@ -282,15 +330,19 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/admin'
+    | '/api/assistant-chat'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
+    | '/admin/assistant'
     | '/admin/automation'
+    | '/admin/memory'
     | '/admin/pipeline'
     | '/admin/portfolio'
     | '/admin/settings'
     | '/admin/team'
     | '/admin/'
+    | '/admin/assistant/$threadId'
     | '/admin/clients/$id'
     | '/admin/invoices/$id'
     | '/admin/leads/$id'
@@ -298,6 +350,7 @@ export interface FileRouteTypes {
     | '/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
+    | '/admin/assistant/'
     | '/admin/clients/'
     | '/admin/invoices/'
     | '/admin/leads/'
@@ -309,15 +362,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
+    | '/api/assistant-chat'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
     | '/admin/automation'
+    | '/admin/memory'
     | '/admin/pipeline'
     | '/admin/portfolio'
     | '/admin/settings'
     | '/admin/team'
     | '/admin'
+    | '/admin/assistant/$threadId'
     | '/admin/clients/$id'
     | '/admin/invoices/$id'
     | '/admin/leads/$id'
@@ -325,6 +381,7 @@ export interface FileRouteTypes {
     | '/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
+    | '/admin/assistant'
     | '/admin/clients'
     | '/admin/invoices'
     | '/admin/leads'
@@ -338,15 +395,19 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/api/assistant-chat'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/_authenticated/admin/analytics'
+    | '/_authenticated/admin/assistant'
     | '/_authenticated/admin/automation'
+    | '/_authenticated/admin/memory'
     | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/portfolio'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/team'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/assistant/$threadId'
     | '/_authenticated/admin/clients/$id'
     | '/_authenticated/admin/invoices/$id'
     | '/_authenticated/admin/leads/$id'
@@ -354,6 +415,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/proposals/$id'
     | '/api/public/hooks/automation-scan'
     | '/api/public/telegram/test'
+    | '/_authenticated/admin/assistant/'
     | '/_authenticated/admin/clients/'
     | '/_authenticated/admin/invoices/'
     | '/_authenticated/admin/leads/'
@@ -367,6 +429,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   JasaPembuatanWebsiteAplikasiLandingPageRoute: typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiAssistantChatRoute: typeof ApiAssistantChatRoute
   PortalTokenRoute: typeof PortalTokenRoute
   PortfolioSlugRoute: typeof PortfolioSlugRoute
   ApiPublicHooksAutomationScanRoute: typeof ApiPublicHooksAutomationScanRoute
@@ -424,6 +487,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/assistant-chat': {
+      id: '/api/assistant-chat'
+      path: '/api/assistant-chat'
+      fullPath: '/api/assistant-chat'
+      preLoaderRoute: typeof ApiAssistantChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin': {
       id: '/_authenticated/admin'
       path: '/admin'
@@ -466,11 +536,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPipelineRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/memory': {
+      id: '/_authenticated/admin/memory'
+      path: '/memory'
+      fullPath: '/admin/memory'
+      preLoaderRoute: typeof AuthenticatedAdminMemoryRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/automation': {
       id: '/_authenticated/admin/automation'
       path: '/automation'
       fullPath: '/admin/automation'
       preLoaderRoute: typeof AuthenticatedAdminAutomationRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/assistant': {
+      id: '/_authenticated/admin/assistant'
+      path: '/assistant'
+      fullPath: '/admin/assistant'
+      preLoaderRoute: typeof AuthenticatedAdminAssistantRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/analytics': {
@@ -514,6 +598,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/clients/'
       preLoaderRoute: typeof AuthenticatedAdminClientsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/assistant/': {
+      id: '/_authenticated/admin/assistant/'
+      path: '/'
+      fullPath: '/admin/assistant/'
+      preLoaderRoute: typeof AuthenticatedAdminAssistantIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminAssistantRoute
     }
     '/api/public/telegram/test': {
       id: '/api/public/telegram/test'
@@ -564,12 +655,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClientsIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/assistant/$threadId': {
+      id: '/_authenticated/admin/assistant/$threadId'
+      path: '/$threadId'
+      fullPath: '/admin/assistant/$threadId'
+      preLoaderRoute: typeof AuthenticatedAdminAssistantThreadIdRouteImport
+      parentRoute: typeof AuthenticatedAdminAssistantRoute
+    }
   }
 }
 
+interface AuthenticatedAdminAssistantRouteChildren {
+  AuthenticatedAdminAssistantThreadIdRoute: typeof AuthenticatedAdminAssistantThreadIdRoute
+  AuthenticatedAdminAssistantIndexRoute: typeof AuthenticatedAdminAssistantIndexRoute
+}
+
+const AuthenticatedAdminAssistantRouteChildren: AuthenticatedAdminAssistantRouteChildren =
+  {
+    AuthenticatedAdminAssistantThreadIdRoute:
+      AuthenticatedAdminAssistantThreadIdRoute,
+    AuthenticatedAdminAssistantIndexRoute:
+      AuthenticatedAdminAssistantIndexRoute,
+  }
+
+const AuthenticatedAdminAssistantRouteWithChildren =
+  AuthenticatedAdminAssistantRoute._addFileChildren(
+    AuthenticatedAdminAssistantRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
+  AuthenticatedAdminAssistantRoute: typeof AuthenticatedAdminAssistantRouteWithChildren
   AuthenticatedAdminAutomationRoute: typeof AuthenticatedAdminAutomationRoute
+  AuthenticatedAdminMemoryRoute: typeof AuthenticatedAdminMemoryRoute
   AuthenticatedAdminPipelineRoute: typeof AuthenticatedAdminPipelineRoute
   AuthenticatedAdminPortfolioRoute: typeof AuthenticatedAdminPortfolioRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
@@ -589,7 +707,10 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
+  AuthenticatedAdminAssistantRoute:
+    AuthenticatedAdminAssistantRouteWithChildren,
   AuthenticatedAdminAutomationRoute: AuthenticatedAdminAutomationRoute,
+  AuthenticatedAdminMemoryRoute: AuthenticatedAdminMemoryRoute,
   AuthenticatedAdminPipelineRoute: AuthenticatedAdminPipelineRoute,
   AuthenticatedAdminPortfolioRoute: AuthenticatedAdminPortfolioRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
@@ -628,6 +749,7 @@ const rootRouteChildren: RootRouteChildren = {
   JasaPembuatanWebsiteAplikasiLandingPageRoute:
     JasaPembuatanWebsiteAplikasiLandingPageRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiAssistantChatRoute: ApiAssistantChatRoute,
   PortalTokenRoute: PortalTokenRoute,
   PortfolioSlugRoute: PortfolioSlugRoute,
   ApiPublicHooksAutomationScanRoute: ApiPublicHooksAutomationScanRoute,

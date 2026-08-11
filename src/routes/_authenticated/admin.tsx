@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   BarChart3,
+  Bot,
+  Brain,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -52,6 +54,8 @@ const NAV = [
   { to: "/admin/projects", label: "Projects", exact: false, icon: FolderKanban },
   { to: "/admin/portfolio", label: "Portfolio", exact: false, icon: Images },
   { to: "/admin/automation", label: "Automation", exact: false, icon: Workflow },
+  { to: "/admin/assistant", label: "AI Assistant", exact: false, icon: Bot },
+  { to: "/admin/memory", label: "AI Memory", exact: false, icon: Brain },
   { to: "/admin/team", label: "Team", exact: false, icon: UsersRound },
   { to: "/admin/analytics", label: "Analytics", exact: false, icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", exact: false, icon: Settings },
