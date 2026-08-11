@@ -21,7 +21,6 @@ import {
   parseTeam,
   templateMeta,
   templateTimeline,
-  type TaskPriority,
   type TaskStatus,
 } from "@/lib/admin/projects";
 
@@ -279,7 +278,7 @@ export async function createProjectTask(
     title: string;
     description: string | null;
     assignee: string | null;
-    priority: TaskPriority;
+    priority: string;
     status: TaskStatus;
     due_date: string | null;
   },
@@ -322,7 +321,7 @@ export async function updateProjectTask(
     title: string;
     description: string | null;
     assignee: string | null;
-    priority: TaskPriority;
+    priority: string;
     status: TaskStatus;
     due_date: string | null;
     notes: string | null;

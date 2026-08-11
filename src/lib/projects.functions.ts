@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PROJECT_STATUSES } from "@/lib/admin/payments";
+import { actorName } from "@/lib/admin/actor";
 import { DELIVERY_STAGES } from "@/lib/admin/ops";
 import { PROJECT_TEMPLATES, TASK_PRIORITY_VALUES, TASK_STATUSES } from "@/lib/admin/projects";
 
