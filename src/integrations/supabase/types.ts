@@ -37,6 +37,7 @@ export type Database = {
           journey: Json
           landing_page: string | null
           lead_score: number
+          lead_source: string
           lead_temperature: string
           name: string
           notes: string | null
@@ -77,6 +78,7 @@ export type Database = {
           journey?: Json
           landing_page?: string | null
           lead_score?: number
+          lead_source?: string
           lead_temperature?: string
           name: string
           notes?: string | null
@@ -117,6 +119,7 @@ export type Database = {
           journey?: Json
           landing_page?: string | null
           lead_score?: number
+          lead_source?: string
           lead_temperature?: string
           name?: string
           notes?: string | null
