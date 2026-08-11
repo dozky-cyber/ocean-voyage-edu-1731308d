@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminPortfolioRouteImport } from './routes/_authenticated/admin.portfolio'
 import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authenticated/admin.pipeline'
 import { Route as AuthenticatedAdminAutomationRouteImport } from './routes/_authenticated/admin.automation'
+import { Route as AuthenticatedAdminAssistantRouteImport } from './routes/_authenticated/admin.assistant'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 import { Route as AuthenticatedAdminProposalsIndexRouteImport } from './routes/_authenticated/admin.proposals.index'
 import { Route as AuthenticatedAdminProjectsIndexRouteImport } from './routes/_authenticated/admin.projects.index'
@@ -117,6 +118,12 @@ const AuthenticatedAdminAutomationRoute =
     path: '/automation',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAssistantRoute =
+  AuthenticatedAdminAssistantRouteImport.update({
+    id: '/assistant',
+    path: '/assistant',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAnalyticsRoute =
   AuthenticatedAdminAnalyticsRouteImport.update({
     id: '/analytics',
@@ -205,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/assistant': typeof AuthenticatedAdminAssistantRoute
   '/admin/automation': typeof AuthenticatedAdminAutomationRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -233,6 +241,7 @@ export interface FileRoutesByTo {
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/admin/assistant': typeof AuthenticatedAdminAssistantRoute
   '/admin/automation': typeof AuthenticatedAdminAutomationRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -264,6 +273,7 @@ export interface FileRoutesById {
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
+  '/_authenticated/admin/assistant': typeof AuthenticatedAdminAssistantRoute
   '/_authenticated/admin/automation': typeof AuthenticatedAdminAutomationRoute
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
   '/_authenticated/admin/portfolio': typeof AuthenticatedAdminPortfolioRoute
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
+    | '/admin/assistant'
     | '/admin/automation'
     | '/admin/pipeline'
     | '/admin/portfolio'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
+    | '/admin/assistant'
     | '/admin/automation'
     | '/admin/pipeline'
     | '/admin/portfolio'
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/_authenticated/admin/analytics'
+    | '/_authenticated/admin/assistant'
     | '/_authenticated/admin/automation'
     | '/_authenticated/admin/pipeline'
     | '/_authenticated/admin/portfolio'
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAutomationRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/assistant': {
+      id: '/_authenticated/admin/assistant'
+      path: '/assistant'
+      fullPath: '/admin/assistant'
+      preLoaderRoute: typeof AuthenticatedAdminAssistantRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/analytics': {
       id: '/_authenticated/admin/analytics'
       path: '/analytics'
@@ -589,6 +609,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
+  AuthenticatedAdminAssistantRoute: typeof AuthenticatedAdminAssistantRoute
   AuthenticatedAdminAutomationRoute: typeof AuthenticatedAdminAutomationRoute
   AuthenticatedAdminPipelineRoute: typeof AuthenticatedAdminPipelineRoute
   AuthenticatedAdminPortfolioRoute: typeof AuthenticatedAdminPortfolioRoute
@@ -609,6 +630,7 @@ interface AuthenticatedAdminRouteChildren {
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
+  AuthenticatedAdminAssistantRoute: AuthenticatedAdminAssistantRoute,
   AuthenticatedAdminAutomationRoute: AuthenticatedAdminAutomationRoute,
   AuthenticatedAdminPipelineRoute: AuthenticatedAdminPipelineRoute,
   AuthenticatedAdminPortfolioRoute: AuthenticatedAdminPortfolioRoute,
