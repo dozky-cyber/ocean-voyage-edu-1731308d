@@ -1,8 +1,30 @@
 import { analytics } from "@/lib/analytics";
 import { servicePackageCta, servicePackages } from "@/lib/consultation-content";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import { useEffect, useState } from "react";
 import { Reveal } from "../Reveal";
 
 export function ServicePackageStage() {
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!api) return;
+    setCurrent(api.selectedScrollSnap());
+    const onSelect = () => setCurrent(api.selectedScrollSnap());
+    api.on("select", onSelect);
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api]);
+
   return (
     <section id="paket-layanan" className="relative px-5 py-20 sm:px-8">
       <div className="mx-auto max-w-5xl">
@@ -18,9 +40,15 @@ export function ServicePackageStage() {
           </p>
         </Reveal>
 
-        <div className="mt-10 grid gap-5">
-          {servicePackages.packages.map((pkg, i) => (
-            <Reveal key={pkg.title} delay={0.08 * i}>
+        <Carousel
+          setApi={setApi}
+          opts={{ align: "start", loop: false, dragFree: false, containScroll: "trimSnaps" }}
+          className="mt-10"
+        >
+          <CarouselContent className="-ml-5 items-start">
+            {servicePackages.packages.map((pkg, i) => (
+              <CarouselItem key={pkg.title} className="pl-5 basis-full lg:basis-4/5">
+            <Reveal delay={0.08 * i}>
               <article
                 className="relative overflow-hidden rounded-[1.75rem] glass-panel p-6 sm:p-8"
                 onClick={() => analytics.servicePackageClick(pkg.level)}
@@ -114,6 +142,24 @@ export function ServicePackageStage() {
                 </div>
               </article>
             </Reveal>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious className="hidden sm:flex -left-3 border-primary/30 bg-background/40 text-primary hover:bg-primary/10" />
+          <CarouselNext className="hidden sm:flex -right-3 border-primary/30 bg-background/40 text-primary hover:bg-primary/10" />
+        </Carousel>
+
+        <div className="mt-6 flex justify-center gap-2">
+          {servicePackages.packages.map((pkg, i) => (
+            <button
+              key={pkg.title}
+              type="button"
+              aria-label={`Lihat ${pkg.title}`}
+              onClick={() => api?.scrollTo(i)}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                current === i ? "w-8 bg-primary" : "w-2 bg-primary/25 hover:bg-primary/50"
+              }`}
+            />
           ))}
         </div>
 
