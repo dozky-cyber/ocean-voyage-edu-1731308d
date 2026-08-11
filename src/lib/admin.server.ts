@@ -19,7 +19,7 @@ import type { Database } from "@/integrations/supabase/types";
 type Client = SupabaseClient<Database>;
 
 export const LEAD_LIST_COLUMNS =
-  "id, created_at, name, email, whatsapp, company, business_name, project_type, budget, timeline, status, status_updated_at, lead_score, lead_temperature, lead_source, visitor_source, utm_source, utm_campaign, ai_recommended_package, ai_business_category, ai_lead_score, ai_qualification_status, ai_complexity";
+  "id, created_at, name, email, whatsapp, company, business_name, project_type, budget, timeline, status, status_updated_at, lead_score, lead_temperature, lead_source, visitor_source, utm_source, utm_campaign, ai_recommended_package, ai_business_category, ai_lead_score, ai_qualification_status, ai_complexity, archived_at";
 
 export type LeadListRow = {
   id: string;
@@ -45,6 +45,7 @@ export type LeadListRow = {
   ai_lead_score: number;
   ai_qualification_status: string | null;
   ai_complexity: string | null;
+  archived_at: string | null;
 };
 
 /** Roles held by the signed-in user (RLS lets users read their own rows). */
@@ -145,6 +146,46 @@ export async function setLeadStage(supabase: Client, id: string, stage: Pipeline
     status: normalizeStage(stage),
   });
 
+  return { ok: true as const };
+}
+
+/** Archive / restore a lead without deleting any data. */
+export async function setLeadArchived(supabase: Client, id: string, archived: boolean) {
+  const { error } = await supabase
+    .from("consultations")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  return { ok: true as const, archived };
+}
+
+/** Permanently delete a lead and every record attached to it. */
+export async function purgeLead(id: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const db = supabaseAdmin as unknown as {
+    from: (table: string) => {
+      delete: () => { eq: (col: string, value: string) => Promise<{ error: { message: string } | null }> };
+      update: (values: Record<string, unknown>) => {
+        eq: (col: string, value: string) => Promise<{ error: { message: string } | null }>;
+      };
+    };
+  };
+
+  // Children first, then loose references, then the lead itself.
+  for (const table of [
+    "conversation_requirements",
+    "lead_ai_activities",
+    "automation_tasks",
+  ]) {
+    const { error } = await db.from(table).delete().eq("lead_id", id);
+    if (error) throw new Error(error.message);
+  }
+  for (const table of ["ai_conversations", "clients"]) {
+    const { error } = await db.from(table).update({ lead_id: null }).eq("lead_id", id);
+    if (error) throw new Error(error.message);
+  }
+  const { error: delError } = await db.from("consultations").delete().eq("id", id);
+  if (delError) throw new Error(delError.message);
   return { ok: true as const };
 }
 
