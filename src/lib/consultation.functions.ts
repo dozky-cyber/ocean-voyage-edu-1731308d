@@ -41,6 +41,19 @@ export const submitConsultationLead = createServerFn({ method: "POST" })
     const telegram = await sendTelegramMessage(formatLeadTelegram(form, createdAt, tracking, ai));
     const email = await sendLeadEmail(form, createdAt, tracking, ai);
 
+    const { runAutomation } = await import("./automation.server");
+    await runAutomation({
+      type: "lead.created",
+      leadId: row?.id ?? null,
+      name: form.name,
+      contact: form.whatsapp || form.email,
+      projectType: form.projectType,
+      budget: form.budget,
+      score: ai?.score ?? tracking?.leadScore ?? 0,
+      temperature: tracking?.leadTemperature ?? "Cold Lead",
+      source: leadSource,
+    });
+
     return {
       success: true as const,
       stored: Boolean(row),

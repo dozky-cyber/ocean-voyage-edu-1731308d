@@ -136,5 +136,14 @@ export const approvePortalMilestone = createServerFn({ method: "POST" })
       detail: step.title,
     });
 
+    const { runAutomation } = await import("@/lib/automation.server");
+    await runAutomation({
+      type: "client.approval_granted",
+      projectId: project.id,
+      clientName: client.name,
+      projectName: project.name,
+      milestone: step.title,
+    });
+
     return { ok: true as const, title: step.title };
   });

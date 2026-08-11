@@ -14,6 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
+      automation_logs: {
+        Row: {
+          category: string
+          created_at: string
+          detail: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event: string
+          id: string
+          meta: Json
+          rule_key: string
+          status: string
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          detail?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event: string
+          id?: string
+          meta?: Json
+          rule_key: string
+          status?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          detail?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event?: string
+          id?: string
+          meta?: Json
+          rule_key?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      automation_rules: {
+        Row: {
+          category: string
+          config: Json
+          created_at: string
+          description: string | null
+          enabled: boolean
+          id: string
+          key: string
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key: string
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          enabled?: boolean
+          id?: string
+          key?: string
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      automation_tasks: {
+        Row: {
+          assignee: string | null
+          client_id: string | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          detail: string | null
+          due_at: string
+          id: string
+          invoice_id: string | null
+          kind: string
+          lead_id: string | null
+          meta: Json
+          priority: string
+          project_id: string | null
+          proposal_id: string | null
+          rule_key: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          detail?: string | null
+          due_at?: string
+          id?: string
+          invoice_id?: string | null
+          kind: string
+          lead_id?: string | null
+          meta?: Json
+          priority?: string
+          project_id?: string | null
+          proposal_id?: string | null
+          rule_key: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee?: string | null
+          client_id?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          detail?: string | null
+          due_at?: string
+          id?: string
+          invoice_id?: string | null
+          kind?: string
+          lead_id?: string | null
+          meta?: Json
+          priority?: string
+          project_id?: string | null
+          proposal_id?: string | null
+          rule_key?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_tasks_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_tasks_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "client_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_tasks_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_documents: {
         Row: {
           client_id: string

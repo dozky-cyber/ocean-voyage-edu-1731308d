@@ -200,6 +200,18 @@ export async function setInvoiceStatus(
 
   if (status !== "Paid") return { ok: true, clientId: null };
 
+  const paidInvoice = await fetchInvoice(supabase, id);
+  const { runAutomation } = await import("@/lib/automation.server");
+  await runAutomation({
+    type: "invoice.paid",
+    invoiceId: id,
+    leadId: paidInvoice?.lead_id ?? null,
+    number: paidInvoice?.number ?? "-",
+    amount: Number(paidInvoice?.amount ?? 0),
+    currency: paidInvoice?.currency ?? "IDR",
+    clientName: paidInvoice?.client_name ?? null,
+  });
+
   const client = await convertInvoiceToClient(supabase, id);
   return { ok: true, clientId: client?.id ?? null };
 }
@@ -308,6 +320,16 @@ export async function convertInvoiceToClient(supabase: Client, invoiceId: string
           `Invoice: ${invoice.number}`,
         ].join("\n"),
       ).catch(() => undefined);
+
+      const { runAutomation } = await import("@/lib/automation.server");
+      await runAutomation({
+        type: "project.created",
+        projectId: createdProject.id,
+        clientId: client.id,
+        name: projectName,
+        template: templateMeta(templateId).label,
+        invoiceNumber: invoice.number,
+      });
     }
 
     await supabase.from("client_documents").insert(
