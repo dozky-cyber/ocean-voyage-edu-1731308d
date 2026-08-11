@@ -84,6 +84,12 @@ function OverviewPage() {
     queryKey: ["admin", "proposal-analytics"],
     queryFn: () => fetchProposalStats(),
   });
+  const fetchTeam = useServerFn(getTeamWorkspace);
+  const team = useQuery({
+    queryKey: ["admin", "team"],
+    queryFn: () => fetchTeam(),
+  });
+
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat analitik…</p>;
   if (error || !data)
