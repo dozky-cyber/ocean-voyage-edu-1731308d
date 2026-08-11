@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_conversations: {
+        Row: {
+          budget: string | null
+          business_category: string | null
+          complexity: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_whatsapp: string | null
+          created_at: string
+          features: Json
+          id: string
+          intent: string
+          lead_id: string | null
+          message_count: number
+          messages: Json
+          package_name: string | null
+          problems: Json
+          qualified_at: string | null
+          requirements: Json
+          score: number
+          session_id: string
+          status: string
+          summary: string | null
+          timeline: string | null
+          updated_at: string
+          users_scale: string | null
+        }
+        Insert: {
+          budget?: string | null
+          business_category?: string | null
+          complexity?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          features?: Json
+          id?: string
+          intent?: string
+          lead_id?: string | null
+          message_count?: number
+          messages?: Json
+          package_name?: string | null
+          problems?: Json
+          qualified_at?: string | null
+          requirements?: Json
+          score?: number
+          session_id: string
+          status?: string
+          summary?: string | null
+          timeline?: string | null
+          updated_at?: string
+          users_scale?: string | null
+        }
+        Update: {
+          budget?: string | null
+          business_category?: string | null
+          complexity?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          created_at?: string
+          features?: Json
+          id?: string
+          intent?: string
+          lead_id?: string | null
+          message_count?: number
+          messages?: Json
+          package_name?: string | null
+          problems?: Json
+          qualified_at?: string | null
+          requirements?: Json
+          score?: number
+          session_id?: string
+          status?: string
+          summary?: string | null
+          timeline?: string | null
+          updated_at?: string
+          users_scale?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assistant_memories: {
         Row: {
           category: string
