@@ -197,10 +197,14 @@ export async function buildBusinessSnapshot(supabase: Client): Promise<string> {
       .order("due_date", { ascending: true })
       .limit(15),
     supabase.from("clients").select("name, company, package, status").limit(15),
-    supabase.from("team_members").select("name, role, active, capacity").eq("active", true).limit: undefined as never,
+    supabase
+      .from("team_members")
+      .select("name, role, active, capacity")
+      .eq("active", true)
+      .limit(20),
   ]);
 
-  void team;
+
   const lines: string[] = [`Tanggal hari ini: ${today}`];
 
   const leadRows = leads.data ?? [];
