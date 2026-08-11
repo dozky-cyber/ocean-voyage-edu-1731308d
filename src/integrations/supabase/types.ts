@@ -751,6 +751,99 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_requirements: {
+        Row: {
+          budget: string | null
+          business: string
+          change_note: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_whatsapp: string | null
+          conversation_id: string
+          created_at: string
+          created_by: string | null
+          features: Json
+          final_prompt: string | null
+          id: string
+          intent: string
+          lead_id: string | null
+          package_name: string | null
+          problems: Json
+          project: string
+          score: number
+          source: string
+          summary: string | null
+          timeline: string | null
+          users_scale: string | null
+          version: number
+        }
+        Insert: {
+          budget?: string | null
+          business?: string
+          change_note?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          conversation_id: string
+          created_at?: string
+          created_by?: string | null
+          features?: Json
+          final_prompt?: string | null
+          id?: string
+          intent?: string
+          lead_id?: string | null
+          package_name?: string | null
+          problems?: Json
+          project?: string
+          score?: number
+          source?: string
+          summary?: string | null
+          timeline?: string | null
+          users_scale?: string | null
+          version: number
+        }
+        Update: {
+          budget?: string | null
+          business?: string
+          change_note?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_whatsapp?: string | null
+          conversation_id?: string
+          created_at?: string
+          created_by?: string | null
+          features?: Json
+          final_prompt?: string | null
+          id?: string
+          intent?: string
+          lead_id?: string | null
+          package_name?: string | null
+          problems?: Json
+          project?: string
+          score?: number
+          source?: string
+          summary?: string | null
+          timeline?: string | null
+          users_scale?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_requirements_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_requirements_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number

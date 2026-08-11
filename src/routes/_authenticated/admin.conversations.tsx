@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { RequirementPreviewPanel } from "@/components/admin/RequirementPreviewPanel";
 import { GlassCard } from "@/components/admin/ui";
 import {
   listAiConversations,
@@ -160,6 +161,8 @@ function ConversationCard({
           </button>
         )}
       </div>
+
+      {row.status === "qualified_lead" && <RequirementPreviewPanel conversationId={row.id} />}
 
       {open && (
         <div className="mt-4 max-h-80 space-y-3 overflow-y-auto rounded-2xl border border-border/70 bg-card/40 p-3">

@@ -4,12 +4,12 @@ import { z } from "zod";
 
 import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import {
-  formatQualifiedTelegram,
   qualifyConversation,
   saveDraftConversation,
   scoreConversation,
   type ConversationTurn,
 } from "@/lib/ai-conversation.server";
+import { formatRequirementTelegram } from "@/lib/requirements.server";
 import { sendTelegramMessage } from "@/lib/telegram.server";
 
 type Body = { messages?: unknown; sessionId?: unknown };
@@ -119,7 +119,27 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
                 const score = scoreConversation(input);
                 const outcome = await qualifyConversation(sessionId, input, turns);
                 if (outcome.ok && outcome.isNew) {
-                  void sendTelegramMessage(formatQualifiedTelegram(input, score));
+                  void sendTelegramMessage(
+                    formatRequirementTelegram(
+                      {
+                        business: input.businessCategory,
+                        project: outcome.project,
+                        features: input.features,
+                        problems: input.problems,
+                        packageName: input.packageName,
+                        timeline: input.timeline,
+                        budget: input.budget,
+                        usersScale: input.users,
+                        intent: input.intent,
+                        score,
+                        contactName: input.contactName || null,
+                        contactEmail: input.contactEmail || null,
+                        contactWhatsapp: input.contactWhatsapp || null,
+                        summary: input.summary,
+                      },
+                      outcome.requirementVersion ?? 1,
+                    ),
+                  );
                 }
                 return { ...input, score };
               },

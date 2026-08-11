@@ -150,6 +150,8 @@ export async function qualifyConversation(
     leadId = data.id;
   }
 
+  let requirementVersion: number | null = null;
+
   if (conversation) {
     const { error } = await supabaseAdmin
       .from("ai_conversations")
@@ -175,9 +177,37 @@ export async function qualifyConversation(
       })
       .eq("id", conversation.id);
     if (error) console.error("[ai-conversation] qualify failed", error.message);
+
+    const { saveRequirementVersion } = await import("@/lib/requirements.server");
+    const saved = await saveRequirementVersion(conversation.id, leadId, {
+      business: input.businessCategory,
+      project: projectTypeByPackage[input.packageName] ?? "Lainnya",
+      features: input.features,
+      problems: input.problems,
+      packageName: input.packageName,
+      timeline: input.timeline,
+      budget: input.budget,
+      usersScale: input.users,
+      intent: input.intent,
+      score,
+      contactName: input.contactName ?? null,
+      contactEmail: input.contactEmail ?? null,
+      contactWhatsapp: input.contactWhatsapp ?? null,
+      summary: input.summary,
+      source: "ai",
+    });
+    requirementVersion = saved?.version ?? null;
   }
 
-  return { ok: true as const, leadId, score, qualification, isNew: !conversation?.lead_id };
+  return {
+    ok: true as const,
+    leadId,
+    score,
+    qualification,
+    isNew: !conversation?.lead_id,
+    requirementVersion,
+    project: projectTypeByPackage[input.packageName] ?? "Lainnya",
+  };
 }
 
 export function formatQualifiedTelegram(input: QualificationInput, score: number) {
