@@ -16,7 +16,9 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminPipelineRouteImport } from './routes/_authenticated/admin.pipeline'
+import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated/admin.analytics'
 import { Route as AuthenticatedAdminProposalsIndexRouteImport } from './routes/_authenticated/admin.proposals.index'
 import { Route as AuthenticatedAdminLeadsIndexRouteImport } from './routes/_authenticated/admin.leads.index'
 import { Route as ApiPublicTelegramTestRouteImport } from './routes/api/public/telegram/test'
@@ -58,10 +60,22 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPipelineRoute =
   AuthenticatedAdminPipelineRouteImport.update({
     id: '/pipeline',
     path: '/pipeline',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAnalyticsRoute =
+  AuthenticatedAdminAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminProposalsIndexRoute =
@@ -100,7 +114,9 @@ export interface FileRoutesByFullPath {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
@@ -113,7 +129,9 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
@@ -129,7 +147,9 @@ export interface FileRoutesById {
   '/jasa-pembuatan-website-aplikasi-landing-page': typeof JasaPembuatanWebsiteAplikasiLandingPageRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
   '/_authenticated/admin/pipeline': typeof AuthenticatedAdminPipelineRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/leads/$id': typeof AuthenticatedAdminLeadsIdRoute
   '/_authenticated/admin/proposals/$id': typeof AuthenticatedAdminProposalsIdRoute
@@ -145,7 +165,9 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/admin'
+    | '/admin/analytics'
     | '/admin/pipeline'
+    | '/admin/settings'
     | '/admin/'
     | '/admin/leads/$id'
     | '/admin/proposals/$id'
@@ -158,7 +180,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
+    | '/admin/analytics'
     | '/admin/pipeline'
+    | '/admin/settings'
     | '/admin'
     | '/admin/leads/$id'
     | '/admin/proposals/$id'
@@ -173,7 +197,9 @@ export interface FileRouteTypes {
     | '/jasa-pembuatan-website-aplikasi-landing-page'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/_authenticated/admin/analytics'
     | '/_authenticated/admin/pipeline'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/leads/$id'
     | '/_authenticated/admin/proposals/$id'
@@ -242,11 +268,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/pipeline': {
       id: '/_authenticated/admin/pipeline'
       path: '/pipeline'
       fullPath: '/admin/pipeline'
       preLoaderRoute: typeof AuthenticatedAdminPipelineRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/analytics': {
+      id: '/_authenticated/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AuthenticatedAdminAnalyticsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/proposals/': {
@@ -288,7 +328,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminPipelineRoute: typeof AuthenticatedAdminPipelineRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
   AuthenticatedAdminLeadsIdRoute: typeof AuthenticatedAdminLeadsIdRoute
   AuthenticatedAdminProposalsIdRoute: typeof AuthenticatedAdminProposalsIdRoute
@@ -297,7 +339,9 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAnalyticsRoute: AuthenticatedAdminAnalyticsRoute,
   AuthenticatedAdminPipelineRoute: AuthenticatedAdminPipelineRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
   AuthenticatedAdminLeadsIdRoute: AuthenticatedAdminLeadsIdRoute,
   AuthenticatedAdminProposalsIdRoute: AuthenticatedAdminProposalsIdRoute,
@@ -331,13 +375,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -54,9 +54,10 @@ function OverviewPage() {
     ? Number(((data.hot / data.totalLeads) * 100).toFixed(1))
     : 0;
   const maxMonth = Math.max(1, ...data.monthly.map((m) => m.leads));
-  const closed =
-    data.stageCounts.find((s) => s.stage === "Completed")?.count ??
-    0 + (data.stageCounts.find((s) => s.stage === "Payment")?.count ?? 0);
+  const stageCount = (stage: string) =>
+    data.stageCounts.find((s) => s.stage === stage)?.count ?? 0;
+  const closed = stageCount("Completed") + stageCount("Payment");
+
 
   return (
     <div className="space-y-6">
