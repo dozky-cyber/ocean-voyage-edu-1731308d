@@ -267,7 +267,7 @@ export async function sendLeadEmail(
     return { sent: false, reason: "email_not_configured" as const };
   }
 
-  const { subject, text } = formatLeadEmail(data, createdAt, tracking);
+  const { subject, text } = formatLeadEmail(data, createdAt, tracking, ai);
   const from = process.env["RESEND_FROM"] ?? "KERJAKU <onboarding@resend.dev>";
 
   try {
@@ -284,7 +284,7 @@ export async function sendLeadEmail(
         reply_to: data.email,
         subject,
         text,
-        html: htmlBody(data, createdAt, tracking),
+        html: htmlBody(data, createdAt, tracking, ai),
       }),
     });
 
