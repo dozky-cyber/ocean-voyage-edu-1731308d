@@ -196,8 +196,7 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
             <p className="text-muted-foreground">Attachment: {fileName}</p>
             {confirm === "whatsapp" && (
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Pesan menyertakan link download PDF asli, jadi customer langsung menerima
-                filenya.
+                Pesan menyertakan link download PDF asli, jadi customer langsung menerima filenya.
               </p>
             )}
             <div className="mt-3 flex flex-wrap gap-3">
@@ -228,9 +227,7 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>
-  );
+  return <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>;
 }
 
 function Field({ label, value }: { label: string; value: string }) {

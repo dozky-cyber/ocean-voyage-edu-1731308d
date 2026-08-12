@@ -2,12 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { formatDate } from "@/lib/admin/pipeline";
-import {
-  copyPayload,
-  copyText,
-  packetTitle,
-  type DocumentPacket,
-} from "@/lib/document-delivery";
+import { copyPayload, copyText, packetTitle, type DocumentPacket } from "@/lib/document-delivery";
 
 export type DocumentDeliveryRow = {
   id: string;
@@ -221,9 +216,7 @@ export function DocumentActions({
                   <p className="text-foreground">
                     {packetTitle(packet)} dikirim melalui{" "}
                     {row.channel === "email" ? "Email" : "WhatsApp"} ·{" "}
-                    <span
-                      className={row.status === "failed" ? "text-destructive" : "text-primary"}
-                    >
+                    <span className={row.status === "failed" ? "text-destructive" : "text-primary"}>
                       {row.status === "failed" ? "Gagal" : "Berhasil"}
                     </span>
                   </p>

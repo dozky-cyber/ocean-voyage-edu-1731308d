@@ -241,7 +241,6 @@ export function LeadOrderBriefCard({ leadId }: Props) {
               </div>
             </div>
           )}
-
         </div>
       )}
 
@@ -259,9 +258,7 @@ export function LeadOrderBriefCard({ leadId }: Props) {
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>
-  );
+  return <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>;
 }
 
 function Item({ label, value }: { label: string; value: string }) {

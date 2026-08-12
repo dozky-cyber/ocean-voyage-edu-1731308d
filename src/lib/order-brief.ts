@@ -2,7 +2,6 @@
 // Pure formatting/normalisation only — no AI Consultant logic is touched here.
 import { attachmentBlock } from "./document-delivery";
 
-
 export type OrderBriefData = {
   version: number;
   customerName: string;
@@ -121,7 +120,6 @@ export function buildFollowUpBody(brief: OrderBriefData, stampIso?: string) {
   ].join("\n");
 }
 
-
 /** Order Brief delivery workflow status. */
 export type OrderBriefStatus = "None" | "Generated" | "Reviewed" | "Sent WhatsApp" | "Sent Email";
 
@@ -137,7 +135,6 @@ export function orderBriefStatus(input: {
   if (input.reviewed) return "Reviewed";
   return "Generated";
 }
-
 
 export function emailSubject(brief: OrderBriefData) {
   return `Order Brief Konsultasi KERJAKU - ${brief.customerName}`;
