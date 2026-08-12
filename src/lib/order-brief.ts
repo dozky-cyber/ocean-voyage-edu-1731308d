@@ -68,16 +68,22 @@ export function wibStamp(iso?: string) {
 }
 
 /** Message sent to the customer (identical for WhatsApp and email body). */
-export function buildFollowUpMessage(brief: OrderBriefData, stampIso?: string) {
-  const { date, time } = wibStamp(stampIso);
-  return [
+export function buildFollowUpMessage(
+  brief: OrderBriefData,
+  options?: { stampIso?: string; pdfUrl?: string | null },
+) {
+  const { date, time } = wibStamp(options?.stampIso);
+  const lines = [
     "Halo Kak, terima kasih sudah melakukan konsultasi bersama KERJAKU AI Consultant.",
     "",
     "Berikut hasil preview konsultasi awal Kakak yang sudah kami rangkum dalam Order Brief KERJAKU.",
     "",
     "Jika ada tambahan fitur, perubahan kebutuhan, atau ingin konsultasi lanjutan bisa langsung informasikan kepada kami ya Kak.",
     "",
-    `📎 Terlampir Order Brief: ${briefFileName(brief.customerName)}`,
+    `📎 Order Brief: ${briefFileName(brief.customerName)}`,
+  ];
+  if (options?.pdfUrl) lines.push(`📥 Download PDF: ${options.pdfUrl}`);
+  lines.push(
     "",
     `Tanggal: ${date}`,
     `Jam: ${time}`,
@@ -86,8 +92,26 @@ export function buildFollowUpMessage(brief: OrderBriefData, stampIso?: string) {
     "Setelah kebutuhan sudah final, tim kami akan memberikan rekomendasi solusi dan penawaran harga yang sesuai.",
     "",
     "Terima kasih sudah mempercayakan konsultasi kepada KERJAKU 🙏",
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
+
+/** Order Brief delivery workflow status. */
+export type OrderBriefStatus = "None" | "Generated" | "Reviewed" | "Sent WhatsApp" | "Sent Email";
+
+export function orderBriefStatus(input: {
+  hasBrief: boolean;
+  reviewed: boolean;
+  sentWhatsapp: boolean;
+  sentEmail: boolean;
+}): OrderBriefStatus {
+  if (!input.hasBrief) return "None";
+  if (input.sentEmail) return "Sent Email";
+  if (input.sentWhatsapp) return "Sent WhatsApp";
+  if (input.reviewed) return "Reviewed";
+  return "Generated";
+}
+
 
 export function emailSubject(brief: OrderBriefData) {
   return `Order Brief Konsultasi KERJAKU - ${brief.customerName}`;
