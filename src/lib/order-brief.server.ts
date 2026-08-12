@@ -160,8 +160,18 @@ export async function createDocumentShortLink(input: {
   }
 }
 
-/** Resolve a short slug into a fresh signed storage URL. */
+/** Resolve a short slug into a fresh signed storage URL (forces download). */
 export async function resolveDocumentShortLink(slug: string) {
+  const detail = await resolveDocumentShortLinkDetail(slug);
+  return detail?.downloadUrl ?? null;
+}
+
+/** Resolve a short slug into inline-view + download signed URLs. */
+export async function resolveDocumentShortLinkDetail(slug: string): Promise<{
+  fileName: string;
+  viewUrl: string;
+  downloadUrl: string;
+} | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const admin = supabaseAdmin as unknown as { from: (table: string) => any; storage: any };
   const { data } = await admin
@@ -170,13 +180,19 @@ export async function resolveDocumentShortLink(slug: string) {
     .eq("slug", slug)
     .maybeSingle();
   if (!data) return null;
-  const { data: signed } = await admin.storage
-    .from(data.bucket as string)
-    .createSignedUrl(data.path as string, 60 * 60, {
-      download: data.file_name as string,
-    });
-  return (signed?.signedUrl as string) ?? null;
+
+  const storage = admin.storage.from(data.bucket as string);
+  const fileName = (data.file_name as string) ?? "dokumen.pdf";
+  const [view, download] = await Promise.all([
+    storage.createSignedUrl(data.path as string, 60 * 60),
+    storage.createSignedUrl(data.path as string, 60 * 60, { download: fileName }),
+  ]);
+  const viewUrl = (view?.data?.signedUrl as string) ?? null;
+  const downloadUrl = (download?.data?.signedUrl as string) ?? viewUrl;
+  if (!viewUrl) return null;
+  return { fileName, viewUrl, downloadUrl };
 }
+
 
 /** Upload the generated PDF to private storage and return a clean short link. */
 export async function uploadOrderBriefPdf(input: {
