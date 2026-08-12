@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { OrderBriefDialog } from "@/components/admin/OrderBriefDialog";
 import { OrderBriefEditDialog } from "@/components/admin/OrderBriefEditDialog";
 import { Chip, GlassCard } from "@/components/admin/ui";
+import { DocumentActions } from "@/components/admin/DocumentActions";
 import {
   getOrderBrief,
   markOrderBriefReviewed,
@@ -16,7 +17,9 @@ import {
 import {
   briefFields,
   briefFileName,
+  buildFollowUpBody,
   buildFollowUpMessage,
+  emailSubject,
   normalizeWhatsapp,
   waLink,
 } from "@/lib/order-brief";
@@ -38,6 +41,8 @@ export function LeadOrderBriefCard({ leadId }: Props) {
   const [preview, setPreview] = useState(false);
   const [edit, setEdit] = useState(false);
   const [confirm, setConfirm] = useState<"whatsapp" | "email" | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["order-brief", leadId],
@@ -72,6 +77,7 @@ export function LeadOrderBriefCard({ leadId }: Props) {
       if (!brief) throw new Error("Order Brief belum tersedia.");
       if (!waNumber) throw new Error("Nomor WhatsApp customer tidak valid.");
       const file = await prepareFile({ data: { leadId } });
+      setFileUrl(file.url);
       window.open(
         waLink(waNumber, buildFollowUpMessage(brief, { pdfUrl: file.url })),
         "_blank",
@@ -95,14 +101,23 @@ export function LeadOrderBriefCard({ leadId }: Props) {
   });
 
   const email = useMutation({
-    mutationFn: () => sendEmail({ data: { leadId, markContacted: true } }),
+    mutationFn: async () => {
+      const file = await prepareFile({ data: { leadId } }).catch(() => null);
+      if (file?.url) setFileUrl(file.url);
+      return sendEmail({ data: { leadId, markContacted: true } });
+    },
     onSuccess: async (result) => {
+      setEmailError(null);
       toast.success(`Order Brief dikirim ke ${result.to}. Status lead → Contacted.`);
       setConfirm(null);
       await refresh();
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Gagal mengirim email."),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Gagal mengirim email.";
+      setEmailError(message);
+      setConfirm(null);
+      toast.error(message);
+    },
   });
 
   const busy = whatsapp.isPending || email.isPending;
