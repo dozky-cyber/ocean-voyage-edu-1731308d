@@ -175,3 +175,41 @@ export async function sendOrderBriefEmail(input: {
   }
 }
 
+
+/** Save an edited Order Brief as a NEW version (previous versions are kept). */
+export async function saveOrderBriefVersion(
+  supabase: Client,
+  input: {
+    conversationId: string;
+    leadId: string | null;
+    base: OrderBriefData;
+    next: OrderBriefData;
+    createdBy: string | null;
+  },
+): Promise<{ version: number }> {
+  const version = Number(input.base.version || 1) + 1;
+  const { error } = await (supabase as any).from("conversation_requirements").insert({
+    conversation_id: input.conversationId,
+    lead_id: input.leadId,
+    version,
+    business: input.next.business,
+    project: input.next.project,
+    features: input.next.features,
+    problems: input.next.problems,
+    package_name: input.next.recommendation,
+    timeline: input.next.timeline,
+    budget: input.next.budget,
+    users_scale: input.next.usersScale,
+    intent: "qualified",
+    score: 0,
+    contact_name: input.next.customerName,
+    contact_email: input.next.email,
+    contact_whatsapp: input.next.whatsapp,
+    summary: input.next.goal,
+    change_note: input.next.adminNeeds,
+    source: "admin_edit",
+    created_by: input.createdBy,
+  });
+  if (error) throw new Error(error.message);
+  return { version };
+}
