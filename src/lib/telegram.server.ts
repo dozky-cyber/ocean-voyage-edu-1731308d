@@ -27,7 +27,10 @@ export function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-export async function sendTelegramMessage(text: string): Promise<TelegramResult> {
+export async function sendTelegramMessage(
+  text: string,
+  chatIdOverride?: string,
+): Promise<TelegramResult> {
   const config = readConfig();
   if (!config) {
     console.error("[telegram] missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID");
