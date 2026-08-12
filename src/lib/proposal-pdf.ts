@@ -85,17 +85,17 @@ function summaryBox(doc: Doc, data: ProposalDocData) {
     ["Rekomendasi Paket", data.recommendedPackage || "-"],
     ["Berlaku Sampai", data.validUntil || "-"],
   ];
-  const h = 30 + rows.length * 22;
+  const h = 38 + rows.length * 24;
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, "0.94 0.98 0.98");
   doc.text("PROPOSAL SUMMARY", MARGIN + 16, top + h - 18, 8, true, BRAND);
-  let y = top + h - 36;
+  let y = top + h - 38;
   rows.forEach(([label, value]) => {
     doc.text(label.toUpperCase(), MARGIN + 16, y, 7, false, MUTED);
     const line = wrap(value, 10, true, CONTENT_W - 40)[0] ?? "-";
-    doc.text(line, MARGIN + 16, y - 12, 10, true);
-    y -= 22;
+    doc.text(line, MARGIN + 16, y - 13, 10, true);
+    y -= 24;
   });
   doc.y = top - 22;
 }
@@ -147,7 +147,7 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
   for (const row of data.pricing) {
     total += Number(row.amount) || 0;
     const detailLines = row.detail ? wrap(row.detail, 9, false, itemW) : [];
-    doc.ensure(20 + detailLines.length * 12);
+    doc.ensure(38 + detailLines.length * 12);
     const amount = money(row.amount, data.currency);
     doc.text(row.item || "-", MARGIN, doc.y, 10, true);
     doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false);
@@ -156,8 +156,9 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
       doc.text(line, MARGIN, doc.y, 9, false, MUTED);
       doc.y -= 12;
     });
-    doc.y -= 4;
-    doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4, "0.92 0.94 0.96");
+    doc.y -= 6;
+    doc.line(MARGIN, doc.y, PAGE_W - MARGIN, doc.y, "0.92 0.94 0.96");
+    doc.y -= 12;
   }
 
   doc.ensure(34);
