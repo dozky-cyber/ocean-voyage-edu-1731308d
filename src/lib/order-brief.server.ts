@@ -42,14 +42,18 @@ export async function loadOrderBrief(
     createdAt: (row["created_at"] as string) ?? new Date().toISOString(),
   };
 
-  return { brief, leadId: (row["lead_id"] as string) ?? null };
+  return {
+    brief,
+    leadId: (row["lead_id"] as string) ?? null,
+    conversationId,
+  };
 }
 
 /** Same mapping, but resolved from the CRM lead id instead of a conversation. */
 export async function loadOrderBriefByLead(
   supabase: Client,
   leadId: string,
-): Promise<{ brief: OrderBriefData; leadId: string | null } | null> {
+): Promise<{ brief: OrderBriefData; leadId: string | null; conversationId: string } | null> {
   const { data, error } = await supabase
     .from("conversation_requirements")
     .select("conversation_id")
