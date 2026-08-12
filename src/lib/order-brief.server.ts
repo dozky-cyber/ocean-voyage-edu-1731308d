@@ -9,7 +9,7 @@ type Client = {
 export async function loadOrderBrief(
   supabase: Client,
   conversationId: string,
-): Promise<{ brief: OrderBriefData; leadId: string | null } | null> {
+): Promise<{ brief: OrderBriefData; leadId: string | null; conversationId: string } | null> {
   const { data, error } = await supabase
     .from("conversation_requirements")
     .select("*")
