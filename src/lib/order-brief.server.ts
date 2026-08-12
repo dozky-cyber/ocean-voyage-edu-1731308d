@@ -9,7 +9,7 @@ type Client = {
 export async function loadOrderBrief(
   supabase: Client,
   conversationId: string,
-): Promise<{ brief: OrderBriefData; leadId: string | null } | null> {
+): Promise<{ brief: OrderBriefData; leadId: string | null; conversationId: string } | null> {
   const { data, error } = await supabase
     .from("conversation_requirements")
     .select("*")
@@ -42,14 +42,18 @@ export async function loadOrderBrief(
     createdAt: (row["created_at"] as string) ?? new Date().toISOString(),
   };
 
-  return { brief, leadId: (row["lead_id"] as string) ?? null };
+  return {
+    brief,
+    leadId: (row["lead_id"] as string) ?? null,
+    conversationId,
+  };
 }
 
 /** Same mapping, but resolved from the CRM lead id instead of a conversation. */
 export async function loadOrderBriefByLead(
   supabase: Client,
   leadId: string,
-): Promise<{ brief: OrderBriefData; leadId: string | null } | null> {
+): Promise<{ brief: OrderBriefData; leadId: string | null; conversationId: string } | null> {
   const { data, error } = await supabase
     .from("conversation_requirements")
     .select("conversation_id")
@@ -80,6 +84,35 @@ function htmlFromMessage(message: string) {
   ).replace(/\n/g, "<br/>")}</div>`;
 }
 
+/** Upload the generated PDF to private storage and return a long-lived signed URL. */
+export async function uploadOrderBriefPdf(input: {
+  leadId: string | null;
+  conversationId?: string | null;
+  fileName: string;
+  bytes: Uint8Array;
+}): Promise<{ url: string | null; path: string | null; reason: string | null }> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const storage = (supabaseAdmin as unknown as { storage: any }).storage.from("order-briefs");
+    const folder = input.leadId ?? input.conversationId ?? "misc";
+    const path = `${folder}/${Date.now()}-${input.fileName}`;
+    const { error } = await storage.upload(path, input.bytes, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+    if (error) return { url: null, path: null, reason: error.message };
+    const { data, error: signError } = await storage.createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (signError) return { url: null, path, reason: signError.message };
+    return { url: (data?.signedUrl as string) ?? null, path, reason: null };
+  } catch (error) {
+    return {
+      url: null,
+      path: null,
+      reason: error instanceof Error ? error.message : "storage_failed",
+    };
+  }
+}
+
 /** Send the Order Brief to the customer via Resend with the PDF attached. */
 export async function sendOrderBriefEmail(input: {
   to: string;
@@ -91,7 +124,7 @@ export async function sendOrderBriefEmail(input: {
   const lovableKey = process.env["LOVABLE_API_KEY"];
   const resendKey = process.env["RESEND_API_KEY"];
   if (!lovableKey || !resendKey) {
-    return { sent: false, reason: "email_not_configured" };
+    return { sent: false, reason: "Email belum dikonfigurasi (RESEND_API_KEY tidak tersedia)." };
   }
   const from = process.env["RESEND_FROM"] ?? "KERJAKU <onboarding@resend.dev>";
 
@@ -109,19 +142,74 @@ export async function sendOrderBriefEmail(input: {
         subject: input.subject,
         text: input.message,
         html: htmlFromMessage(input.message),
-        attachments: [{ filename: input.fileName, content: input.pdfBase64 }],
+        attachments: [
+          {
+            filename: input.fileName,
+            content: input.pdfBase64,
+            content_type: "application/pdf",
+          },
+        ],
       }),
     });
     if (!response.ok) {
       const detail = await response.text();
       console.error(`[order-brief] email failed [${response.status}]: ${detail}`);
-      return { sent: false, reason: `email_send_failed_${response.status}` };
+      let message = detail;
+      try {
+        const parsed = JSON.parse(detail) as { message?: string; error?: string };
+        message = parsed.message ?? parsed.error ?? detail;
+      } catch {
+        /* keep raw text */
+      }
+      if (response.status === 403) {
+        message = `${message} — domain pengirim belum terverifikasi di Resend. Verifikasi domain lalu set RESEND_FROM (contoh: KERJAKU <noreply@kerjaku.space>).`;
+      }
+      return { sent: false, reason: `[${response.status}] ${message}`.slice(0, 400) };
     }
     return { sent: true, reason: null };
   } catch (error) {
     console.error(
       `[order-brief] email threw: ${error instanceof Error ? error.message : String(error)}`,
     );
-    return { sent: false, reason: "email_send_failed" };
+    return { sent: false, reason: error instanceof Error ? error.message : "email_send_failed" };
   }
+}
+
+
+/** Save an edited Order Brief as a NEW version (previous versions are kept). */
+export async function saveOrderBriefVersion(
+  supabase: Client,
+  input: {
+    conversationId: string;
+    leadId: string | null;
+    base: OrderBriefData;
+    next: OrderBriefData;
+    createdBy: string | null;
+  },
+): Promise<{ version: number }> {
+  const version = Number(input.base.version || 1) + 1;
+  const { error } = await (supabase as any).from("conversation_requirements").insert({
+    conversation_id: input.conversationId,
+    lead_id: input.leadId,
+    version,
+    business: input.next.business,
+    project: input.next.project,
+    features: input.next.features,
+    problems: input.next.problems,
+    package_name: input.next.recommendation,
+    timeline: input.next.timeline,
+    budget: input.next.budget,
+    users_scale: input.next.usersScale,
+    intent: "qualified",
+    score: 0,
+    contact_name: input.next.customerName,
+    contact_email: input.next.email,
+    contact_whatsapp: input.next.whatsapp,
+    summary: input.next.goal,
+    change_note: input.next.adminNeeds,
+    source: "admin_edit",
+    created_by: input.createdBy,
+  });
+  if (error) throw new Error(error.message);
+  return { version };
 }

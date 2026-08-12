@@ -4,10 +4,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { OrderBriefDialog } from "@/components/admin/OrderBriefDialog";
+import { OrderBriefEditDialog } from "@/components/admin/OrderBriefEditDialog";
 import { Chip, GlassCard } from "@/components/admin/ui";
 import {
   getOrderBrief,
+  markOrderBriefReviewed,
   markOrderBriefSent,
+  prepareOrderBriefFile,
   sendOrderBriefByEmail,
 } from "@/lib/order-brief.functions";
 import {
@@ -17,17 +20,23 @@ import {
   normalizeWhatsapp,
   waLink,
 } from "@/lib/order-brief";
+import { downloadOrderBriefPdf } from "@/lib/order-brief-pdf";
 import { formatDate } from "@/lib/admin/pipeline";
 
 type Props = { leadId: string };
+
+const FLOW = ["Generated", "Reviewed", "Sent WhatsApp", "Sent Email"] as const;
 
 /** Order Brief delivery block shown inside the existing CRM lead detail page. */
 export function LeadOrderBriefCard({ leadId }: Props) {
   const queryClient = useQueryClient();
   const load = useServerFn(getOrderBrief);
   const markSent = useServerFn(markOrderBriefSent);
+  const markReviewed = useServerFn(markOrderBriefReviewed);
+  const prepareFile = useServerFn(prepareOrderBriefFile);
   const sendEmail = useServerFn(sendOrderBriefByEmail);
   const [preview, setPreview] = useState(false);
+  const [edit, setEdit] = useState(false);
   const [confirm, setConfirm] = useState<"whatsapp" | "email" | null>(null);
 
   const query = useQuery({
@@ -37,6 +46,7 @@ export function LeadOrderBriefCard({ leadId }: Props) {
 
   const brief = query.data?.brief ?? null;
   const deliveries = query.data?.deliveries ?? [];
+  const status = query.data?.status ?? "None";
   const fileName = brief ? briefFileName(brief.customerName) : "";
   const waNumber = normalizeWhatsapp(brief?.whatsapp);
 
@@ -47,15 +57,37 @@ export function LeadOrderBriefCard({ leadId }: Props) {
     ]);
   }
 
+  async function openReviewed(open: () => void) {
+    open();
+    try {
+      await markReviewed({ data: { leadId } });
+      await refresh();
+    } catch {
+      /* status update is best-effort */
+    }
+  }
+
   const whatsapp = useMutation({
     mutationFn: async () => {
       if (!brief) throw new Error("Order Brief belum tersedia.");
       if (!waNumber) throw new Error("Nomor WhatsApp customer tidak valid.");
-      window.open(waLink(waNumber, buildFollowUpMessage(brief)), "_blank", "noopener");
-      return markSent({ data: { leadId, channel: "whatsapp" as const, markContacted: true } });
+      const file = await prepareFile({ data: { leadId } });
+      window.open(
+        waLink(waNumber, buildFollowUpMessage(brief, { pdfUrl: file.url })),
+        "_blank",
+        "noopener",
+      );
+      return markSent({
+        data: {
+          leadId,
+          channel: "whatsapp" as const,
+          markContacted: true,
+          pdfUrl: file.url,
+        },
+      });
     },
     onSuccess: async () => {
-      toast.success("Order Brief ditandai terkirim via WhatsApp. Status lead → Contacted.");
+      toast.success("Order Brief + link PDF dikirim via WhatsApp. Status lead → Contacted.");
       setConfirm(null);
       await refresh();
     },
@@ -73,8 +105,8 @@ export function LeadOrderBriefCard({ leadId }: Props) {
       toast.error(error instanceof Error ? error.message : "Gagal mengirim email."),
   });
 
-  const status = deliveries.length ? "Sent" : brief ? "Generated" : "Belum tersedia";
   const busy = whatsapp.isPending || email.isPending;
+  const activeIndex = FLOW.indexOf(status as (typeof FLOW)[number]);
 
   return (
     <GlassCard>
@@ -87,12 +119,12 @@ export function LeadOrderBriefCard({ leadId }: Props) {
         </div>
         <Chip
           className={
-            status === "Sent"
+            status.startsWith("Sent")
               ? "bg-primary/15 text-primary border-primary/30"
               : "bg-secondary/40 text-secondary-foreground border-border/60"
           }
         >
-          {status}
+          {status === "None" ? "Belum tersedia" : status}
         </Chip>
       </div>
 
@@ -104,6 +136,26 @@ export function LeadOrderBriefCard({ leadId }: Props) {
         </p>
       ) : (
         <div className="mt-4 space-y-4 text-xs">
+          <section>
+            <Label>Order Brief Status</Label>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {FLOW.map((step, index) => (
+                <span key={step} className="flex items-center gap-2">
+                  <span
+                    className={`rounded-full border px-3 py-1 ${
+                      index <= activeIndex
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "border-border/60 text-muted-foreground"
+                    }`}
+                  >
+                    {step}
+                  </span>
+                  {index < FLOW.length - 1 && <span className="text-muted-foreground">→</span>}
+                </span>
+              ))}
+            </div>
+          </section>
+
           <section>
             <Label>Customer Data</Label>
             <div className="mt-2 grid gap-2 sm:grid-cols-3">
@@ -124,18 +176,34 @@ export function LeadOrderBriefCard({ leadId }: Props) {
 
           <section>
             <Label>Attachment</Label>
-            <p className="mt-2 inline-flex rounded-full border border-border px-3 py-1 text-foreground">
-              📎 {fileName}
-            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <span className="rounded-full border border-border px-3 py-1 text-foreground">
+                📎 {fileName}
+              </span>
+              <button
+                type="button"
+                onClick={() => downloadOrderBriefPdf(brief)}
+                className="text-primary hover:underline"
+              >
+                Download PDF
+              </button>
+            </div>
           </section>
 
           <div className="flex flex-wrap gap-3 border-t border-border/60 pt-4">
             <button
               type="button"
-              onClick={() => setPreview(true)}
+              onClick={() => void openReviewed(() => setPreview(true))}
               className="rounded-full border border-border px-4 py-1.5 text-foreground"
             >
               Preview Brief
+            </button>
+            <button
+              type="button"
+              onClick={() => void openReviewed(() => setEdit(true))}
+              className="rounded-full border border-border px-4 py-1.5 text-foreground"
+            >
+              Edit Brief
             </button>
             <button
               type="button"
@@ -165,6 +233,12 @@ export function LeadOrderBriefCard({ leadId }: Props) {
                   : `Email: ${brief.email ?? "tidak tersedia"}`}
               </p>
               <p className="text-muted-foreground">Attachment: {fileName}</p>
+              {confirm === "whatsapp" && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Pesan WhatsApp menyertakan link download PDF asli (berlaku 1 tahun) sehingga
+                  customer langsung menerima filenya.
+                </p>
+              )}
               <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -194,7 +268,10 @@ export function LeadOrderBriefCard({ leadId }: Props) {
                 {deliveries.map((row) => (
                   <li key={row.id} className="rounded-xl border border-border/70 p-2">
                     <p className="text-foreground">
-                      Order Brief dikirim melalui {row.channel === "email" ? "Email" : "WhatsApp"}
+                      Order Brief dikirim melalui {row.channel === "email" ? "Email" : "WhatsApp"} ·{" "}
+                      <span className={row.status === "failed" ? "text-destructive" : "text-primary"}>
+                        {row.status === "failed" ? "Gagal" : "Berhasil"}
+                      </span>
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
                       {formatDate(row.created_at)} · {row.created_by_email ?? "admin"}
@@ -209,6 +286,14 @@ export function LeadOrderBriefCard({ leadId }: Props) {
       )}
 
       {preview && <OrderBriefDialog leadId={leadId} onClose={() => setPreview(false)} />}
+      {edit && brief && (
+        <OrderBriefEditDialog
+          brief={brief}
+          leadId={leadId}
+          onClose={() => setEdit(false)}
+          onSaved={refresh}
+        />
+      )}
     </GlassCard>
   );
 }
