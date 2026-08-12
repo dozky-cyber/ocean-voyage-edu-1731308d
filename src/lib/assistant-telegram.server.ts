@@ -21,7 +21,7 @@ import {
   renameThread,
   saveMemory,
 } from "@/lib/assistant.server";
-import { escapeHtml, sendTelegramMessage } from "@/lib/telegram.server";
+import { escapeHtml, markdownToTelegramHtml, sendTelegramMessage } from "@/lib/telegram.server";
 
 const THREAD_PREFIX = "Telegram";
 
@@ -325,12 +325,4 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
 }
 
 /** Converts the assistant's light markdown into Telegram-safe HTML. */
-export function toTelegramHtml(markdown: string): string {
-  const escaped = escapeHtml(markdown)
-    .replace(/^#{1,6}\s*/gm, "")
-    .replace(/^\s*[-*]\s+/gm, "• ");
-  return escaped
-    .replace(/\*\*(.+?)\*\*/gs, "<b>$1</b>")
-    .replace(/(^|\s)\*(?!\s)(.+?)\*(?=\s|$)/gs, "$1<i>$2</i>")
-    .slice(0, 3900);
-}
+export const toTelegramHtml = markdownToTelegramHtml;
