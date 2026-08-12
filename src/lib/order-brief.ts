@@ -68,57 +68,66 @@ export function wibStamp(iso?: string) {
   };
 }
 
-/** Message sent to the customer (identical for WhatsApp and email body). */
-export function buildFollowUpMessage(
-  brief: OrderBriefData,
-  options?: { stampIso?: string; pdfUrl?: string | null },
-) {
-  const { date, time } = wibStamp(options?.stampIso);
-  const lines = [
-    "Halo Kak, terima kasih sudah melakukan konsultasi bersama KERJAKU AI Consultant.",
+/** Intro paragraphs (shared by WhatsApp + email). */
+function introLines(brief: OrderBriefData) {
+  return [
+    `Halo Kak ${brief.customerName || "Customer"}, terima kasih sudah melakukan konsultasi bersama KERJAKU AI Consultant.`,
     "",
     "Berikut hasil preview konsultasi awal Kakak yang sudah kami rangkum dalam Order Brief KERJAKU.",
     "",
     "Jika ada tambahan fitur, perubahan kebutuhan, atau ingin konsultasi lanjutan bisa langsung informasikan kepada kami ya Kak.",
-    "",
-    `Tanggal: ${date}`,
-    `Jam: ${time}`,
-    "",
+  ];
+}
+
+function closingLines() {
+  return [
     "Tim KERJAKU akan melakukan pengecekan kebutuhan terlebih dahulu.",
     "Setelah kebutuhan sudah final, tim kami akan memberikan rekomendasi solusi dan penawaran harga yang sesuai.",
     "",
     "Terima kasih sudah mempercayakan konsultasi kepada KERJAKU 🙏",
   ];
-  const attachment = attachmentBlock({
-    kind: "order-brief",
-    subject: emailSubject(brief),
-    customerName: brief.customerName,
-    message: "",
-    fileName: briefFileName(brief.customerName),
-    downloadUrl: options?.pdfUrl ?? null,
-  });
-  return `${lines.join("\n")}\n\n${attachment}`;
+}
+
+/**
+ * Message sent to the customer (WhatsApp + email body).
+ * Date/time always come from when the Order Brief was created, never from send time.
+ */
+export function buildFollowUpMessage(
+  brief: OrderBriefData,
+  options?: { stampIso?: string; pdfUrl?: string | null },
+) {
+  const { date, time } = wibStamp(options?.stampIso ?? brief.createdAt);
+  const lines = [
+    ...introLines(brief),
+    "",
+    "📎 Order Brief KERJAKU",
+    "",
+    "File:",
+    briefFileName(brief.customerName),
+  ];
+  if (options?.pdfUrl) {
+    lines.push("", "Download PDF:", options.pdfUrl);
+  }
+  lines.push("", `Tanggal:`, date, "", `Jam:`, time, "", ...closingLines());
+  return lines.join("\n");
 }
 
 /** Body only (no attachment block) — used by the reusable DocumentActions packet. */
 export function buildFollowUpBody(brief: OrderBriefData, stampIso?: string) {
-  const { date, time } = wibStamp(stampIso);
+  const { date, time } = wibStamp(stampIso ?? brief.createdAt);
   return [
-    "Halo Kak, terima kasih sudah melakukan konsultasi bersama KERJAKU AI Consultant.",
+    ...introLines(brief),
     "",
-    "Berikut hasil preview konsultasi awal Kakak yang sudah kami rangkum dalam Order Brief KERJAKU.",
+    "Tanggal:",
+    date,
     "",
-    "Jika ada tambahan fitur, perubahan kebutuhan, atau ingin konsultasi lanjutan bisa langsung informasikan kepada kami ya Kak.",
+    "Jam:",
+    time,
     "",
-    `Tanggal: ${date}`,
-    `Jam: ${time}`,
-    "",
-    "Tim KERJAKU akan melakukan pengecekan kebutuhan terlebih dahulu.",
-    "Setelah kebutuhan sudah final, tim kami akan memberikan rekomendasi solusi dan penawaran harga yang sesuai.",
-    "",
-    "Terima kasih sudah mempercayakan konsultasi kepada KERJAKU 🙏",
+    ...closingLines(),
   ].join("\n");
 }
+
 
 /** Order Brief delivery workflow status. */
 export type OrderBriefStatus = "None" | "Generated" | "Reviewed" | "Sent WhatsApp" | "Sent Email";
