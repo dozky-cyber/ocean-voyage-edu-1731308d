@@ -244,13 +244,19 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
     const thread = await getOrCreateThread(supabaseAdmin, String(chatId), userId);
 
     if (text === "/start") {
-      await sendTelegramMessage(WELCOME);
+      await sendTelegramMessage(WELCOME, String(chatId));
       return;
     }
     if (text === "/reset") {
       await clearThreadMessages(supabaseAdmin, thread.id);
       await renameThread(supabaseAdmin, thread.id, `${THREAD_PREFIX} · ${chatId}`);
-      await sendTelegramMessage("🧹 Riwayat percakapan Telegram dibersihkan. Memory bisnis tetap tersimpan.");
+      await sendTelegramMessage(
+        "🧹 Riwayat percakapan Telegram dibersihkan. Memory bisnis tetap tersimpan.",
+        String(chatId),
+      );
+      return;
+    }
+    if (text.startsWith("/") && (await handleCommand(supabaseAdmin, chatId, text))) {
       return;
     }
 
