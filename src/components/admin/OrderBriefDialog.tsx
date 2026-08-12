@@ -9,9 +9,11 @@ import {
   prepareOrderBriefFile,
   sendOrderBriefByEmail,
 } from "@/lib/order-brief.functions";
+import { DocumentActions } from "@/components/admin/DocumentActions";
 import {
   briefFields,
   briefFileName,
+  buildFollowUpBody,
   buildFollowUpMessage,
   emailSubject,
   normalizeWhatsapp,
@@ -37,6 +39,8 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
   const sendEmail = useServerFn(sendOrderBriefByEmail);
   const prepareFile = useServerFn(prepareOrderBriefFile);
   const [confirm, setConfirm] = useState<"whatsapp" | "email" | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["order-brief", targetKey],
@@ -45,7 +49,7 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
 
   const brief = query.data?.brief ?? null;
   const deliveries = query.data?.deliveries ?? [];
-  const message = brief ? buildFollowUpMessage(brief) : "";
+  const message = brief ? buildFollowUpBody(brief) : "";
   const fileName = brief ? briefFileName(brief.customerName) : "";
   const waNumber = normalizeWhatsapp(brief?.whatsapp);
 
@@ -54,6 +58,7 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
       if (!brief) throw new Error("Order Brief belum tersedia.");
       if (!waNumber) throw new Error("Nomor WhatsApp customer tidak valid.");
       const file = await prepareFile({ data: target });
+      setFileUrl(file.url);
       window.open(
         waLink(waNumber, buildFollowUpMessage(brief, { pdfUrl: file.url })),
         "_blank",
@@ -72,14 +77,23 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
   });
 
   const email = useMutation({
-    mutationFn: () => sendEmail({ data: { ...target, markContacted: true } }),
+    mutationFn: async () => {
+      const file = await prepareFile({ data: target }).catch(() => null);
+      if (file?.url) setFileUrl(file.url);
+      return sendEmail({ data: { ...target, markContacted: true } });
+    },
     onSuccess: async (result) => {
+      setEmailError(null);
       toast.success(`Order Brief dikirim ke ${result.to}. Status lead → Contacted.`);
       setConfirm(null);
       await refresh();
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Gagal mengirim email."),
+    onError: (error) => {
+      const detail = error instanceof Error ? error.message : "Gagal mengirim email.";
+      setEmailError(detail);
+      setConfirm(null);
+      toast.error(detail);
+    },
   });
 
   async function refresh() {
@@ -147,59 +161,24 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
               </p>
             </section>
 
-            <section>
-              <SectionTitle>Attachment</SectionTitle>
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <span className="rounded-full border border-border px-3 py-1 text-foreground">
-                  📎 {fileName}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => downloadOrderBriefPdf(brief)}
-                  className="text-primary hover:underline"
-                >
-                  Download PDF
-                </button>
-              </div>
-            </section>
-
-            <div className="flex flex-wrap gap-3 border-t border-border/60 pt-4">
-              <button
-                type="button"
-                onClick={() => setConfirm("whatsapp")}
-                className="rounded-full border border-primary/60 bg-primary/10 px-4 py-1.5 text-primary"
-              >
-                Send WhatsApp
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirm("email")}
-                className="rounded-full border border-border px-4 py-1.5 text-foreground"
-              >
-                Send Email
-              </button>
-            </div>
-
-            <section>
-              <SectionTitle>Delivery History</SectionTitle>
-              {deliveries.length === 0 ? (
-                <p className="mt-2 text-muted-foreground">Belum ada pengiriman.</p>
-              ) : (
-                <ul className="mt-2 space-y-2">
-                  {deliveries.map((row) => (
-                    <li key={row.id} className="rounded-xl border border-border/70 p-2">
-                      <p className="text-foreground">
-                        Order Brief dikirim melalui {row.channel === "email" ? "Email" : "WhatsApp"}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        {formatDate(row.created_at)} · {row.created_by_email ?? "admin"}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground">File: {row.file_name}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            <DocumentActions
+              packet={{
+                kind: "order-brief",
+                subject: emailSubject(brief),
+                customerName: brief.customerName,
+                email: brief.email,
+                whatsapp: waNumber,
+                message,
+                fileName,
+                downloadUrl: fileUrl,
+              }}
+              onDownload={() => downloadOrderBriefPdf(brief)}
+              onSendWhatsapp={() => setConfirm("whatsapp")}
+              onSendEmail={() => setConfirm("email")}
+              busy={whatsapp.isPending || email.isPending}
+              emailError={emailError}
+              deliveries={deliveries}
+            />
           </div>
         )}
 

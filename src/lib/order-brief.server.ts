@@ -126,7 +126,7 @@ export async function sendOrderBriefEmail(input: {
   if (!lovableKey || !resendKey) {
     return { sent: false, reason: "Email belum dikonfigurasi (RESEND_API_KEY tidak tersedia)." };
   }
-  const from = process.env["RESEND_FROM"] ?? "KERJAKU <onboarding@resend.dev>";
+  const from = process.env["RESEND_FROM"] ?? "KERJAKU <noreply@kerjaku.space>";
 
   try {
     const response = await fetch("https://connector-gateway.lovable.dev/resend/emails", {
@@ -162,7 +162,7 @@ export async function sendOrderBriefEmail(input: {
         /* keep raw text */
       }
       if (response.status === 403) {
-        message = `${message} — domain pengirim belum terverifikasi di Resend. Verifikasi domain lalu set RESEND_FROM (contoh: KERJAKU <noreply@kerjaku.space>).`;
+        message = `${message} — domain pengirim belum terverifikasi di Resend. Verifikasi domain kerjaku.space di Resend (DNS: SPF, DKIM, DMARC) lalu set RESEND_FROM, contoh: KERJAKU <noreply@kerjaku.space>. Sementara itu gunakan tombol Copy Email / Copy Link PDF / Copy Message untuk kirim manual.`;
       }
       return { sent: false, reason: `[${response.status}] ${message}`.slice(0, 400) };
     }
