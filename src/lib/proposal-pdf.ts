@@ -136,7 +136,10 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
   const amountW = 120;
   const itemW = CONTENT_W - amountW - 12;
 
-  doc.ensure(24);
+  const firstDetail = data.pricing[0]?.detail
+    ? wrap(data.pricing[0]!.detail!, 9, false, itemW).length
+    : 0;
+  doc.ensure(62 + firstDetail * 12);
   doc.text("ITEM", MARGIN, doc.y, 7.5, true, MUTED);
   doc.text("JUMLAH", PAGE_W - MARGIN - textWidth("JUMLAH", 7.5, true), doc.y, 7.5, true, MUTED);
   doc.y -= 8;
