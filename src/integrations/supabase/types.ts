@@ -928,6 +928,63 @@ export type Database = {
           },
         ]
       }
+      document_links: {
+        Row: {
+          bucket: string
+          conversation_id: string | null
+          created_at: string
+          created_by: string | null
+          file_name: string
+          id: string
+          kind: string
+          lead_id: string | null
+          path: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          bucket?: string
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          id?: string
+          kind?: string
+          lead_id?: string | null
+          path: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          bucket?: string
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          id?: string
+          kind?: string
+          lead_id?: string | null
+          path?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_links_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_links_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number

@@ -128,8 +128,10 @@ export function buildWhatsappFollowUpMessage(
     briefFileName(brief.customerName),
   ];
   if (options?.pdfUrl) {
-    lines.push("", "📥 Download PDF:", `[Download Order Brief KERJAKU](${options.pdfUrl})`);
+    // WhatsApp cannot render markdown links — send the short URL so it stays clickable.
+    lines.push("", "📥 Download PDF:", options.pdfUrl);
   }
+
   lines.push("", `Tanggal:`, date, "", `Jam:`, time, "", ...closingLines());
   return lines.join("\n");
 }

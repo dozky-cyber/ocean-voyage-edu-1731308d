@@ -84,12 +84,107 @@ function htmlFromMessage(message: string) {
   ).replace(/\n/g, "<br/>")}</div>`;
 }
 
-/** Upload the generated PDF to private storage and return a long-lived signed URL. */
+/** Public base URL used for short download links. */
+export function publicSiteUrl() {
+  const raw = process.env["PUBLIC_SITE_URL"] ?? "https://kerjaku.space";
+  return raw.replace(/\/+$/, "");
+}
+
+/** "Order_Brief_KERJAKU_Candra.pdf" → "order-brief-kerjaku-candra" */
+export function slugFromFileName(fileName: string) {
+  return (
+    fileName
+      .replace(/\.pdf$/i, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "order-brief-kerjaku"
+  );
+}
+
+/**
+ * Register (or refresh) a readable short link that points at a stored PDF.
+ * The short link never expires: the signed URL is minted when it is opened.
+ */
+export async function createDocumentShortLink(input: {
+  base: string;
+  bucket?: string;
+  path: string;
+  fileName: string;
+  leadId?: string | null;
+  conversationId?: string | null;
+  createdBy?: string | null;
+}): Promise<string | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const admin = supabaseAdmin as unknown as { from: (table: string) => any };
+    const bucket = input.bucket ?? "order-briefs";
+    const row = {
+      kind: "order-brief",
+      bucket,
+      path: input.path,
+      file_name: input.fileName,
+      lead_id: input.leadId ?? null,
+      conversation_id: input.conversationId ?? null,
+      created_by: input.createdBy ?? null,
+    };
+
+    // Reuse the same slug for the same lead/document so customers keep one link.
+    const { data: existing } = await admin
+      .from("document_links")
+      .select("slug")
+      .eq("file_name", input.fileName)
+      .eq("lead_id", input.leadId ?? null)
+      .limit(1)
+      .maybeSingle();
+
+    if (existing?.slug) {
+      await admin
+        .from("document_links")
+        .update({ path: input.path, bucket })
+        .eq("slug", existing.slug);
+      return existing.slug as string;
+    }
+
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const slug =
+        attempt === 0
+          ? input.base
+          : `${input.base}-${Math.random().toString(36).slice(2, 6)}`;
+      const { error } = await admin.from("document_links").insert({ ...row, slug });
+      if (!error) return slug;
+      if (!String(error.message ?? "").includes("duplicate")) return null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve a short slug into a fresh signed storage URL. */
+export async function resolveDocumentShortLink(slug: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const admin = supabaseAdmin as unknown as { from: (table: string) => any; storage: any };
+  const { data } = await admin
+    .from("document_links")
+    .select("bucket, path, file_name")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (!data) return null;
+  const { data: signed } = await admin.storage
+    .from(data.bucket as string)
+    .createSignedUrl(data.path as string, 60 * 60, {
+      download: data.file_name as string,
+    });
+  return (signed?.signedUrl as string) ?? null;
+}
+
+/** Upload the generated PDF to private storage and return a clean short link. */
 export async function uploadOrderBriefPdf(input: {
   leadId: string | null;
   conversationId?: string | null;
   fileName: string;
   bytes: Uint8Array;
+  createdBy?: string | null;
 }): Promise<{ url: string | null; path: string | null; reason: string | null }> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -101,6 +196,18 @@ export async function uploadOrderBriefPdf(input: {
       upsert: true,
     });
     if (error) return { url: null, path: null, reason: error.message };
+
+    const slug = await createDocumentShortLink({
+      base: slugFromFileName(input.fileName),
+      path,
+      fileName: input.fileName,
+      leadId: input.leadId,
+      conversationId: input.conversationId ?? null,
+      createdBy: input.createdBy ?? null,
+    });
+    if (slug) return { url: `${publicSiteUrl()}/d/${slug}`, path, reason: null };
+
+    // Fallback: signed URL if the short link could not be registered.
     const { data, error: signError } = await storage.createSignedUrl(path, 60 * 60 * 24 * 365);
     if (signError) return { url: null, path, reason: signError.message };
     return { url: (data?.signedUrl as string) ?? null, path, reason: null };
@@ -112,6 +219,7 @@ export async function uploadOrderBriefPdf(input: {
     };
   }
 }
+
 
 /** Send the Order Brief to the customer via Resend with the PDF attached. */
 export async function sendOrderBriefEmail(input: {
