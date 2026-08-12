@@ -8,7 +8,7 @@ import { generateText } from "ai";
 
 import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 import { buildBusinessSnapshot, buildMemoryContext } from "@/lib/assistant.server";
-import { escapeHtml, sendTelegramMessage } from "@/lib/telegram.server";
+import { escapeHtml, markdownToTelegramHtml, sendTelegramMessage } from "@/lib/telegram.server";
 
 export const BRIEF_TIMEZONE = "Asia/Jakarta";
 export const BRIEF_SEND_TIME_WIB = "08:30";
@@ -167,7 +167,7 @@ const BASE_PERSONA = [
   "Jangan mengarang angka, nama, atau status. Sebut nama lead/klien/project nyata dari data.",
   "Jika tidak ada tugas mendesak, JANGAN kirim laporan kosong — beri saran aktivitas produktif (konten, branding, developer, marketing).",
   "",
-  "Format Telegram HTML sederhana: hanya <b> dan baris baru. Tanpa tabel, tanpa markdown heading, tanpa ``` block. Maksimal ~3000 karakter.",
+  "Format jawaban: teks polos dengan **tebal** untuk judul bagian dan bullet \"- \". DILARANG memakai tag HTML, tabel, heading #, atau code block. Maksimal ~2800 karakter.",
 ].join("\n");
 
 /* ------------------------------ brief generator ---------------------------- */
@@ -196,27 +196,27 @@ export async function generateDailyBrief(supabase: AdminClient): Promise<string>
       BASE_PERSONA,
       "",
       "Susun DAILY BRIEF dengan struktur persis berikut (tanpa mengulang header tanggal):",
-      "🎯 <b>TODAY'S PRIORITY</b>",
+      "🎯 **TODAY'S PRIORITY**",
       "",
-      "🔥 <b>PRIORITY 1 — MOST IMPORTANT</b>",
+      "🔥 **PRIORITY 1 — MOST IMPORTANT**",
       "Task: ...",
       "Alasan: ...",
       "Dampak: ...",
       "",
-      "💻 <b>DEVELOPMENT</b> — prioritas teknis: task development aktif, bug, perbaikan sistem/produk.",
+      "💻 **DEVELOPMENT** — prioritas teknis: task development aktif, bug, perbaikan sistem/produk.",
       "",
-      "📢 <b>BUSINESS</b> — follow up lead, komunikasi klien, aktivitas sales, aktivitas marketing.",
+      "📢 **BUSINESS** — follow up lead, komunikasi klien, aktivitas sales, aktivitas marketing.",
       "",
-      "⏰ <b>RECOMMENDED SCHEDULE</b> — blok 08:30-10:30, 10:30-12:00, 13:00-15:00, 15:00-16:00, 20:00 review. Isi tiap blok dengan pekerjaan nyata.",
+      "⏰ **RECOMMENDED SCHEDULE** — blok 08:30-10:30, 10:30-12:00, 13:00-15:00, 15:00-16:00, 20:00 review. Isi tiap blok dengan pekerjaan nyata.",
       "",
-      "💡 <b>AI SUGGESTION</b> — saran produktif bila tidak ada yang mendesak (Content / Branding / Developer / Marketing).",
+      "💡 **AI SUGGESTION** — saran produktif bila tidak ada yang mendesak (Content / Branding / Developer / Marketing).",
       "",
-      "📌 <b>REMINDER</b> — pengingat dari CRM, leads, projects, proposals, invoice, dan task.",
+      "📌 **REMINDER** — pengingat dari CRM, leads, projects, proposals, invoice, dan task.",
     ].join("\n"),
     prompt: `Tanggal hari ini: ${dateLabel} (WIB).\n\n${context}`,
   });
 
-  return `${header}${text.trim()}`;
+  return `${header}${markdownToTelegramHtml(text.trim())}`;
 }
 
 export async function generateTodayFocus(supabase: AdminClient): Promise<string> {
@@ -228,7 +228,7 @@ export async function generateTodayFocus(supabase: AdminClient): Promise<string>
     system: `${BASE_PERSONA}\n\nBerikan prioritas hari ini + jadwal kerja singkat (blok waktu WIB). Maksimal ~1500 karakter.`,
     prompt: `Tanggal: ${jakartaDateLabel()} (WIB), sekarang pukul ${jakartaNow().time} WIB.\n\n${context}`,
   });
-  return `🎯 <b>TODAY'S PRIORITY</b>\n\n${text.trim()}`;
+  return `🎯 <b>TODAY'S PRIORITY</b>\n\n${markdownToTelegramHtml(text.trim())}`;
 }
 
 export async function generateIdeas(supabase: AdminClient, topic?: string): Promise<string> {
@@ -240,7 +240,7 @@ export async function generateIdeas(supabase: AdminClient, topic?: string): Prom
     system: `${BASE_PERSONA}\n\nBerikan 5-7 ide konkret dan bisa langsung dieksekusi (bisnis, marketing, konten, atau development) yang relevan dengan kondisi bisnis saat ini. Setiap ide 1-2 kalimat + kenapa layak dikerjakan.`,
     prompt: `${topic ? `Fokus ide: ${topic}\n\n` : ""}${context}`,
   });
-  return `💡 <b>IDEAS</b>\n\n${text.trim()}`;
+  return `💡 <b>IDEAS</b>\n\n${markdownToTelegramHtml(text.trim())}`;
 }
 
 export async function generateDailyReview(supabase: AdminClient): Promise<string> {
@@ -257,7 +257,7 @@ export async function generateDailyReview(supabase: AdminClient): Promise<string
       done.length ? done.map((t) => `- ${t.title}`).join("\n") : "(belum ada)"
     }\n\n${context}`,
   });
-  return `🌙 <b>DAILY REVIEW</b>\n\n${text.trim()}`;
+  return `🌙 <b>DAILY REVIEW</b>\n\n${markdownToTelegramHtml(text.trim())}`;
 }
 
 /* -------------------------------- delivery --------------------------------- */
