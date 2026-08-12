@@ -89,7 +89,7 @@ function closingLines() {
 }
 
 /**
- * Message sent to the customer (WhatsApp + email body).
+ * Message sent to the customer via email.
  * Date/time always come from when the Order Brief was created, never from send time.
  */
 export function buildFollowUpMessage(
@@ -107,6 +107,28 @@ export function buildFollowUpMessage(
   ];
   if (options?.pdfUrl) {
     lines.push("", "Download PDF:", options.pdfUrl);
+  }
+  lines.push("", `Tanggal:`, date, "", `Jam:`, time, "", ...closingLines());
+  return lines.join("\n");
+}
+
+/**
+ * WhatsApp-specific message with a clean labeled link instead of a raw signed URL.
+ * Date/time always come from when the Order Brief was created, never from send time.
+ */
+export function buildWhatsappFollowUpMessage(
+  brief: OrderBriefData,
+  options?: { stampIso?: string; pdfUrl?: string | null },
+) {
+  const { date, time } = wibStamp(options?.stampIso ?? brief.createdAt);
+  const lines = [
+    ...introLines(brief),
+    "",
+    "📎 Order Brief:",
+    briefFileName(brief.customerName),
+  ];
+  if (options?.pdfUrl) {
+    lines.push("", "📥 Download PDF:", `[Download Order Brief KERJAKU](${options.pdfUrl})`);
   }
   lines.push("", `Tanggal:`, date, "", `Jam:`, time, "", ...closingLines());
   return lines.join("\n");

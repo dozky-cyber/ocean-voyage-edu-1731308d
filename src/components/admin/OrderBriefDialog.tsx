@@ -14,7 +14,7 @@ import {
   briefFields,
   briefFileName,
   buildFollowUpBody,
-  buildFollowUpMessage,
+  buildWhatsappFollowUpMessage,
   emailSubject,
   normalizeWhatsapp,
   waLink,
@@ -60,7 +60,7 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
       const file = await prepareFile({ data: target });
       setFileUrl(file.url);
       window.open(
-        waLink(waNumber, buildFollowUpMessage(brief, { pdfUrl: file.url })),
+        waLink(waNumber, buildWhatsappFollowUpMessage(brief, { pdfUrl: file.url })),
         "_blank",
         "noopener",
       );
