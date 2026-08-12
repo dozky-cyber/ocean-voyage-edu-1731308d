@@ -21,7 +21,7 @@ import {
   renameThread,
   saveMemory,
 } from "@/lib/assistant.server";
-import { escapeHtml, sendTelegramMessage } from "@/lib/telegram.server";
+import { escapeHtml, markdownToTelegramHtml, sendTelegramMessage } from "@/lib/telegram.server";
 
 const THREAD_PREFIX = "Telegram";
 
@@ -123,16 +123,98 @@ async function extractMemories(
 }
 
 const WELCOME = [
-  "🤖 <b>KERJAKU AI Business Assistant</b>",
+  "🤖 <b>KERJAKU AI EXECUTIVE ASSISTANT</b>",
   "",
   "Tanyakan apa saja soal bisnis kamu, contoh:",
   "• berapa lead masuk hari ini?",
   "• project mana yang terlambat?",
   "• siapa yang harus saya follow up?",
-  "• berapa pemasukan bulan ini?",
   "",
-  "Ketik /reset untuk memulai percakapan baru.",
+  "<b>Command:</b>",
+  "/today — prioritas & jadwal hari ini",
+  "/brief — kirim Daily Brief sekarang",
+  "/add [task] — tambah personal task",
+  "/tasks — lihat personal task",
+  "/done [nomor] — tandai task selesai",
+  "/idea — ide bisnis / marketing / development",
+  "/review — daily review",
+  "/reset — mulai percakapan baru",
+  "",
+  "Daily Brief otomatis terkirim setiap hari pukul 08:30 WIB.",
 ].join("\n");
+
+/** Telegram-only assistant commands. Returns true when the update was handled. */
+async function handleCommand(
+  supabase: AdminClient,
+  chatId: number,
+  text: string,
+): Promise<boolean> {
+  const [rawCommand, ...rest] = text.split(/\s+/);
+  const command = (rawCommand ?? "").split("@")[0]!.toLowerCase();
+  const argument = rest.join(" ").trim();
+
+  const daily = await import("@/lib/assistant-daily.server");
+
+  switch (command) {
+    case "/today": {
+      await sendTelegramMessage(await daily.generateTodayFocus(supabase), String(chatId));
+      return true;
+    }
+    case "/brief": {
+      const result = await daily.sendDailyBrief("manual");
+      if (!result.ok) {
+        await sendTelegramMessage(
+          `⚠️ Daily Brief gagal dikirim. ${escapeHtml(result.errors.join("; "))}`,
+          String(chatId),
+        );
+      }
+      return true;
+    }
+    case "/add": {
+      if (!argument) {
+        await sendTelegramMessage("Format: <code>/add Perbaiki email CRM</code>", String(chatId));
+        return true;
+      }
+      const task = await daily.addOwnerTask(supabase, { title: argument, chatId: String(chatId) });
+      await sendTelegramMessage(
+        task ? `✅ Task ditambahkan: <b>${escapeHtml(task.title)}</b>` : "⚠️ Gagal menyimpan task.",
+        String(chatId),
+      );
+      return true;
+    }
+    case "/tasks": {
+      const open = await daily.listOwnerTasks(supabase, "open");
+      const body = open.length
+        ? open.map((t, i) => `${i + 1}. ${escapeHtml(t.title)}`).join("\n")
+        : "(Tidak ada task terbuka.)";
+      await sendTelegramMessage(`📝 <b>PERSONAL TASK</b>\n\n${body}`, String(chatId));
+      return true;
+    }
+    case "/done": {
+      if (!argument) {
+        await sendTelegramMessage("Format: <code>/done 1</code>", String(chatId));
+        return true;
+      }
+      const done = await daily.completeOwnerTask(supabase, argument);
+      await sendTelegramMessage(
+        done ? `✔️ Selesai: <b>${escapeHtml(done.title)}</b>` : "⚠️ Task tidak ditemukan.",
+        String(chatId),
+      );
+      return true;
+    }
+    case "/idea": {
+      await sendTelegramMessage(await daily.generateIdeas(supabase, argument), String(chatId));
+      return true;
+    }
+    case "/review": {
+      await sendTelegramMessage(await daily.generateDailyReview(supabase), String(chatId));
+      return true;
+    }
+    default:
+      return false;
+  }
+}
+
 
 /** Processes one Telegram update end-to-end. Never throws. */
 export async function handleTelegramUpdate(update: unknown): Promise<void> {
@@ -162,13 +244,19 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
     const thread = await getOrCreateThread(supabaseAdmin, String(chatId), userId);
 
     if (text === "/start") {
-      await sendTelegramMessage(WELCOME);
+      await sendTelegramMessage(WELCOME, String(chatId));
       return;
     }
     if (text === "/reset") {
       await clearThreadMessages(supabaseAdmin, thread.id);
       await renameThread(supabaseAdmin, thread.id, `${THREAD_PREFIX} · ${chatId}`);
-      await sendTelegramMessage("🧹 Riwayat percakapan Telegram dibersihkan. Memory bisnis tetap tersimpan.");
+      await sendTelegramMessage(
+        "🧹 Riwayat percakapan Telegram dibersihkan. Memory bisnis tetap tersimpan.",
+        String(chatId),
+      );
+      return;
+    }
+    if (text.startsWith("/") && (await handleCommand(supabaseAdmin, chatId, text))) {
       return;
     }
 
@@ -223,7 +311,7 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       userId,
     });
 
-    await sendTelegramMessage(toTelegramHtml(reply));
+    await sendTelegramMessage(toTelegramHtml(reply), String(chatId));
     await extractMemories(supabaseAdmin, model, {
       question: text,
       answer: reply,
@@ -237,12 +325,4 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
 }
 
 /** Converts the assistant's light markdown into Telegram-safe HTML. */
-export function toTelegramHtml(markdown: string): string {
-  const escaped = escapeHtml(markdown)
-    .replace(/^#{1,6}\s*/gm, "")
-    .replace(/^\s*[-*]\s+/gm, "• ");
-  return escaped
-    .replace(/\*\*(.+?)\*\*/gs, "<b>$1</b>")
-    .replace(/(^|\s)\*(?!\s)(.+?)\*(?=\s|$)/gs, "$1<i>$2</i>")
-    .slice(0, 3900);
-}
+export const toTelegramHtml = markdownToTelegramHtml;

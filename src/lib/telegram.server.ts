@@ -27,7 +27,10 @@ export function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;");
 }
 
-export async function sendTelegramMessage(text: string): Promise<TelegramResult> {
+export async function sendTelegramMessage(
+  text: string,
+  chatIdOverride?: string,
+): Promise<TelegramResult> {
   const config = readConfig();
   if (!config) {
     console.error("[telegram] missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID");
@@ -39,7 +42,7 @@ export async function sendTelegramMessage(text: string): Promise<TelegramResult>
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: config.chatId,
+        chat_id: chatIdOverride ?? config.chatId.split(",")[0]!.trim(),
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
@@ -94,4 +97,15 @@ export function formatConsultation(data: ConsultationSubmission): string {
   lines.push("", "<b>Pesan:</b>", escapeHtml(data.message));
   lines.push("", `<i>${new Date().toISOString()}</i>`);
   return lines.join("\n");
+}
+
+/** Converts light markdown into Telegram-safe HTML (escapes all raw tags). */
+export function markdownToTelegramHtml(markdown: string): string {
+  const escaped = escapeHtml(markdown)
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "• ");
+  return escaped
+    .replace(/\*\*(.+?)\*\*/gs, "<b>$1</b>")
+    .replace(/(^|\s)\*(?!\s)(.+?)\*(?=\s|$)/gs, "$1<i>$2</i>")
+    .slice(0, 3900);
 }
