@@ -103,6 +103,48 @@ export type Database = {
           },
         ]
       }
+      assistant_daily_briefs: {
+        Row: {
+          brief_date: string
+          chat_id: string
+          created_at: string
+          error: string | null
+          id: string
+          message: string
+          scheduled_for: string | null
+          sent_at: string
+          status: string
+          timezone: string
+          trigger_source: string
+        }
+        Insert: {
+          brief_date: string
+          chat_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          message: string
+          scheduled_for?: string | null
+          sent_at?: string
+          status?: string
+          timezone?: string
+          trigger_source?: string
+        }
+        Update: {
+          brief_date?: string
+          chat_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          message?: string
+          scheduled_for?: string | null
+          sent_at?: string
+          status?: string
+          timezone?: string
+          trigger_source?: string
+        }
+        Relationships: []
+      }
       assistant_memories: {
         Row: {
           category: string
@@ -187,6 +229,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      assistant_owner_tasks: {
+        Row: {
+          chat_id: string | null
+          completed_at: string | null
+          created_at: string
+          detail: string | null
+          due_date: string | null
+          id: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chat_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          detail?: string | null
+          due_date?: string | null
+          id?: string
+          source?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          detail?: string | null
+          due_date?: string | null
+          id?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       assistant_threads: {
         Row: {
