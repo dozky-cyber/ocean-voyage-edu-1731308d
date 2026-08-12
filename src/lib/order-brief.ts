@@ -1,6 +1,6 @@
 // Client-safe helpers for the KERJAKU Order Brief follow-up (CRM delivery).
 // Pure formatting/normalisation only — no AI Consultant logic is touched here.
-import { attachmentBlock } from "./document-delivery";
+
 
 export type OrderBriefData = {
   version: number;
