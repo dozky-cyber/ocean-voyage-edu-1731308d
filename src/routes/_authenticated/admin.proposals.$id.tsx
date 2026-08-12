@@ -16,6 +16,10 @@ import {
   setProposalStatusFn,
 } from "@/lib/admin.functions";
 import { generateInvoice } from "@/lib/billing.functions";
+import { markProposalSent, prepareProposalFile } from "@/lib/proposal.functions";
+import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
+import { buildProposalWhatsappMessage, type ProposalDocData } from "@/lib/proposal-doc";
+import { proposalPdfBlobUrl } from "@/lib/proposal-pdf";
 import { formatDate } from "@/lib/admin/pipeline";
 
 import {
@@ -50,6 +54,8 @@ function ProposalDetailPage() {
   const duplicate = useServerFn(duplicateProposalFn);
   const remove = useServerFn(deleteProposalFn);
   const createInvoice = useServerFn(generateInvoice);
+  const prepareFile = useServerFn(prepareProposalFile);
+  const markSent = useServerFn(markProposalSent);
 
 
   const { data, isLoading, error } = useQuery({
@@ -79,6 +85,7 @@ function ProposalDetailPage() {
   const [versionNote, setVersionNote] = useState("");
   const [sections, setSections] = useState<ProposalSection[]>([]);
   const [pricing, setPricing] = useState<PricingItem[]>([]);
+  const [previewVersion, setPreviewVersion] = useState<{ label: string; url: string } | null>(null);
 
   useEffect(() => {
     if (!data) return;
@@ -157,6 +164,35 @@ function ProposalDetailPage() {
       navigate({ to: "/admin/proposals/$id", params: { id: result.id } });
     },
     onError: () => toast.error("Gagal menduplikasi proposal."),
+  });
+
+  const whatsappMutation = useMutation({
+    mutationFn: async () => {
+      const prepared = await prepareFile({ data: { id } });
+      const number = normalizeWhatsapp(prepared.whatsapp ?? lead.data?.whatsapp ?? null);
+      const message = buildProposalWhatsappMessage({
+        clientName: lead.data?.name ?? prepared.clientName,
+        fileName: prepared.fileName,
+        previewUrl: prepared.url,
+      });
+      if (typeof window !== "undefined") {
+        window.open(
+          number ? waLink(number, message) : `https://wa.me/?text=${encodeURIComponent(message)}`,
+          "_blank",
+          "noopener",
+        );
+      }
+      await markSent({
+        data: { id, channel: "whatsapp", fileName: prepared.fileName, url: prepared.url },
+      });
+      return prepared;
+    },
+    onSuccess: async (prepared) => {
+      toast.success(`WhatsApp disiapkan — ${prepared.fileName}`);
+      await queryClient.invalidateQueries({ queryKey: ["admin"] });
+    },
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : "Gagal menyiapkan WhatsApp proposal."),
   });
 
   const deleteMutation = useMutation({
@@ -248,9 +284,17 @@ function ProposalDetailPage() {
             type="button"
             onClick={() => duplicateMutation.mutate()}
             disabled={duplicateMutation.isPending}
-            className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
+            className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground disabled:opacity-60"
           >
-            Duplikasi
+            {duplicateMutation.isPending ? "Menyalin…" : "Copy Proposal"}
+          </button>
+          <button
+            type="button"
+            onClick={() => whatsappMutation.mutate()}
+            disabled={whatsappMutation.isPending}
+            className="rounded-xl border border-primary/50 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20 disabled:opacity-60"
+          >
+            {whatsappMutation.isPending ? "Menyiapkan…" : "Kirim WhatsApp"}
           </button>
           <button
             type="button"
@@ -483,6 +527,14 @@ function ProposalDetailPage() {
                       {v.note ? ` · ${v.note}` : ""}
                     </p>
                   </div>
+                  <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openVersionPreview(v)}
+                    className="rounded-xl border border-primary/50 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary transition hover:bg-primary/20"
+                  >
+                    Preview
+                  </button>
                   <button
                     type="button"
                     disabled={restoreMutation.isPending}
@@ -491,6 +543,7 @@ function ProposalDetailPage() {
                   >
                     Pulihkan
                   </button>
+                  </div>
                 </li>
               ))}
             </ul>
