@@ -239,11 +239,19 @@ function LeadsPage() {
       {pendingDelete ? (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-3xl border border-border/70 bg-card p-5 shadow-2xl">
-            <p className="text-sm font-semibold">Apakah Anda yakin ingin menghapus lead ini?</p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {pendingDelete.name} — percakapan, requirement preview, order brief version, dan
-              delivery history akan ikut terhapus permanen.
+            <p className="text-sm font-semibold">Hapus lead {pendingDelete.name}?</p>
+            <p className="mt-2 text-xs text-muted-foreground">Data yang dihapus:</p>
+            <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+              <li>• Lead</li>
+              <li>• Conversation</li>
+              <li>• Requirement version</li>
+              <li>• Order Brief</li>
+              <li>• Delivery History</li>
+            </ul>
+            <p className="mt-2 text-xs font-medium text-destructive">
+              Data tidak dapat dikembalikan.
             </p>
+
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
