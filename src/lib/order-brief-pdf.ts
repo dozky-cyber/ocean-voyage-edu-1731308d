@@ -3,19 +3,19 @@
 
 import { briefFields, briefFileName, wibStamp, type OrderBriefData } from "./order-brief";
 
-const PAGE_W = 595.28; // A4
-const PAGE_H = 841.89;
-const MARGIN = 48;
-const CONTENT_W = PAGE_W - MARGIN * 2;
+export const PAGE_W = 595.28; // A4
+export const PAGE_H = 841.89;
+export const MARGIN = 48;
+export const CONTENT_W = PAGE_W - MARGIN * 2;
 
-const INK = "0.09 0.11 0.15";
-const MUTED = "0.42 0.46 0.53";
-const BRAND = "0.05 0.62 0.63";
-const HEADER_BG = "0.05 0.11 0.16";
-const CARD_BG = "0.96 0.97 0.98";
-const LINE = "0.85 0.88 0.91";
+export const INK = "0.09 0.11 0.15";
+export const MUTED = "0.42 0.46 0.53";
+export const BRAND = "0.05 0.62 0.63";
+export const HEADER_BG = "0.05 0.11 0.16";
+export const CARD_BG = "0.96 0.97 0.98";
+export const LINE = "0.85 0.88 0.91";
 
-type Ops = string[];
+export type Ops = string[];
 
 function sanitize(value: string) {
   return value
@@ -33,11 +33,11 @@ function esc(value: string) {
 }
 
 /** Rough Helvetica width metric (good enough for wrapping). */
-function textWidth(text: string, size: number, bold: boolean) {
+export function textWidth(text: string, size: number, bold: boolean) {
   return sanitize(text).length * size * (bold ? 0.55 : 0.5);
 }
 
-function wrap(text: string, size: number, bold: boolean, maxWidth: number): string[] {
+export function wrap(text: string, size: number, bold: boolean, maxWidth: number): string[] {
   const out: string[] = [];
   for (const raw of text.split("\n")) {
     if (!raw.trim()) {
@@ -59,7 +59,7 @@ function wrap(text: string, size: number, bold: boolean, maxWidth: number): stri
   return out;
 }
 
-class Doc {
+export class Doc {
   pages: Ops[] = [];
   ops: Ops = [];
   y = PAGE_H - MARGIN;
@@ -248,8 +248,11 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   doc.paragraph(brief.recommendation || "-", MARGIN, 11, true, CONTENT_W, BRAND);
 
   footer(doc);
-  const pages = [...doc.pages, doc.ops].filter((ops) => ops.length);
+  return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
+}
 
+/** Serialize page content streams into a minimal, valid PDF byte array. */
+export function serializePdf(pages: Ops[]): Uint8Array {
   const objects: string[] = [];
   const pageIds = pages.map((_, index) => 5 + index * 2);
   objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
@@ -287,6 +290,7 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   for (let i = 0; i < pdf.length; i += 1) bytes[i] = pdf.charCodeAt(i) & 0xff;
   return bytes;
 }
+
 
 export function orderBriefPdfBase64(brief: OrderBriefData): string {
   const bytes = buildOrderBriefPdf(brief);

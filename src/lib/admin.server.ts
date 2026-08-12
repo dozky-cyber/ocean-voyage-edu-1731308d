@@ -386,8 +386,32 @@ export async function fetchProposalVersions(supabase: Client, proposalId: string
 }
 
 export async function createProposalForLead(supabase: Client, leadId: string, userId: string) {
-  const lead = await fetchLead(supabase, leadId);
-  if (!lead) throw new Error("Lead tidak ditemukan.");
+  const baseLead = await fetchLead(supabase, leadId);
+  if (!baseLead) throw new Error("Lead tidak ditemukan.");
+  // Master data = FINAL ORDER BRIEF (latest requirement version), lead record as fallback.
+  const { loadOrderBriefByLead } = await import("./order-brief.server");
+  const finalBrief = await loadOrderBriefByLead(supabase as never, leadId).catch(() => null);
+  const lead = finalBrief
+    ? {
+        ...baseLead,
+        name: finalBrief.brief.customerName || baseLead.name,
+        business_name: finalBrief.brief.business || baseLead.business_name,
+        requirement: finalBrief.brief.project || baseLead.requirement,
+        features: finalBrief.brief.features.length
+          ? finalBrief.brief.features.join(", ")
+          : baseLead.features,
+        timeline: finalBrief.brief.timeline ?? baseLead.timeline,
+        budget: finalBrief.brief.budget ?? baseLead.budget,
+        ai_summary: finalBrief.brief.goal ?? baseLead.ai_summary,
+        ai_problems: finalBrief.brief.problems.length
+          ? finalBrief.brief.problems
+          : baseLead.ai_problems,
+        ai_requirements: finalBrief.brief.features.length
+          ? finalBrief.brief.features
+          : baseLead.ai_requirements,
+        ai_recommended_package: finalBrief.brief.recommendation ?? baseLead.ai_recommended_package,
+      }
+    : baseLead;
   const brief = buildSalesBrief(lead);
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + 30);
@@ -421,7 +445,7 @@ export async function duplicateProposal(supabase: Client, id: string, userId: st
     .from("proposals")
     .insert({
       lead_id: source.lead_id,
-      title: `${source.title} (copy)`,
+      title: `${source.title} - Copy`,
       status: "Draft",
       recommended_package: source.recommended_package,
       content: source.content,

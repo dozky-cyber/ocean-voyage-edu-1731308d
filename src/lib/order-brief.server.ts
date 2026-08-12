@@ -107,6 +107,7 @@ export function slugFromFileName(fileName: string) {
  */
 export async function createDocumentShortLink(input: {
   base: string;
+  kind?: string;
   bucket?: string;
   path: string;
   fileName: string;
@@ -119,7 +120,7 @@ export async function createDocumentShortLink(input: {
     const admin = supabaseAdmin as unknown as { from: (table: string) => any };
     const bucket = input.bucket ?? "order-briefs";
     const row = {
-      kind: "order-brief",
+      kind: input.kind ?? "order-brief",
       bucket,
       path: input.path,
       file_name: input.fileName,
@@ -336,4 +337,47 @@ export async function saveOrderBriefVersion(
   });
   if (error) throw new Error(error.message);
   return { version };
+}
+
+
+/** Generic PDF upload + short link (Proposal, Invoice, Quotation, Report). */
+export async function uploadDocumentPdf(input: {
+  kind: string;
+  slugBase: string;
+  folder: string;
+  fileName: string;
+  bytes: Uint8Array;
+  leadId?: string | null;
+  createdBy?: string | null;
+}): Promise<{ url: string | null; path: string | null; reason: string | null }> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const storage = (supabaseAdmin as unknown as { storage: any }).storage.from("order-briefs");
+    const path = `${input.kind}/${input.folder}/${Date.now()}-${input.fileName}`;
+    const { error } = await storage.upload(path, input.bytes, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+    if (error) return { url: null, path: null, reason: error.message };
+
+    const slug = await createDocumentShortLink({
+      base: input.slugBase,
+      kind: input.kind,
+      path,
+      fileName: input.fileName,
+      leadId: input.leadId ?? null,
+      createdBy: input.createdBy ?? null,
+    });
+    if (slug) return { url: `${publicSiteUrl()}/d/${slug}`, path, reason: null };
+
+    const { data, error: signError } = await storage.createSignedUrl(path, 60 * 60 * 24 * 365);
+    if (signError) return { url: null, path, reason: signError.message };
+    return { url: (data?.signedUrl as string) ?? null, path, reason: null };
+  } catch (error) {
+    return {
+      url: null,
+      path: null,
+      reason: error instanceof Error ? error.message : "storage_failed",
+    };
+  }
 }
