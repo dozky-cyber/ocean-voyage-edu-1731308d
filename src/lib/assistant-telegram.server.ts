@@ -311,7 +311,7 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       userId,
     });
 
-    await sendTelegramMessage(toTelegramHtml(reply));
+    await sendTelegramMessage(toTelegramHtml(reply), String(chatId));
     await extractMemories(supabaseAdmin, model, {
       question: text,
       answer: reply,
