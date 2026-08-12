@@ -413,6 +413,19 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       }
     : baseLead;
   const brief = buildSalesBrief(lead);
+  const { buildEnhancements } = await import("./admin/proposal-logic");
+  const enhancements = buildEnhancements({
+    features: brief.features,
+    context: [
+      lead.requirement,
+      lead.project_type,
+      lead.features,
+      lead.ai_business_category,
+      brief.features.join(" "),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  });
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + 30);
   const { data, error } = await supabase
@@ -424,6 +437,9 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       recommended_package: recommendPackage(lead),
       content: buildProposalSections(lead),
       pricing_items: buildPricingItems(lead),
+      enhancements,
+      brief_timeline: finalBrief?.brief.timeline ?? lead.timeline ?? null,
+      estimated_timeline: null,
       currency: "IDR",
       valid_until: validUntil.toISOString().slice(0, 10),
       version: 1,
@@ -438,6 +454,7 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
   return { id: data.id as string };
 }
 
+
 export async function duplicateProposal(supabase: Client, id: string, userId: string) {
   const source = await fetchProposal(supabase, id);
   if (!source) throw new Error("Proposal tidak ditemukan.");
@@ -450,6 +467,9 @@ export async function duplicateProposal(supabase: Client, id: string, userId: st
       recommended_package: source.recommended_package,
       content: source.content,
       pricing_items: source.pricing_items,
+      enhancements: source.enhancements ?? [],
+      brief_timeline: source.brief_timeline ?? null,
+      estimated_timeline: source.estimated_timeline ?? null,
       currency: source.currency,
       valid_until: source.valid_until,
       version: 1,
@@ -471,6 +491,9 @@ export type SaveProposalInput = {
   recommended_package: string | null;
   content: { heading: string; body: string }[];
   pricing_items?: PricingItem[];
+  enhancements?: { name: string; benefit: string; amount: number }[];
+  brief_timeline?: string | null;
+  estimated_timeline?: string | null;
   currency?: string | null;
   valid_until?: string | null;
   investment_note?: string | null;
@@ -492,6 +515,9 @@ export async function saveProposal(supabase: Client, input: SaveProposalInput, u
     recommended_package: current.recommended_package,
     content: current.content,
     pricing_items: current.pricing_items ?? [],
+    enhancements: current.enhancements ?? [],
+    brief_timeline: current.brief_timeline ?? null,
+    estimated_timeline: current.estimated_timeline ?? null,
     investment_note: current.investment_note,
     timeline_note: current.timeline_note,
     note: input.version_note ?? null,
@@ -507,6 +533,9 @@ export async function saveProposal(supabase: Client, input: SaveProposalInput, u
       recommended_package: input.recommended_package,
       content: input.content,
       pricing_items: input.pricing_items ?? current.pricing_items,
+      enhancements: input.enhancements ?? current.enhancements ?? [],
+      brief_timeline: input.brief_timeline ?? current.brief_timeline ?? null,
+      estimated_timeline: input.estimated_timeline ?? null,
       currency: input.currency ?? current.currency,
       valid_until: input.valid_until ?? null,
       investment_note: input.investment_note ?? current.investment_note,
@@ -514,6 +543,7 @@ export async function saveProposal(supabase: Client, input: SaveProposalInput, u
       version: nextVersion,
     })
     .eq("id", input.id);
+
   if (error) throw new Error(error.message);
   return { ok: true as const, version: nextVersion };
 }
