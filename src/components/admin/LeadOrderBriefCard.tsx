@@ -18,7 +18,7 @@ import {
   briefFields,
   briefFileName,
   buildFollowUpBody,
-  buildFollowUpMessage,
+  buildWhatsappFollowUpMessage,
   emailSubject,
   normalizeWhatsapp,
   waLink,
