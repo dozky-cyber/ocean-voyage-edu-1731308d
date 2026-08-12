@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { OrderBriefDialog } from "@/components/admin/OrderBriefDialog";
 import { OrderBriefEditDialog } from "@/components/admin/OrderBriefEditDialog";
 import { Chip, GlassCard } from "@/components/admin/ui";
+import { DocumentActions } from "@/components/admin/DocumentActions";
 import {
   getOrderBrief,
   markOrderBriefReviewed,
@@ -16,7 +17,9 @@ import {
 import {
   briefFields,
   briefFileName,
+  buildFollowUpBody,
   buildFollowUpMessage,
+  emailSubject,
   normalizeWhatsapp,
   waLink,
 } from "@/lib/order-brief";
@@ -38,6 +41,8 @@ export function LeadOrderBriefCard({ leadId }: Props) {
   const [preview, setPreview] = useState(false);
   const [edit, setEdit] = useState(false);
   const [confirm, setConfirm] = useState<"whatsapp" | "email" | null>(null);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const query = useQuery({
     queryKey: ["order-brief", leadId],
@@ -72,6 +77,7 @@ export function LeadOrderBriefCard({ leadId }: Props) {
       if (!brief) throw new Error("Order Brief belum tersedia.");
       if (!waNumber) throw new Error("Nomor WhatsApp customer tidak valid.");
       const file = await prepareFile({ data: { leadId } });
+      setFileUrl(file.url);
       window.open(
         waLink(waNumber, buildFollowUpMessage(brief, { pdfUrl: file.url })),
         "_blank",
@@ -95,14 +101,23 @@ export function LeadOrderBriefCard({ leadId }: Props) {
   });
 
   const email = useMutation({
-    mutationFn: () => sendEmail({ data: { leadId, markContacted: true } }),
+    mutationFn: async () => {
+      const file = await prepareFile({ data: { leadId } }).catch(() => null);
+      if (file?.url) setFileUrl(file.url);
+      return sendEmail({ data: { leadId, markContacted: true } });
+    },
     onSuccess: async (result) => {
+      setEmailError(null);
       toast.success(`Order Brief dikirim ke ${result.to}. Status lead → Contacted.`);
       setConfirm(null);
       await refresh();
     },
-    onError: (error) =>
-      toast.error(error instanceof Error ? error.message : "Gagal mengirim email."),
+    onError: (error) => {
+      const message = error instanceof Error ? error.message : "Gagal mengirim email.";
+      setEmailError(message);
+      setConfirm(null);
+      toast.error(message);
+    },
   });
 
   const busy = whatsapp.isPending || email.isPending;
@@ -174,52 +189,26 @@ export function LeadOrderBriefCard({ leadId }: Props) {
             </div>
           </section>
 
-          <section>
-            <Label>Attachment</Label>
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <span className="rounded-full border border-border px-3 py-1 text-foreground">
-                📎 {fileName}
-              </span>
-              <button
-                type="button"
-                onClick={() => downloadOrderBriefPdf(brief)}
-                className="text-primary hover:underline"
-              >
-                Download PDF
-              </button>
-            </div>
-          </section>
-
-          <div className="flex flex-wrap gap-3 border-t border-border/60 pt-4">
-            <button
-              type="button"
-              onClick={() => void openReviewed(() => setPreview(true))}
-              className="rounded-full border border-border px-4 py-1.5 text-foreground"
-            >
-              Preview Brief
-            </button>
-            <button
-              type="button"
-              onClick={() => void openReviewed(() => setEdit(true))}
-              className="rounded-full border border-border px-4 py-1.5 text-foreground"
-            >
-              Edit Brief
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirm("whatsapp")}
-              className="rounded-full border border-primary/60 bg-primary/10 px-4 py-1.5 text-primary"
-            >
-              Send WhatsApp
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirm("email")}
-              className="rounded-full border border-border px-4 py-1.5 text-foreground"
-            >
-              Send Email
-            </button>
-          </div>
+          <DocumentActions
+            packet={{
+              kind: "order-brief",
+              subject: emailSubject(brief),
+              customerName: brief.customerName,
+              email: brief.email,
+              whatsapp: waNumber,
+              message: buildFollowUpBody(brief),
+              fileName,
+              downloadUrl: fileUrl,
+            }}
+            onPreview={() => void openReviewed(() => setPreview(true))}
+            onEdit={() => void openReviewed(() => setEdit(true))}
+            onDownload={() => downloadOrderBriefPdf(brief)}
+            onSendWhatsapp={() => setConfirm("whatsapp")}
+            onSendEmail={() => setConfirm("email")}
+            busy={busy}
+            emailError={emailError}
+            deliveries={deliveries}
+          />
 
           {confirm && (
             <div className="rounded-2xl border border-primary/40 bg-primary/5 p-3">
@@ -232,13 +221,7 @@ export function LeadOrderBriefCard({ leadId }: Props) {
                   ? `Nomor: ${waNumber ?? "tidak valid"}`
                   : `Email: ${brief.email ?? "tidak tersedia"}`}
               </p>
-              <p className="text-muted-foreground">Attachment: {fileName}</p>
-              {confirm === "whatsapp" && (
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  Pesan WhatsApp menyertakan link download PDF asli (berlaku 1 tahun) sehingga
-                  customer langsung menerima filenya.
-                </p>
-              )}
+              <p className="text-muted-foreground">Attachment: 📎 {fileName}</p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -258,30 +241,6 @@ export function LeadOrderBriefCard({ leadId }: Props) {
               </div>
             </div>
           )}
-
-          <section>
-            <Label>Delivery History</Label>
-            {deliveries.length === 0 ? (
-              <p className="mt-2 text-muted-foreground">Belum ada pengiriman.</p>
-            ) : (
-              <ul className="mt-2 space-y-2">
-                {deliveries.map((row) => (
-                  <li key={row.id} className="rounded-xl border border-border/70 p-2">
-                    <p className="text-foreground">
-                      Order Brief dikirim melalui {row.channel === "email" ? "Email" : "WhatsApp"} ·{" "}
-                      <span className={row.status === "failed" ? "text-destructive" : "text-primary"}>
-                        {row.status === "failed" ? "Gagal" : "Berhasil"}
-                      </span>
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {formatDate(row.created_at)} · {row.created_by_email ?? "admin"}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">File: {row.file_name}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </div>
       )}
 
@@ -299,9 +258,7 @@ export function LeadOrderBriefCard({ leadId }: Props) {
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>
-  );
+  return <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{children}</p>;
 }
 
 function Item({ label, value }: { label: string; value: string }) {
