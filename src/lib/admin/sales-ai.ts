@@ -320,11 +320,21 @@ export function parsePricingItems(value: unknown): PricingItem[] {
   );
 }
 
-/** Professional KERJAKU proposal template — 9 client-facing sections. */
+/**
+ * KERJAKU proposal template V2.
+ *
+ * Structure: Client Requirement → Business Problem → Feature List (Order Brief)
+ * → Recommended Solution → (Recommended Enhancement, Timeline, Investment are
+ * rendered dynamically from the proposal record) → Benefits → Next Steps.
+ *
+ * The feature list is copied 1:1 from the Final Order Brief — never summarized,
+ * merged, renamed, or reduced.
+ */
 export function buildProposalSections(lead: SalesLead): ProposalSection[] {
   const brief = buildSalesBrief(lead);
   const client = clientLabel(lead);
   const bullets = (items: string[]) => items.map((i) => `• ${i}`).join("\n");
+  const numbered = (items: string[]) => items.map((i, index) => `${index + 1}. ${i}`).join("\n");
   const today = new Date().toLocaleDateString("id-ID", {
     day: "numeric",
     month: "long",
@@ -340,7 +350,7 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
         lead.project_type ? `Kebutuhan: ${lead.project_type}` : null,
         `Rekomendasi paket: ${brief.recommendedPackage}`,
         `Tanggal: ${today}`,
-        "Disiapkan oleh: KERJAKU — Work, made your way.",
+        "Disiapkan oleh: KERJAKU — Business System Consultant",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -354,48 +364,37 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
       ].join("\n\n"),
     },
     {
-      heading: "Client Problem Understanding",
+      heading: "Client Requirement",
       body: [
-        lead.ai_summary?.trim() ||
-          `${client} membutuhkan ${lead.requirement?.trim() || "sistem digital untuk meningkatkan efisiensi operasional"}.`,
+        `${client} menyampaikan kebutuhan berikut pada sesi konsultasi bersama KERJAKU:`,
         "",
-        "Masalah utama yang kami identifikasi:",
-        bullets(brief.painPoints),
-      ].join("\n"),
-    },
-    {
-      heading: "Proposed Solution",
-      body: [
-        `KERJAKU merekomendasikan ${brief.recommendedPackage} sebagai fase pertama.`,
-        `Solusi ini menyelesaikan ${brief.painPoints[0].toLowerCase()} melalui alur kerja terpusat, data yang rapi, dan laporan yang terbentuk otomatis.`,
-        "",
-        "Komponen solusi:",
-        bullets(brief.features),
-      ].join("\n"),
-    },
-    { heading: "Scope of Work", body: bullets(brief.scope) },
-    {
-      heading: "Timeline",
-      body: [
-        brief.timeline,
-        lead.timeline ? `Target klien: ${lead.timeline}.` : null,
-        "",
-        bullets([
-          "Minggu 1 — Discovery, blueprint, dan persetujuan alur",
-          "Minggu 2–4 — Pengembangan modul inti",
-          "Minggu 5 — Integrasi, migrasi data, dan testing",
-          "Minggu 6 — UAT, pelatihan tim, dan go-live",
-        ]),
+        lead.requirement?.trim() || lead.project_type?.trim() || "Sistem digital untuk mendukung operasional bisnis.",
+        lead.ai_summary?.trim() ? `\n${lead.ai_summary.trim()}` : null,
+        lead.budget?.trim() ? `\nRange budget klien: ${lead.budget.trim()}` : null,
       ]
         .filter((v) => v !== null)
         .join("\n"),
     },
     {
-      heading: "Investment",
+      heading: "Business Problem",
+      body: ["Masalah utama yang kami identifikasi:", "", bullets(brief.painPoints)].join("\n"),
+    },
+    {
+      heading: "Feature List (Order Brief)",
       body: [
-        brief.investment,
+        "Daftar fitur berikut diambil langsung dari Final Order Brief dan menjadi acuan scope pengerjaan:",
         "",
-        "Rincian investasi tercantum pada tabel investasi di bawah. Pembayaran dapat dibagi bertahap: 40% saat kick-off, 40% saat UAT, 20% saat go-live.",
+        numbered(brief.features),
+      ].join("\n"),
+    },
+    {
+      heading: "Recommended Solution",
+      body: [
+        `KERJAKU merekomendasikan ${brief.recommendedPackage} sebagai solusi utama.`,
+        `Solusi ini menyelesaikan ${brief.painPoints[0].toLowerCase()} melalui alur kerja terpusat, data yang rapi, dan laporan yang terbentuk otomatis.`,
+        "",
+        "Cakupan pengerjaan:",
+        bullets(brief.scope),
       ].join("\n"),
     },
     {
@@ -419,6 +418,7 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
     },
   ];
 }
+
 
 
 export function parseSections(value: unknown): ProposalSection[] {
