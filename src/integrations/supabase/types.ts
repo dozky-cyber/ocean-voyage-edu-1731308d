@@ -1299,9 +1299,12 @@ export type Database = {
       }
       proposal_versions: {
         Row: {
+          brief_timeline: string | null
           content: Json
           created_at: string
           created_by: string | null
+          enhancements: Json
+          estimated_timeline: string | null
           id: string
           investment_note: string | null
           note: string | null
@@ -1313,9 +1316,12 @@ export type Database = {
           version: number
         }
         Insert: {
+          brief_timeline?: string | null
           content?: Json
           created_at?: string
           created_by?: string | null
+          enhancements?: Json
+          estimated_timeline?: string | null
           id?: string
           investment_note?: string | null
           note?: string | null
@@ -1327,9 +1333,12 @@ export type Database = {
           version: number
         }
         Update: {
+          brief_timeline?: string | null
           content?: Json
           created_at?: string
           created_by?: string | null
+          enhancements?: Json
+          estimated_timeline?: string | null
           id?: string
           investment_note?: string | null
           note?: string | null
@@ -1353,11 +1362,14 @@ export type Database = {
       proposals: {
         Row: {
           approved_at: string | null
+          brief_timeline: string | null
           client_name: string | null
           content: Json
           created_at: string
           created_by: string | null
           currency: string
+          enhancements: Json
+          estimated_timeline: string | null
           id: string
           investment_note: string | null
           lead_id: string
@@ -1375,11 +1387,14 @@ export type Database = {
         }
         Insert: {
           approved_at?: string | null
+          brief_timeline?: string | null
           client_name?: string | null
           content?: Json
           created_at?: string
           created_by?: string | null
           currency?: string
+          enhancements?: Json
+          estimated_timeline?: string | null
           id?: string
           investment_note?: string | null
           lead_id: string
@@ -1397,11 +1412,14 @@ export type Database = {
         }
         Update: {
           approved_at?: string | null
+          brief_timeline?: string | null
           client_name?: string | null
           content?: Json
           created_at?: string
           created_by?: string | null
           currency?: string
+          enhancements?: Json
+          estimated_timeline?: string | null
           id?: string
           investment_note?: string | null
           lead_id?: string
