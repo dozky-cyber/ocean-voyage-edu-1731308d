@@ -232,6 +232,39 @@ function ProposalDetailPage() {
     )}&body=${encodeURIComponent(body)}`;
   }, [lead.data, clientName, sections, pricing, currency, total, title]);
 
+  type VersionRow = {
+    id: string;
+    version: number;
+    title: string;
+    recommended_package: string | null;
+    content: unknown;
+    pricing_items: unknown;
+    investment_note: string | null;
+    timeline_note: string | null;
+    created_at: string;
+  };
+
+  function openVersionPreview(v: VersionRow) {
+    const doc: ProposalDocData = {
+      title: v.title,
+      version: v.version,
+      clientName: data?.client_name ?? lead.data?.name ?? "Client",
+      contactName: lead.data?.name ?? data?.client_name ?? "Client",
+      email: lead.data?.email ?? null,
+      whatsapp: lead.data?.whatsapp ?? null,
+      recommendedPackage: v.recommended_package,
+      currency: data?.currency ?? "IDR",
+      validUntil: data?.valid_until ?? null,
+      investmentNote: v.investment_note,
+      timelineNote: v.timeline_note,
+      sections: parseSections(v.content),
+      pricing: parsePricingItems(v.pricing_items),
+      createdAt: v.created_at,
+    };
+    if (previewVersion) URL.revokeObjectURL(previewVersion.url);
+    setPreviewVersion({ label: `Versi ${v.version} · ${v.title}`, url: proposalPdfBlobUrl(doc) });
+  }
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat proposal…</p>;
   if (error || !data) return <p className="text-sm text-destructive">Proposal tidak ditemukan.</p>;
 
@@ -635,9 +668,34 @@ function ProposalDetailPage() {
         </div>
 
         <div className="border-t border-border/40 px-6 py-6 text-xs text-muted-foreground sm:px-10">
-          KERJAKU · Work, made your way. · kerjaku.space
+          KERJAKU · Business System Consultant · kerjaku.space
         </div>
       </div>
+
+      {previewVersion ? (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background/95 p-3 backdrop-blur print:hidden">
+          <div className="flex items-center justify-between gap-3 pb-3">
+            <p className="truncate text-sm font-medium">{previewVersion.label}</p>
+            <button
+              type="button"
+              onClick={() => {
+                URL.revokeObjectURL(previewVersion.url);
+                setPreviewVersion(null);
+              }}
+              className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
+            >
+              Tutup
+            </button>
+          </div>
+          <object
+            data={previewVersion.url}
+            type="application/pdf"
+            className="flex-1 rounded-2xl border border-border/40"
+          >
+            <iframe src={previewVersion.url} title={previewVersion.label} className="h-full w-full" />
+          </object>
+        </div>
+      ) : null}
     </div>
   );
 }
