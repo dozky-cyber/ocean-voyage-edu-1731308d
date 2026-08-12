@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   getOrderBrief,
   markOrderBriefSent,
+  prepareOrderBriefFile,
   sendOrderBriefByEmail,
 } from "@/lib/order-brief.functions";
 import {
@@ -34,6 +35,7 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
   const load = useServerFn(getOrderBrief);
   const markSent = useServerFn(markOrderBriefSent);
   const sendEmail = useServerFn(sendOrderBriefByEmail);
+  const prepareFile = useServerFn(prepareOrderBriefFile);
   const [confirm, setConfirm] = useState<"whatsapp" | "email" | null>(null);
 
   const query = useQuery({
@@ -49,9 +51,17 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
 
   const whatsapp = useMutation({
     mutationFn: async () => {
+      if (!brief) throw new Error("Order Brief belum tersedia.");
       if (!waNumber) throw new Error("Nomor WhatsApp customer tidak valid.");
-      window.open(waLink(waNumber, message), "_blank", "noopener");
-      return markSent({ data: { ...target, channel: "whatsapp" as const, markContacted: true } });
+      const file = await prepareFile({ data: target });
+      window.open(
+        waLink(waNumber, buildFollowUpMessage(brief, { pdfUrl: file.url })),
+        "_blank",
+        "noopener",
+      );
+      return markSent({
+        data: { ...target, channel: "whatsapp" as const, markContacted: true, pdfUrl: file.url },
+      });
     },
     onSuccess: async () => {
       toast.success("Order Brief ditandai terkirim via WhatsApp. Status lead → Contacted.");
@@ -207,8 +217,8 @@ export function OrderBriefDialog({ conversationId, leadId, onClose }: Props) {
             <p className="text-muted-foreground">Attachment: {fileName}</p>
             {confirm === "whatsapp" && (
               <p className="mt-1 text-[11px] text-muted-foreground">
-                WhatsApp Web tidak bisa melampirkan file otomatis — download PDF lalu lampirkan di
-                chat.
+                Pesan menyertakan link download PDF asli, jadi customer langsung menerima
+                filenya.
               </p>
             )}
             <div className="mt-3 flex flex-wrap gap-3">
