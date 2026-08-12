@@ -80,10 +80,34 @@ export function buildFollowUpMessage(
     "",
     "Jika ada tambahan fitur, perubahan kebutuhan, atau ingin konsultasi lanjutan bisa langsung informasikan kepada kami ya Kak.",
     "",
-    `📎 Order Brief: ${briefFileName(brief.customerName)}`,
+    `Tanggal: ${date}`,
+    `Jam: ${time}`,
+    "",
+    "Tim KERJAKU akan melakukan pengecekan kebutuhan terlebih dahulu.",
+    "Setelah kebutuhan sudah final, tim kami akan memberikan rekomendasi solusi dan penawaran harga yang sesuai.",
+    "",
+    "Terima kasih sudah mempercayakan konsultasi kepada KERJAKU 🙏",
   ];
-  if (options?.pdfUrl) lines.push(`📥 Download PDF: ${options.pdfUrl}`);
-  lines.push(
+  const attachment = attachmentBlock({
+    kind: "order-brief",
+    subject: emailSubject(brief),
+    customerName: brief.customerName,
+    message: "",
+    fileName: briefFileName(brief.customerName),
+    downloadUrl: options?.pdfUrl ?? null,
+  });
+  return `${lines.join("\n")}\n\n${attachment}`;
+}
+
+/** Body only (no attachment block) — used by the reusable DocumentActions packet. */
+export function buildFollowUpBody(brief: OrderBriefData, stampIso?: string) {
+  const { date, time } = wibStamp(stampIso);
+  return [
+    "Halo Kak, terima kasih sudah melakukan konsultasi bersama KERJAKU AI Consultant.",
+    "",
+    "Berikut hasil preview konsultasi awal Kakak yang sudah kami rangkum dalam Order Brief KERJAKU.",
+    "",
+    "Jika ada tambahan fitur, perubahan kebutuhan, atau ingin konsultasi lanjutan bisa langsung informasikan kepada kami ya Kak.",
     "",
     `Tanggal: ${date}`,
     `Jam: ${time}`,
@@ -92,9 +116,9 @@ export function buildFollowUpMessage(
     "Setelah kebutuhan sudah final, tim kami akan memberikan rekomendasi solusi dan penawaran harga yang sesuai.",
     "",
     "Terima kasih sudah mempercayakan konsultasi kepada KERJAKU 🙏",
-  );
-  return lines.join("\n");
+  ].join("\n");
 }
+
 
 /** Order Brief delivery workflow status. */
 export type OrderBriefStatus = "None" | "Generated" | "Reviewed" | "Sent WhatsApp" | "Sent Email";
