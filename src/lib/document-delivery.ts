@@ -37,7 +37,7 @@ export function packetTitle(packet: DocumentPacket) {
  */
 export function attachmentBlock(packet: DocumentPacket) {
   const lines = [`📎 ${packetTitle(packet)}`, "", "File:", packet.fileName];
-  if (packet.downloadUrl) lines.push("", "Download:", packet.downloadUrl);
+  if (packet.downloadUrl) lines.push("", "Download PDF:", packet.downloadUrl);
   return lines.join("\n");
 }
 
