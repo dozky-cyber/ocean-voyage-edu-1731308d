@@ -248,8 +248,11 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   doc.paragraph(brief.recommendation || "-", MARGIN, 11, true, CONTENT_W, BRAND);
 
   footer(doc);
-  const pages = [...doc.pages, doc.ops].filter((ops) => ops.length);
+  return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
+}
 
+/** Serialize page content streams into a minimal, valid PDF byte array. */
+export function serializePdf(pages: Ops[]): Uint8Array {
   const objects: string[] = [];
   const pageIds = pages.map((_, index) => 5 + index * 2);
   objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
@@ -287,6 +290,7 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   for (let i = 0; i < pdf.length; i += 1) bytes[i] = pdf.charCodeAt(i) & 0xff;
   return bytes;
 }
+
 
 export function orderBriefPdfBase64(brief: OrderBriefData): string {
   const bytes = buildOrderBriefPdf(brief);
