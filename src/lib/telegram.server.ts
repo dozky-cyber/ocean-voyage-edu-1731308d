@@ -42,7 +42,7 @@ export async function sendTelegramMessage(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: config.chatId,
+        chat_id: chatIdOverride ?? config.chatId.split(",")[0]!.trim(),
         text,
         parse_mode: "HTML",
         disable_web_page_preview: true,
