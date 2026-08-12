@@ -413,6 +413,19 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       }
     : baseLead;
   const brief = buildSalesBrief(lead);
+  const { buildEnhancements } = await import("./admin/proposal-logic");
+  const enhancements = buildEnhancements({
+    features: brief.features,
+    context: [
+      lead.requirement,
+      lead.project_type,
+      lead.features,
+      lead.ai_business_category,
+      brief.features.join(" "),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  });
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + 30);
   const { data, error } = await supabase
@@ -424,6 +437,9 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       recommended_package: recommendPackage(lead),
       content: buildProposalSections(lead),
       pricing_items: buildPricingItems(lead),
+      enhancements,
+      brief_timeline: finalBrief?.brief.timeline ?? lead.timeline ?? null,
+      estimated_timeline: null,
       currency: "IDR",
       valid_until: validUntil.toISOString().slice(0, 10),
       version: 1,
@@ -437,6 +453,7 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
   if (error) throw new Error(error.message);
   return { id: data.id as string };
 }
+
 
 export async function duplicateProposal(supabase: Client, id: string, userId: string) {
   const source = await fetchProposal(supabase, id);
