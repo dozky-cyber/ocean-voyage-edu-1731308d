@@ -1,18 +1,23 @@
-// Minimal dependency-free PDF writer for the Order Brief attachment.
+// Dependency-free PDF writer for the Order Brief attachment.
 // Runs both in the browser (download) and in the Worker runtime (email attachment).
 
 import { briefFields, briefFileName, wibStamp, type OrderBriefData } from "./order-brief";
 
-type Line = { text: string; size: number; bold: boolean };
+const PAGE_W = 595.28; // A4
+const PAGE_H = 841.89;
+const MARGIN = 48;
+const CONTENT_W = PAGE_W - MARGIN * 2;
 
-const PAGE_H = 792;
-const PAGE_W = 612;
-const MARGIN = 56;
-const LEADING = 16;
-const MAX_LINES = Math.floor((PAGE_H - MARGIN * 2) / LEADING);
+const INK = "0.09 0.11 0.15";
+const MUTED = "0.42 0.46 0.53";
+const BRAND = "0.05 0.62 0.63";
+const HEADER_BG = "0.05 0.11 0.16";
+const CARD_BG = "0.96 0.97 0.98";
+const LINE = "0.85 0.88 0.91";
+
+type Ops = string[];
 
 function sanitize(value: string) {
-  // PDF base-14 fonts are single byte; drop anything outside Latin-1.
   return value
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
@@ -23,24 +28,30 @@ function sanitize(value: string) {
     .join("");
 }
 
-function escapeText(value: string) {
+function esc(value: string) {
   return sanitize(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 }
 
-function wrap(text: string, max: number): string[] {
+/** Rough Helvetica width metric (good enough for wrapping). */
+function textWidth(text: string, size: number, bold: boolean) {
+  return sanitize(text).length * size * (bold ? 0.55 : 0.5);
+}
+
+function wrap(text: string, size: number, bold: boolean, maxWidth: number): string[] {
   const out: string[] = [];
   for (const raw of text.split("\n")) {
-    if (raw.length <= max) {
-      out.push(raw);
+    if (!raw.trim()) {
+      out.push("");
       continue;
     }
     let current = "";
     for (const word of raw.split(" ")) {
-      if ((current + " " + word).trim().length > max) {
-        if (current) out.push(current);
+      const next = current ? `${current} ${word}` : word;
+      if (textWidth(next, size, bold) > maxWidth && current) {
+        out.push(current);
         current = word;
       } else {
-        current = current ? `${current} ${word}` : word;
+        current = next;
       }
     }
     if (current) out.push(current);
@@ -48,76 +59,208 @@ function wrap(text: string, max: number): string[] {
   return out;
 }
 
-function buildLines(brief: OrderBriefData): Line[] {
+class Doc {
+  pages: Ops[] = [];
+  ops: Ops = [];
+  y = PAGE_H - MARGIN;
+
+  constructor() {
+    this.newPage(false);
+  }
+
+  newPage(withHeaderSpace = true) {
+    if (this.ops.length) this.pages.push(this.ops);
+    this.ops = [];
+    this.y = PAGE_H - (withHeaderSpace ? MARGIN : MARGIN);
+  }
+
+  ensure(space: number) {
+    if (this.y - space < MARGIN + 40) this.newPage();
+  }
+
+  rect(x: number, y: number, w: number, h: number, fill: string) {
+    this.ops.push(`${fill} rg ${x} ${y} ${w} ${h} re f`);
+  }
+
+  line(x1: number, y1: number, x2: number, y2: number, color = LINE) {
+    this.ops.push(`${color} RG 0.7 w ${x1} ${y1} m ${x2} ${y2} l S`);
+  }
+
+  text(value: string, x: number, y: number, size: number, bold: boolean, color = INK) {
+    this.ops.push(
+      `BT ${color} rg /${bold ? "F2" : "F1"} ${size} Tf 1 0 0 1 ${x} ${y} Tm (${esc(value)}) Tj ET`,
+    );
+  }
+
+  paragraph(
+    value: string,
+    x: number,
+    size: number,
+    bold: boolean,
+    maxWidth: number,
+    color = INK,
+    leading = size + 5,
+  ) {
+    for (const row of wrap(value, size, bold, maxWidth)) {
+      this.ensure(leading);
+      if (row) this.text(row, x, this.y, size, bold, color);
+      this.y -= leading;
+    }
+  }
+}
+
+function header(doc: Doc, brief: OrderBriefData) {
   const stamp = wibStamp(brief.createdAt);
-  const lines: Line[] = [
-    { text: "KERJAKU", size: 20, bold: true },
-    { text: `ORDER BRIEF KONSULTASI - V${brief.version}`, size: 12, bold: true },
-    { text: `${stamp.date} · ${stamp.time}`, size: 10, bold: false },
-    { text: "", size: 10, bold: false },
-    { text: "DATA CUSTOMER", size: 12, bold: true },
+  const h = 108;
+  const top = PAGE_H - h;
+  doc.rect(0, top, PAGE_W, h, HEADER_BG);
+  doc.rect(0, top, 6, h, BRAND);
+  // Logo mark
+  doc.rect(MARGIN, top + h - 52, 26, 26, BRAND);
+  doc.text("K", MARGIN + 8, top + h - 45, 16, true, "1 1 1");
+  doc.text("KERJAKU", MARGIN + 38, top + h - 44, 22, true, "1 1 1");
+  doc.text("AI CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
+  doc.text("ORDER BRIEF KONSULTASI", MARGIN, top + 26, 11, true, "0.85 0.92 0.94");
+  const right = `${stamp.date}  |  ${stamp.time}`;
+  doc.text(right, PAGE_W - MARGIN - textWidth(right, 9, false), top + 27, 9, false, "0.66 0.72 0.78");
+  const ver = `VERSI BRIEF V${brief.version}`;
+  doc.text(ver, PAGE_W - MARGIN - textWidth(ver, 9, true), top + h - 44, 9, true, "0.62 0.86 0.87");
+  doc.y = top - 28;
+}
+
+function sectionTitle(doc: Doc, title: string) {
+  doc.ensure(34);
+  doc.text(title.toUpperCase(), MARGIN, doc.y, 10, true, BRAND);
+  doc.y -= 8;
+  doc.line(MARGIN, doc.y, PAGE_W - MARGIN, doc.y);
+  doc.y -= 16;
+}
+
+function customerCard(doc: Doc, brief: OrderBriefData) {
+  const h = 76;
+  doc.ensure(h + 12);
+  const top = doc.y - h;
+  doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
+  doc.rect(MARGIN, top, 3, h, BRAND);
+  doc.text("CUSTOMER INFORMATION", MARGIN + 16, top + h - 20, 8, true, MUTED);
+  const cols = [
+    ["Nama", brief.customerName],
+    ["WhatsApp", brief.whatsapp || "-"],
+    ["Email", brief.email || "-"],
   ];
-  const push = (label: string, value: string) => {
-    lines.push({ text: label.toUpperCase(), size: 9, bold: true });
-    for (const wrapped of wrap(value || "-", 88)) {
-      lines.push({ text: wrapped, size: 11, bold: false });
-    }
-    lines.push({ text: "", size: 10, bold: false });
-  };
-  push("Nama", brief.customerName);
-  push("WhatsApp", brief.whatsapp || "-");
-  push("Email", brief.email || "-");
-  lines.push({ text: "ORDER BRIEF", size: 12, bold: true });
-  for (const field of briefFields(brief)) push(field.label, field.value);
-  lines.push({
-    text: "Catatan: Order Brief ini adalah hasil konsultasi awal, bukan penawaran harga.",
-    size: 9,
-    bold: false,
+  const colW = (CONTENT_W - 32) / 3;
+  cols.forEach(([label, value], index) => {
+    const x = MARGIN + 16 + index * colW;
+    doc.text(label!.toUpperCase(), x, top + h - 40, 7, false, MUTED);
+    const lines = wrap(value!, 9.5, true, colW - 10).slice(0, 2);
+    lines.forEach((row, i) => doc.text(row, x, top + h - 53 - i * 12, 9.5, true));
   });
-  lines.push({
-    text: "Tim KERJAKU akan melakukan pengecekan kebutuhan sebelum memberikan penawaran.",
-    size: 9,
-    bold: false,
-  });
-  return lines;
+  doc.y = top - 22;
 }
 
-function chunk<T>(items: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
+function summaryBox(doc: Doc, brief: OrderBriefData) {
+  const bodyLines = wrap(brief.project || "-", 10, false, CONTENT_W - 32);
+  const goalLines = wrap(brief.goal || "-", 10, false, CONTENT_W - 32);
+  const h = 46 + (bodyLines.length + goalLines.length) * 14;
+  doc.ensure(h + 12);
+  const top = doc.y - h;
+  doc.rect(MARGIN, top, CONTENT_W, h, "0.94 0.98 0.98");
+  doc.text("PROJECT SUMMARY", MARGIN + 16, top + h - 20, 8, true, BRAND);
+  let y = top + h - 38;
+  doc.text(`Bisnis: ${brief.business || "-"}`, MARGIN + 16, y, 10, true);
+  y -= 16;
+  bodyLines.forEach((row) => {
+    doc.text(row, MARGIN + 16, y, 10, false);
+    y -= 14;
+  });
+  goalLines.forEach((row) => {
+    doc.text(row, MARGIN + 16, y, 10, false, MUTED);
+    y -= 14;
+  });
+  doc.y = top - 22;
 }
 
-/** Build a simple multi-page PDF document from the stored Order Brief data. */
+function bulletList(doc: Doc, items: string[]) {
+  if (!items.length) {
+    doc.paragraph("-", MARGIN + 4, 10, false, CONTENT_W - 8, MUTED);
+    return;
+  }
+  for (const item of items) {
+    const lines = wrap(item, 10, false, CONTENT_W - 26);
+    lines.forEach((row, index) => {
+      doc.ensure(15);
+      if (index === 0) doc.text("-", MARGIN + 4, doc.y, 10, true, BRAND);
+      doc.text(row, MARGIN + 18, doc.y, 10, false);
+      doc.y -= 15;
+    });
+  }
+}
+
+function keyValueGrid(doc: Doc, rows: { label: string; value: string }[]) {
+  for (const row of rows) {
+    doc.ensure(30);
+    doc.text(row.label.toUpperCase(), MARGIN, doc.y, 7.5, false, MUTED);
+    doc.y -= 12;
+    doc.paragraph(row.value || "-", MARGIN, 10, false, CONTENT_W);
+    doc.y -= 4;
+  }
+}
+
+function footer(doc: Doc) {
+  for (const ops of [...doc.pages, doc.ops]) {
+    ops.push(`${LINE} RG 0.7 w ${MARGIN} ${MARGIN + 26} m ${PAGE_W - MARGIN} ${MARGIN + 26} l S`);
+    const note =
+      "Order Brief ini adalah hasil konsultasi awal, bukan penawaran harga. Tim KERJAKU akan melakukan";
+    const note2 =
+      "pengecekan kebutuhan sebelum memberikan rekomendasi solusi dan penawaran yang sesuai.";
+    ops.push(
+      `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${MARGIN} ${MARGIN + 12} Tm (${esc(note)}) Tj ET`,
+      `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${MARGIN} ${MARGIN + 2} Tm (${esc(note2)}) Tj ET`,
+      `BT ${BRAND} rg /F2 8 Tf 1 0 0 1 ${PAGE_W - MARGIN - 60} ${MARGIN + 12} Tm (KERJAKU.SPACE) Tj ET`,
+    );
+  }
+}
+
+/** Build a modern, proposal-style Order Brief PDF from stored data. */
 export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
-  const pages = chunk(buildLines(brief), MAX_LINES);
-  const contents = pages.map((pageLines) => {
-    let y = PAGE_H - MARGIN;
-    const parts: string[] = ["BT"];
-    for (const line of pageLines) {
-      parts.push(`/${line.bold ? "F2" : "F1"} ${line.size} Tf`);
-      parts.push(`1 0 0 1 ${MARGIN} ${y} Tm`);
-      parts.push(`(${escapeText(line.text)}) Tj`);
-      y -= LEADING;
-    }
-    parts.push("ET");
-    return parts.join("\n");
-  });
+  const doc = new Doc();
+  header(doc, brief);
+  customerCard(doc, brief);
+  summaryBox(doc, brief);
+
+  sectionTitle(doc, "Business Problems");
+  bulletList(doc, brief.problems);
+  doc.y -= 10;
+
+  sectionTitle(doc, "Feature List");
+  bulletList(doc, brief.features);
+  doc.y -= 10;
+
+  sectionTitle(doc, "Project Detail");
+  keyValueGrid(doc, [
+    { label: "User Sistem", value: brief.usersScale || "-" },
+    { label: "Kebutuhan Admin/Team", value: brief.adminNeeds || "-" },
+    { label: "Timeline", value: brief.timeline || "-" },
+    { label: "Budget", value: brief.budget || "-" },
+  ]);
+
+  sectionTitle(doc, "Recommendation");
+  doc.paragraph(brief.recommendation || "-", MARGIN, 11, true, CONTENT_W, BRAND);
+
+  footer(doc);
+  const pages = [...doc.pages, doc.ops].filter((ops) => ops.length);
 
   const objects: string[] = [];
-  const pageCount = Math.max(contents.length, 1);
-  const pageIds = contents.map((_, index) => 5 + index * 2);
-
+  const pageIds = pages.map((_, index) => 5 + index * 2);
   objects[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-  objects[2] = `<< /Type /Pages /Kids [${pageIds
-    .map((id) => `${id} 0 R`)
-    .join(" ")}] /Count ${pageCount} >>`;
+  objects[2] = `<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${pages.length} >>`;
   objects[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
   objects[4] =
     "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
 
-  contents.forEach((content, index) => {
+  pages.forEach((ops, index) => {
     const pageId = pageIds[index]!;
+    const content = ops.join("\n");
     objects[pageId] =
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PAGE_W} ${PAGE_H}] ` +
       `/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${pageId + 1} 0 R >>`;
@@ -166,3 +309,5 @@ export function downloadOrderBriefPdf(brief: OrderBriefData) {
   anchor.remove();
   URL.revokeObjectURL(url);
 }
+
+export { briefFields };
