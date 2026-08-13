@@ -53,7 +53,35 @@ const RESTRICTED_FEATURE_IDS = new Set([
   "custom",
 ]);
 
+/**
+ * FLEXIBLE RECOMMENDATION RULE — light, business-safe development ideas that
+ * fit almost any small business. Never enterprise (API, CRM, payment, automation).
+ */
+const GENERIC_IDEAS = [
+  {
+    name: "Customer Review / Testimonial",
+    keywords: ["testimoni", "review", "ulasan", "rating"],
+    description:
+      "Menampilkan pengalaman pelanggan sebelumnya pada halaman website secara rapi dan terpercaya.",
+    reason: "Meningkatkan kepercayaan calon customer melalui pengalaman pelanggan sebelumnya.",
+  },
+  {
+    name: "SEO Basic Optimization",
+    keywords: ["seo", "google search", "pencarian google", "mesin pencari"],
+    description:
+      "Penataan judul, deskripsi, struktur halaman, dan kecepatan website agar siap diindeks mesin pencari.",
+    reason: "Membantu website lebih mudah ditemukan calon customer melalui pencarian online.",
+  },
+  {
+    name: "Galeri Foto / Dokumentasi",
+    keywords: ["galeri", "gallery", "dokumentasi foto"],
+    description: "Halaman galeri untuk menampilkan dokumentasi hasil kerja atau produk terbaru.",
+    reason: "Membantu calon customer melihat kualitas hasil kerja sebelum menghubungi bisnis.",
+  },
+];
+
 /** Low-complexity features that are safe to suggest for most businesses. */
+
 const SAFE_OPTIONAL_IDS = [
   "social-media",
   "maps",
@@ -232,6 +260,10 @@ function optionalReason(feature: LibraryFeature, brief: OrderBriefData) {
       return "Membantu menampilkan produk atau layanan secara lebih lengkap dan rapi.";
     case "live-chat":
       return "Membantu merespon pertanyaan calon customer lebih cepat langsung dari website.";
+    case "contact-form":
+      return "Memberikan jalur kontak alternatif bagi calon customer yang belum siap menghubungi via WhatsApp.";
+    case "email":
+      return "Memastikan permintaan customer tetap tercatat rapi melalui email bisnis.";
     default:
       return `Relevan dengan kebutuhan ${business} pada Order Brief dan dapat dikembangkan bertahap.`;
   }
@@ -245,7 +277,7 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   coveredIds: Set<string>,
-): ConsultantOption | null {
+): { option: ConsultantOption; ids: string[] } | null {
   const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
   if (upgradeKey === base) return null;
 
@@ -286,26 +318,27 @@ function buildConsultantOption(
     },
   ];
 
-  const items = pool
-    .filter((item) => !coveredIds.has(item.id))
-    .slice(0, 5)
-    .map(({ id: _id, ...rest }) => rest);
-  if (!items.length) return null;
+  const picked = pool.filter((item) => !coveredIds.has(item.id)).slice(0, 5);
+  if (!picked.length) return null;
 
   return {
-    packageName: PACKAGE_LABEL[upgradeKey],
-    intro: [
-      `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
-      `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
-      `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
-    ],
-    items,
-    comparison: [
-      { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
-      { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
-    ],
+    ids: picked.map((item) => item.id),
+    option: {
+      packageName: PACKAGE_LABEL[upgradeKey],
+      intro: [
+        `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
+        `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
+        `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
+      ],
+      items: picked.map(({ id: _id, ...rest }) => rest),
+      comparison: [
+        { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
+        { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
+      ],
+    },
   };
 }
+
 
 function buildNextSteps(base: string, upgrade: string | null) {
   const lines = [
@@ -361,35 +394,74 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const included = briefIncludedFeatures(brief.features);
   const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
 
+  // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
+  // features are never repeated inside Potential Feature Recommendation.
+  const built = buildConsultantOption(brief, pkg.key, coreIds);
+  const consultant = built?.option ?? null;
+  const consultantIds = new Set(built?.ids ?? []);
+  const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
+
+  // DUPLICATE PROTECTION: skip anything already covered by the brief, by the
+  // detected features, or by the consultant development option.
+  const isDuplicate = (feature: LibraryFeature) => {
+    if (coreIds.has(feature.id) || consultantIds.has(feature.id)) return true;
+    if (selected.some((s) => s.id === feature.id)) return true;
+    const key = normalize(feature.name);
+    return consultantTitles.some((title) => title.includes(key) || key.includes(title));
+  };
+
   // Optional recommendations: relevant, non-duplicate, never package-inflating.
-  const optional = FEATURE_LIBRARY.filter((feature) => {
-    if (coreIds.has(feature.id)) return false;
-    if (selected.some((s) => s.id === feature.id)) return false;
-    if (feature.id === "custom") return false;
-    const explicitlyAsked = hasAny(context, [feature.name, ...feature.keywords]);
-    if (RESTRICTED_FEATURE_IDS.has(feature.id)) return explicitlyAsked;
-    return explicitlyAsked || SAFE_OPTIONAL_IDS.includes(feature.id);
-  })
+  let optional: { name: string; description: string; reason: string }[] = FEATURE_LIBRARY.filter(
+    (feature) => {
+      if (feature.id === "custom") return false;
+      if (isDuplicate(feature)) return false;
+      const explicitlyAsked = hasAny(context, [feature.name, ...feature.keywords]);
+      if (RESTRICTED_FEATURE_IDS.has(feature.id)) return explicitlyAsked;
+      return explicitlyAsked || SAFE_OPTIONAL_IDS.includes(feature.id);
+    },
+  )
     .sort((a, b) => {
       const aSafe = SAFE_OPTIONAL_IDS.indexOf(a.id);
       const bSafe = SAFE_OPTIONAL_IDS.indexOf(b.id);
       return a.priority - b.priority || aSafe - bSafe || a.no - b.no;
     })
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((f) => ({
+      name: f.name,
+      description: describeFeature(f, brief),
+      reason: optionalReason(f, brief),
+    }));
 
-  const consultant = buildConsultantOption(brief, pkg.key, coreIds);
+  // FLEXIBLE RECOMMENDATION RULE: light, business-safe ideas (no enterprise
+  // features) to complete the section when the library has little to offer.
+  for (const idea of GENERIC_IDEAS) {
+    if (optional.length >= 3) break;
+    const key = normalize(idea.name);
+    if (context.includes(key) || hasAny(context, idea.keywords)) continue;
+    if (consultantTitles.some((title) => title.includes(key) || key.includes(title))) continue;
+    if (optional.some((item) => normalize(item.name).includes(key))) continue;
+    optional.push({ name: idea.name, description: idea.description, reason: idea.reason });
+  }
+
+  // POTENTIAL FEATURE LIMIT RULE: a single leftover idea is folded into the
+  // consultant option instead of creating a nearly empty section.
+  if (optional.length === 1 && consultant) {
+    consultant.items.push({
+      title: optional[0]!.name,
+      benefit: optional[0]!.reason,
+      optional: true,
+    });
+    optional = [];
+  }
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
     reason: buildReason(brief, pkg),
     included,
     consultant,
-    optional: optional.map((f) => ({
-      name: f.name,
-      description: describeFeature(f, brief),
-      reason: optionalReason(f, brief),
-    })),
+    optional,
     disclaimer: OPTIONAL_DISCLAIMER,
     nextSteps: buildNextSteps(PACKAGE_LABEL[pkg.key], consultant?.packageName ?? null),
   };
 }
+
