@@ -826,7 +826,14 @@ export type ConsultantPick = ConsultantFeature & {
   solves: string | null;
   /** Core prasyarat untuk fitur growth (null jika berdiri sendiri). */
   requiresCoreId: string | null;
+  /** RELATIONSHIP RULE: relasi terhadap scope customer (khusus growth). */
+  relation: FeatureRelation | null;
+  /** Fitur pada Feature List / Core yang diperkuat atau dilanjutkan. */
+  relatedTo: string | null;
+  /** Kelompok penulisan pada Potential Feature. */
+  growthCategory: GrowthCategory;
 };
+
 
 /**
  * BUSINESS FEATURE VALIDATION RULE.
