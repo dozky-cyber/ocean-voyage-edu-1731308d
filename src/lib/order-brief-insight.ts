@@ -173,12 +173,7 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: s
   const business = brief.business?.trim() || "bisnis Anda";
   // ALASAN PACKAGE: tiga kalimat saja — kebutuhan bisnis, karakter proses, dan
   // skala pengguna. Project Summary tidak disalin ulang di sini.
-  const goal = brief.goal?.trim();
-  const focus = (goal || "merapikan kebutuhan digital bisnis")
-    .replace(/^tujuan\s*:\s*/i, "")
-    .replace(/[.!?]+$/, "")
-    .split(/\.\s+/)[0]!
-    .trim();
+  const focus = focusPhrase(brief);
   const scale = brief.usersScale?.trim();
   const parts = [
     `Kebutuhan ${business} difokuskan untuk ${focus}.`,
@@ -187,6 +182,84 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: s
   ];
   return parts.join("\n\n");
 }
+
+const MATURITY_LABEL: Record<BusinessMaturity, string> = {
+  starter: "Tahap Awal (Starter)",
+  growing: "Tahap Berkembang (Growing)",
+  established: "Tahap Mapan (Established)",
+};
+
+/** BUSINESS READINESS: ringkas, 2-3 kalimat, tanpa menambah halaman baru. */
+function buildReadiness(
+  brief: OrderBriefData,
+  maturity: BusinessMaturity,
+  packageName: string,
+): { level: string; lines: string[] } {
+  const business = brief.business?.trim() || "Bisnis Anda";
+  const scale = brief.usersScale?.trim();
+  const lines = [
+    maturity === "starter"
+      ? `${business} berada pada tahap membangun fondasi digital, sehingga prioritasnya adalah kejelasan informasi dan kemudahan customer menghubungi bisnis.`
+      : maturity === "growing"
+        ? `${business} sudah memiliki alur kerja berjalan, sehingga prioritasnya adalah merapikan pencatatan dan komunikasi progress agar tidak lagi manual.`
+        : `${business} sudah berjalan dengan volume dan tim yang cukup besar, sehingga prioritasnya adalah kontrol data dan visibilitas owner.`,
+    `Dengan kondisi tersebut, ${packageName} sudah cukup untuk menopang kebutuhan saat ini tanpa membebani biaya di awal.`,
+  ];
+  if (scale) lines.push(`Skala pengguna yang disampaikan: ${scale}.`);
+  return { level: MATURITY_LABEL[maturity], lines };
+}
+
+/**
+ * PROBLEM -> SOLUTION MAP: setiap masalah pada brief dipasangkan dengan solusi
+ * yang sudah ada di scope customer, Core Solution, atau ide opsional.
+ */
+function buildProblemMap(input: {
+  brief: OrderBriefData;
+  scopeIds: Set<string>;
+  corePicks: ConsultantPick[];
+  growthPicks: ConsultantPick[];
+}): ProblemMapRow[] {
+  const { brief, scopeIds, corePicks, growthPicks } = input;
+  const coreById = new Map(corePicks.map((p) => [p.id, p.name] as const));
+  const growthById = new Map(growthPicks.map((p) => [p.id, p.name] as const));
+
+  return brief.problems
+    .map((problem) => {
+      const plan = buildProblemSolutionPlan({
+        businessText: [brief.business, brief.project].filter(Boolean).join(" "),
+        problemText: normalize(problem),
+        goalText: "",
+        context: normalize(problem),
+      });
+      const ids = [...plan.core.keys()];
+      const scoped = ids.filter((id) => scopeIds.has(id));
+      if (scoped.length) {
+        return {
+          problem,
+          solution: scoped
+            .map((id) => consultantFeature(id)?.name ?? id)
+            .slice(0, 2)
+            .join(" + "),
+          source: "scope" as const,
+        };
+      }
+      const core = ids.find((id) => coreById.has(id));
+      if (core) {
+        return { problem, solution: coreById.get(core)!, source: "core" as const };
+      }
+      const growth = ids.find((id) => growthById.has(id));
+      if (growth) {
+        return { problem, solution: growthById.get(growth)!, source: "optional" as const };
+      }
+      return {
+        problem,
+        solution: "Dibahas pada tahap pengecekan kebutuhan bersama Team KERJAKU",
+        source: "open" as const,
+      };
+    })
+    .slice(0, 8);
+}
+
 
 
 
