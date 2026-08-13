@@ -244,8 +244,16 @@ CARA MEMAKAI LIBRARY (WAJIB):
   skala bisnis. Pertimbangkan jumlah user, skala bisnis, jumlah lokasi, kompleksitas operasional,
   kebutuhan integrasi, dan struktur organisasi. Bisnis satu lokasi dengan owner + beberapa karyawan
   dan operasional sederhana TIDAK boleh direkomendasikan Enterprise — cukup Business System, dengan
-  opsi pengembangan satu tingkat saja. Enterprise hanya dipertimbangkan bila multi cabang, banyak
-  divisi, banyak user, butuh integrasi sistem, atau operasional kompleks.
+  opsi pengembangan satu tingkat saja.
+- BUSINESS SYSTEM vs ENTERPRISE SYSTEM (wajib dibedakan):
+  * BUSINESS SYSTEM: 1 lokasi/outlet, owner + beberapa karyawan, role sederhana (owner/staff),
+    kurang dari ~25 user, satu alur operasional harian, tanpa integrasi sistem luar.
+  * ENTERPRISE SYSTEM: hanya bila minimal DUA dari berikut terpenuhi — (1) banyak cabang/lokasi,
+    (2) struktur organisasi berjenjang (manager pusat, supervisor, admin cabang, approval, laporan
+    antar divisi) dengan banyak role & hak akses berbeda, (3) user berskala besar (>= 50),
+    (4) integrasi sistem eksternal nyata (ERP/API/sinkronisasi sistem lain).
+  Contoh: laundry 1 outlet dengan owner + 4 karyawan = Business System, BUKAN Enterprise.
+
 - Jangan menaikkan package hanya karena tersedia fitur lebih banyak. Jangan memberi solusi yang
   terlalu besar dibanding masalah customer.
 - Selalu berpikir "masalah bisnis apa yang bisa dibantu solusi digital?", bukan "fitur apa yang bisa dijual?".
