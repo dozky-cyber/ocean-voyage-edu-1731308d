@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortfolioSlugRouteImport } from './routes/portfolio.$slug'
 import { Route as PortalTokenRouteImport } from './routes/portal.$token'
+import { Route as ISlugRouteImport } from './routes/i.$slug'
 import { Route as DSlugRouteImport } from './routes/d.$slug'
 import { Route as ApiAssistantChatRouteImport } from './routes/api/assistant-chat'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -81,6 +82,11 @@ const PortfolioSlugRoute = PortfolioSlugRouteImport.update({
 const PortalTokenRoute = PortalTokenRouteImport.update({
   id: '/portal/$token',
   path: '/portal/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ISlugRoute = ISlugRouteImport.update({
+  id: '/i/$slug',
+  path: '/i/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DSlugRoute = DSlugRouteImport.update({
@@ -270,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/d/$slug': typeof DSlugRoute
+  '/i/$slug': typeof ISlugRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -308,6 +315,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/d/$slug': typeof DSlugRoute
+  '/i/$slug': typeof ISlugRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/api/assistant-chat': typeof ApiAssistantChatRoute
   '/d/$slug': typeof DSlugRoute
+  '/i/$slug': typeof ISlugRoute
   '/portal/$token': typeof PortalTokenRoute
   '/portfolio/$slug': typeof PortfolioSlugRoute
   '/_authenticated/admin/analytics': typeof AuthenticatedAdminAnalyticsRoute
@@ -389,6 +398,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/api/assistant-chat'
     | '/d/$slug'
+    | '/i/$slug'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
@@ -427,6 +437,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/api/assistant-chat'
     | '/d/$slug'
+    | '/i/$slug'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/admin/analytics'
@@ -466,6 +477,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/api/assistant-chat'
     | '/d/$slug'
+    | '/i/$slug'
     | '/portal/$token'
     | '/portfolio/$slug'
     | '/_authenticated/admin/analytics'
@@ -506,6 +518,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiAssistantChatRoute: typeof ApiAssistantChatRoute
   DSlugRoute: typeof DSlugRoute
+  ISlugRoute: typeof ISlugRoute
   PortalTokenRoute: typeof PortalTokenRoute
   PortfolioSlugRoute: typeof PortfolioSlugRoute
   ApiPublicConsultantChatRoute: typeof ApiPublicConsultantChatRoute
@@ -565,6 +578,13 @@ declare module '@tanstack/react-router' {
       path: '/portal/$token'
       fullPath: '/portal/$token'
       preLoaderRoute: typeof PortalTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/i/$slug': {
+      id: '/i/$slug'
+      path: '/i/$slug'
+      fullPath: '/i/$slug'
+      preLoaderRoute: typeof ISlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/d/$slug': {
@@ -875,6 +895,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiAssistantChatRoute: ApiAssistantChatRoute,
   DSlugRoute: DSlugRoute,
+  ISlugRoute: ISlugRoute,
   PortalTokenRoute: PortalTokenRoute,
   PortfolioSlugRoute: PortfolioSlugRoute,
   ApiPublicConsultantChatRoute: ApiPublicConsultantChatRoute,
