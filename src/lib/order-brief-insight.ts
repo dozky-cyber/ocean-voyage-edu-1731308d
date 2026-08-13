@@ -391,6 +391,12 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // jumlah user, dan proses operasional — bukan generator fitur.
   const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
   const maxTier: ConsultantTier = LEVEL_TO_TIER[decision.level];
+  const maturity = detectBusinessMaturity({
+    context,
+    problemText: normalize(brief.problems.join(" | ")),
+    scaleText: [brief.usersScale, brief.adminNeeds].filter(Boolean).join(" | "),
+  });
+
 
 
 
