@@ -35,7 +35,7 @@ function normalize(value: string) {
 export type ConsultantOption = {
   packageName: string;
   intro: string[];
-  items: { title: string; benefit: string; optional?: boolean }[];
+  items: { title: string; benefit: string; optional?: boolean; solves?: string | null }[];
   comparison: { name: string; points: string[] }[];
   /** PACKAGE UPGRADE PROTECTION: this option never replaces the brief package. */
   note: string;
@@ -195,7 +195,11 @@ function buildConsultantOption(
         `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
         `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
       ],
-      items: picks.map((item) => ({ title: item.name, benefit: item.benefit })),
+      items: picks.map((item) => ({
+        title: item.name,
+        benefit: item.benefit,
+        solves: item.solves,
+      })),
       comparison: [
         { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
         { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
