@@ -451,6 +451,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // features are never repeated inside Potential Feature Recommendation.
   const built = buildConsultantOption(brief, pkg.key, corePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
+  const businessLabel = brief.business?.trim() || "bisnis Anda";
   const optional = growthPicks.slice(0, potentialLimit).map((f, index) => {
     const relation = f.relatedTo
       ? f.relation === "enhancement"
@@ -458,7 +459,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
         : `Kelanjutan alur bisnis setelah ${f.relatedTo}.`
       : null;
     // ANTI-DUPLIKASI KALIMAT: alasan relevansi tidak boleh mengulang Kaitan.
-    const reason =
+    const raw =
       f.reasons.find(
         (line) => !/^memperkuat |^melanjutkan alur/i.test(line) && line !== relation,
       ) ??
@@ -467,13 +468,14 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     return {
       name: f.name,
       description: f.fn,
-      reason,
+      reason: humanizeRelevance(raw, businessLabel),
       impact: f.benefit,
       relation,
       priority: index + 1,
       phase: (index < 2 ? 1 : 2) as 1 | 2,
     };
   });
+
 
   const readiness = buildReadiness(brief, maturity, PACKAGE_LABEL[pkg.key]);
   const problemMap = buildProblemMap({
