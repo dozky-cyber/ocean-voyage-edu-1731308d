@@ -57,16 +57,25 @@ async function loadProposalDoc(
     currency: String(proposal.currency ?? "IDR"),
     validUntil: (proposal.valid_until as string) ?? null,
     investmentNote: (proposal.investment_note as string) ?? null,
-    timelineNote: (proposal.timeline_note as string) ?? null,
+    paymentType: (proposal.payment_type as "full" | "termin") ?? "full",
+    paymentDpPercent: (proposal.payment_dp_percent as number) ?? null,
+    paymentTermsText: (proposal.payment_terms_text as string) ?? null,
     sections,
     pricing,
     briefTimeline: (proposal.brief_timeline as string) ?? null,
     estimatedTimeline: (proposal.estimated_timeline as string) ?? null,
+    coreFeatures: Array.isArray(proposal.core_features)
+      ? (proposal.core_features as unknown[]).map((row) => ({
+          name: String((row as { name?: unknown })?.name ?? ""),
+          description: String((row as { description?: unknown })?.description ?? ""),
+        }))
+      : [],
     enhancements: Array.isArray(proposal.enhancements)
       ? (proposal.enhancements as unknown[]).map((row) => ({
           name: String((row as { name?: unknown })?.name ?? ""),
           benefit: String((row as { benefit?: unknown })?.benefit ?? ""),
           amount: Number((row as { amount?: unknown })?.amount ?? 0) || 0,
+          recommended: Boolean((row as { recommended?: unknown })?.recommended),
         }))
       : [],
     createdAt: String(proposal.created_at ?? new Date().toISOString()),
