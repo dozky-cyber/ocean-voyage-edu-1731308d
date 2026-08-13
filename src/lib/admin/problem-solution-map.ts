@@ -139,7 +139,17 @@ export const PROBLEM_RULES: ProblemRule[] = [
   },
   {
     problem: "Jadwal pekerjaan sering bentrok",
-    tokens: ["jadwal bentrok", "bentrok jadwal", "atur jadwal", "penjadwalan", "jadwal pekerjaan", "jadwal team"],
+    tokens: [
+      "bentrok",
+      "jadwal bentrok",
+      "bentrok jadwal",
+      "atur jadwal",
+      "penjadwalan",
+      "jadwal pekerjaan",
+      "jadwal team",
+      "jadwal pasien",
+      "jadwal servis",
+    ],
     core: ["schedule-management"],
     growth: ["notification"],
   },
