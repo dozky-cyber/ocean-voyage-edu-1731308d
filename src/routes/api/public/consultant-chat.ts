@@ -199,6 +199,16 @@ CARA MEMAKAI LIBRARY (WAJIB):
 - Jika hanya ada 1-2 fitur tambahan relevan → taruh di TEAM KERJAKU CONSULTANT RECOMMENDATION.
   Jika ada beberapa ide lain yang relevan → baru gunakan POTENTIAL FEATURE RECOMMENDATION.
 - Jika sebuah fitur tidak memberi dampak bisnis nyata: hapus.
+- BUSINESS FEATURE VALIDATION RULE (wajib sebelum memasukkan fitur ke rekomendasi). Cek 4 hal:
+  1. Apakah fitur dipakai pada proses bisnis utama customer?
+  2. Apakah kondisi bisnis customer memang membutuhkan fitur tersebut?
+  3. Apakah fitur mengurangi masalah yang disebut pada Business Problem?
+  4. Apakah ada fitur lain yang lebih sederhana tetapi lebih berdampak?
+  Jika tidak memenuhi minimal 2 alasan → fitur HARUS dihapus.
+  Contoh: laundry tidak butuh Inventory (tidak ada pengelolaan stok barang);
+  florist personal tidak butuh Multi User Management (tidak ada team);
+  website katalog kecil tidak butuh Search (jumlah produk belum besar).
+  Jangan memberikan fitur hanya karena tersedia di library.
 - PACKAGE LEVEL CONTROL RULE: package rekomendasi dan opsi pengembangan wajib proporsional dengan
   skala bisnis. Pertimbangkan jumlah user, skala bisnis, jumlah lokasi, kompleksitas operasional,
   kebutuhan integrasi, dan struktur organisasi. Bisnis satu lokasi dengan owner + beberapa karyawan

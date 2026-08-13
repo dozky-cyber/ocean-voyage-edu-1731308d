@@ -340,6 +340,8 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const picks = selectConsultantFeatures({
     businessText,
     context,
+    // BUSINESS FEATURE VALIDATION RULE poin 3: fitur harus mengurangi masalah.
+    problemText: normalize(brief.problems.join(" | ")),
     maxTier,
     excludeIds: [...coreIds],
     excludeTitles: included,

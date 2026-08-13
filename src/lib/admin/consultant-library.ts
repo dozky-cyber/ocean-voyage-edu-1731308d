@@ -30,6 +30,18 @@ export type ConsultantFeature = {
    * secara langsung pada brief.
    */
   onRequestOnly?: boolean;
+  /**
+   * BUSINESS FEATURE VALIDATION RULE — kondisi bisnis yang wajib ada pada brief.
+   * Tanpa salah satu kondisi ini, fitur dianggap tidak relevan dan dibuang
+   * (contoh: Inventory tanpa pengelolaan stok, Multi User tanpa team,
+   * Search tanpa jumlah produk yang besar).
+   */
+  requires?: string[];
+  /**
+   * Fitur lain yang lebih sederhana namun lebih berdampak untuk kebutuhan
+   * serupa. Dipakai pada pengecekan poin 4.
+   */
+  simplerAlternativeId?: string;
 };
 
 export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
@@ -191,6 +203,18 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: ["toko", "retail", "gudang", "distributor", "grosir", "bengkel", "apotek"],
     signals: ["stok", "persediaan", "gudang", "barang masuk"],
     aliases: ["inventory", "stok", "persediaan"],
+    // Tidak relevan bila bisnis tidak mengelola stok barang (contoh: laundry).
+    requires: [
+      "stok",
+      "persediaan",
+      "gudang",
+      "barang masuk",
+      "barang keluar",
+      "restock",
+      "inventaris",
+      "sparepart",
+      "jumlah barang",
+    ],
   },
   {
     id: "form-konsultasi",
@@ -234,6 +258,16 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: ["gym", "laundry", "salon", "spa", "kursus", "komunitas", "klinik"],
     signals: ["member", "langganan", "subscription", "pelanggan tetap", "paket bulanan"],
     aliases: ["membership", "member", "langganan"],
+    requires: [
+      "member",
+      "langganan",
+      "subscription",
+      "pelanggan tetap",
+      "repeat order",
+      "paket bulanan",
+      "loyal",
+    ],
+    simplerAlternativeId: "database-customer",
   },
   {
     id: "api",
@@ -276,6 +310,23 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: [],
     signals: ["karyawan", "team", "multi user", "role", "akses", "kasir", "staff"],
     aliases: ["multi user", "user management", "role akses"],
+    // Tidak relevan untuk bisnis personal tanpa team (contoh: florist personal).
+    requires: [
+      "karyawan",
+      "pegawai",
+      "staff",
+      "staf",
+      "team",
+      "tim",
+      "kasir",
+      "divisi",
+      "cabang",
+      "admin",
+      "role",
+      "multi user",
+      "beberapa user",
+    ],
+    simplerAlternativeId: "dashboard-admin",
   },
   {
     id: "notification",
@@ -296,6 +347,20 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: ["distributor", "grosir", "toko", "retail", "apotek", "sparepart"],
     signals: ["banyak produk", "pencarian", "search", "katalog besar"],
     aliases: ["search", "pencarian", "cari produk"],
+    // Tidak relevan bila jumlah produk masih sedikit (katalog kecil).
+    requires: [
+      "banyak produk",
+      "banyak item",
+      "banyak varian",
+      "banyak layanan",
+      "ratusan",
+      "ribuan",
+      "katalog besar",
+      "pencarian",
+      "search",
+      "sku",
+    ],
+    simplerAlternativeId: "katalog",
   },
   {
     id: "faq",
@@ -345,7 +410,62 @@ export function isCoveredByBrief(feature: ConsultantFeature, briefText: string) 
   return includesAny(text, [feature.name, ...feature.aliases]);
 }
 
-export type ConsultantPick = ConsultantFeature & { score: number };
+export type ConsultantPick = ConsultantFeature & { score: number; reasons: string[] };
+
+/**
+ * BUSINESS FEATURE VALIDATION RULE.
+ * Sebelum sebuah fitur boleh masuk rekomendasi, minimal 2 dari 4 pengecekan
+ * berikut harus terpenuhi:
+ *   1. Dipakai pada proses bisnis utama customer.
+ *   2. Kondisi bisnis customer memang membutuhkan fitur tersebut.
+ *   3. Fitur mengurangi masalah yang disebutkan pada Business Problem.
+ *   4. Tidak ada fitur lain yang lebih sederhana tetapi lebih berdampak.
+ * Selain itu, `requires` bersifat wajib: tanpa kondisi bisnis tersebut fitur
+ * langsung dibuang (Inventory pada laundry, Multi User pada bisnis personal,
+ * Search pada katalog kecil).
+ */
+export function validateConsultantFeature(
+  feature: ConsultantFeature,
+  input: { business: string; context: string; problemText?: string },
+): { valid: boolean; reasons: string[] } {
+  const business = normalize(input.business);
+  const context = normalize(`${input.business} ${input.context}`);
+  const problem = normalize(input.problemText ?? "");
+  const tokens = [feature.name, ...feature.aliases, ...feature.signals];
+
+  // Hard condition: kondisi bisnis wajib.
+  if (feature.requires?.length && !includesAny(context, feature.requires)) {
+    return { valid: false, reasons: [] };
+  }
+
+  const reasons: string[] = [];
+
+  // 1. Proses bisnis utama.
+  if (includesAny(business, feature.fits) || includesAny(context, feature.fits)) {
+    reasons.push("Digunakan pada proses bisnis utama customer.");
+  }
+  // 2. Kondisi bisnis membutuhkan fitur ini.
+  if (includesAny(context, feature.signals) || includesAny(context, feature.requires ?? [])) {
+    reasons.push("Kondisi bisnis pada brief membutuhkan fitur ini.");
+  }
+  // 3. Mengurangi masalah pada Business Problem.
+  if (problem && includesAny(problem, tokens)) {
+    reasons.push("Mengurangi masalah yang disebutkan customer.");
+  }
+  // 4. Tidak ada fitur lain yang lebih sederhana namun lebih berdampak.
+  const simpler = feature.simplerAlternativeId
+    ? consultantFeature(feature.simplerAlternativeId)
+    : undefined;
+  const simplerStillBetter =
+    !!simpler &&
+    !includesAny(context, [feature.name, ...feature.aliases]) &&
+    !isCoveredByBrief(simpler, context);
+  if (!simplerStillBetter) {
+    reasons.push("Tidak ada fitur lain yang lebih sederhana dengan dampak lebih besar.");
+  }
+
+  return { valid: reasons.length >= 2, reasons };
+}
 
 /**
  * CONSULTANT DECISION RULE.
@@ -363,6 +483,8 @@ export function selectConsultantFeatures(input: {
   excludeIds?: string[];
   /** Judul yang sudah tampil (duplicate protection lintas section). */
   excludeTitles?: string[];
+  /** Business Problem pada brief (dipakai pengecekan validasi poin 3). */
+  problemText?: string;
   limit?: number;
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
@@ -389,8 +511,20 @@ export function selectConsultantFeatures(input: {
     if (!fitsBusiness && !hasSignal) continue;
     if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
 
-    const score = (fitsBusiness ? 2 : 0) + (hasSignal ? 2 : 0) - TIER_RANK[feature.tier] * 0.25;
-    picks.push({ ...feature, score });
+    // BUSINESS FEATURE VALIDATION RULE: minimal 2 alasan, jika tidak: dibuang.
+    const validation = validateConsultantFeature(feature, {
+      business: input.businessText,
+      context: input.context,
+      problemText: input.problemText,
+    });
+    if (!validation.valid) continue;
+
+    const score =
+      (fitsBusiness ? 2 : 0) +
+      (hasSignal ? 2 : 0) +
+      validation.reasons.length -
+      TIER_RANK[feature.tier] * 0.25;
+    picks.push({ ...feature, score, reasons: validation.reasons });
   }
 
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
