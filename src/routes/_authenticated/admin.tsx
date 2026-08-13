@@ -25,8 +25,8 @@ import { useEffect, useState } from "react";
 
 import { GlobalSearch } from "@/components/admin/GlobalSearch";
 import { NotificationBell } from "@/components/admin/NotificationBell";
-import { supabase } from "@/integrations/supabase/client";
 import { getAdminAccess } from "@/lib/admin.functions";
+import { signOutKeepingQuickUnlock } from "@/lib/auth/biometric-unlock";
 import {
   ROLE_LABELS,
   isWorkspaceRole,
