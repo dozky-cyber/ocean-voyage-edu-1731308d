@@ -245,11 +245,10 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
     { label: "Budget", value: brief.budget || "-" },
   ]);
 
-  sectionTitle(doc, "Recommendation");
-  doc.paragraph(brief.recommendation || "-", MARGIN, 11, true, CONTENT_W, BRAND);
-  doc.y -= 10;
+  packageRecommendation(doc, brief);
 
   aiRecommendation(doc, brief);
+
 
   footer(doc);
   return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
