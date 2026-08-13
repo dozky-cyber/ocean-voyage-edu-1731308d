@@ -760,6 +760,8 @@ export function selectConsultantFeatures(input: {
 
   /** Tujuan sistem pada brief (dipakai peta problem → solution). */
   goalText?: string;
+  /** Feature List pada brief (DUPLICATE PREVENTION RULE). */
+  briefFeatureText?: string;
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
   const context = normalize(`${input.businessText} ${input.context}`);
@@ -768,6 +770,46 @@ export function selectConsultantFeatures(input: {
   const excluded = new Set(input.excludeIds ?? []);
   const excludedTitles = (input.excludeTitles ?? []).map(normalize);
   const personal = isPersonalScale(input.scaleText ?? "", context);
+  const briefFeatures = normalize(input.briefFeatureText ?? "");
+
+  // STEP 6 — ATURAN KHUSUS FITUR (Consultant Engine V5).
+  // Masalah/tujuan yang customer sebut sendiri, bukan tebakan dari jenis bisnis.
+  const problemScope = normalize(`${input.problemText ?? ""} ${input.goalText ?? ""}`);
+  const stockProblem = includesAnyPositive(problemScope, [
+    "stok",
+    "persediaan",
+    "gudang",
+    "restock",
+    "kehabisan barang",
+    "barang habis",
+    "inventory",
+  ]);
+  const accessProblem = includesAnyPositive(context, [
+    "hak akses",
+    "akses berbeda",
+    "level user",
+    "pembagian akses",
+    "role akses",
+    "multi user",
+    "user management",
+  ]);
+  const automationAsked = includesAnyPositive(context, [
+    "otomatis",
+    "otomatisasi",
+    "automation",
+    "workflow otomatis",
+    "reminder otomatis",
+  ]);
+  const crmComplex = includesAnyPositive(context, [
+    "crm",
+    "sales team",
+    "tim sales",
+    "pipeline",
+    "prospek",
+    "lead management",
+    "banyak pelanggan",
+    "manajemen customer",
+  ]);
 
   // BUSINESS FLOW PATTERN LIBRARY: pahami alur bisnis dulu, baru pilih fitur.
   const pattern = detectBusinessFlowPattern(input.businessText, input.context);
@@ -795,11 +837,30 @@ export function selectConsultantFeatures(input: {
     // Penyebutan pada Business Problem bukan berarti fitur sudah ada di brief.
     if (!isCore && isCoveredByBrief(feature, context)) continue;
 
+    // DUPLICATE PREVENTION RULE: fitur yang sudah ada pada Feature List brief
+    // tidak boleh direkomendasikan ulang dengan nama berbeda. Core hanya lolos
+    // bila customer menyebut masalah pada proses tersebut.
+    if (briefFeatures && isCoveredByBrief(feature, briefFeatures)) {
+      if (!isCore) continue;
+      if (!includesAnyPositive(problemScope, [feature.name, ...feature.aliases, ...feature.signals]))
+        continue;
+    }
+
     const key = normalize(feature.name);
     if (excludedTitles.some((title) => title.includes(key) || key.includes(title))) continue;
 
     const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
+
+    // ATURAN KHUSUS — hard block, berlaku juga untuk core.
+    // INVENTORY: hanya bila stok memang masalah/tujuan customer.
+    if (feature.id === "inventory" && !stockProblem && !asked) continue;
+    // MULTI USER: bukan karena ada karyawan, tapi karena butuh hak akses beda.
+    if (feature.id === "multi-user" && !accessProblem) continue;
+    // AUTOMATION: selalu potential kecuali customer memintanya.
+    if (feature.id === "automation" && !automationAsked) continue;
+    // CRM: hanya untuk kebutuhan pengelolaan customer yang kompleks.
+    if (feature.id === "crm" && !crmComplex) continue;
 
     // SCALE RULE (hard block, tidak bisa dilewati oleh business flow priority):
     // bisnis personal tanpa team tidak boleh mendapat fitur bertim/enterprise.
@@ -809,6 +870,7 @@ export function selectConsultantFeatures(input: {
     // PACKAGE LEVEL CONTROL RULE: tanpa kompleksitas organisasi (multi cabang,
     // struktur berjenjang, user besar), fitur enterprise tidak direkomendasikan.
     if (input.allowEnterprise === false && !asked && feature.tier === "enterprise") continue;
+
 
 
     const fitsBusiness =
