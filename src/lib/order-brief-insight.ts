@@ -269,6 +269,9 @@ function buildProblemMap(input: {
         solution: "Dibahas pada tahap pengecekan kebutuhan bersama Team KERJAKU",
         source: "open" as const,
       };
+    })
+    .slice(0, 8);
+}
 
 /** Kalimat relevansi ditulis ulang agar spesifik ke bisnis customer. */
 function humanizeRelevance(raw: string, business: string): string {
@@ -286,10 +289,6 @@ function humanizeRelevance(raw: string, business: string): string {
   return text;
 }
 
-
-    })
-    .slice(0, 8);
-}
 
 
 
