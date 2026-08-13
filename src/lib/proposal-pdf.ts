@@ -291,6 +291,8 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
     bodyBlock(doc, section.body || "-");
   }
 
+  enhancementSection(doc, data);
+  timelineSection(doc, data);
   pricingTable(doc, data);
 
   if (data.timelineNote) {
