@@ -26,6 +26,11 @@ import {
 } from "./admin/consultant-library";
 import { buildProblemSolutionPlan } from "./admin/problem-solution-map";
 import {
+  describeFeatureForIndustry,
+  detectIndustryContext,
+  featureNameForIndustry,
+} from "./admin/industry-context";
+import {
   decidePackageLevel,
   type PackageLevel,
 } from "./admin/package-decision-sop";
