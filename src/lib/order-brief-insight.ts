@@ -305,13 +305,20 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       .join(" | "),
   );
 
-  // Package: never above the complexity the brief actually justifies.
+  // Package: never above the complexity the brief actually justifies, and never
+  // Enterprise unless the business scale itself justifies it.
+  const allowEnterprise = enterpriseScaleJustified(brief, context);
   const requested = resolvePackage(brief.recommendation);
-  const ceilingKey = complexityCeiling(context);
+  const rawCeiling = complexityCeiling(context);
+  const ceilingKey: PackageKey =
+    rawCeiling === "Enterprise System" && !allowEnterprise
+      ? "Digital Workflow Solution"
+      : rawCeiling;
   const pkg =
     PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
       ? resolvePackage(ceilingKey)
       : requested;
+
 
   // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
   // list, verbatim. Package defaults never enter the scope.
