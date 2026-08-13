@@ -1,13 +1,12 @@
-// AI Business Recommendation block for the Order Brief PDF.
+// TEAM KERJAKU CONSULTANT block for the Order Brief PDF.
 //
-// ORDER BRIEF PROTECTION RULE V1
-// - The Final Order Brief is the single source of truth. The AI never adds,
-//   renames, or enlarges the client's own requirements.
+// TEAM KERJAKU CONSULTANT ENGINE V3
+// - The Final Order Brief is the single source of truth. Customer needs and
+//   consultant recommendations are never mixed.
 // - Package recommendation follows the real complexity of the brief and is
 //   never inflated (an admin dashboard alone does not upgrade a package).
-// - Improvements only live inside AI Business Recommendation + Optional
-//   Feature Recommendation, and every optional item must have a business
-//   reason tied to the client's brief.
+// - Improvements only live inside TEAM KERJAKU CONSULTANT RECOMMENDATION +
+//   POTENTIAL FEATURE RECOMMENDATION, each with a clear business reason.
 
 import {
   FEATURE_LIBRARY,
@@ -21,16 +20,25 @@ import {
 } from "./admin/feature-library";
 import type { OrderBriefData } from "./order-brief";
 
+export type ConsultantOption = {
+  packageName: string;
+  intro: string[];
+  items: { title: string; benefit: string; optional?: boolean }[];
+  comparison: { name: string; points: string[] }[];
+};
+
 export type BriefInsight = {
   packageName: string;
   reason: string;
   included: string[];
+  consultant: ConsultantOption | null;
   optional: { name: string; description: string; reason: string }[];
   disclaimer: string;
+  nextSteps: string[];
 };
 
 export const OPTIONAL_DISCLAIMER =
-  "Rekomendasi fitur tambahan merupakan hasil analisa kebutuhan bisnis dan dapat dikembangkan sesuai kebutuhan. Fitur ini bukan bagian dari scope utama sebelum dilakukan persetujuan lebih lanjut.";
+  "Rekomendasi fitur tambahan merupakan hasil analisa kebutuhan bisnis Team KERJAKU dan dapat dikembangkan sesuai kebutuhan. Fitur ini bukan bagian dari scope utama sebelum dilakukan persetujuan lebih lanjut.";
 
 /** Features that may only appear when the brief explicitly asks for them. */
 const RESTRICTED_FEATURE_IDS = new Set([
@@ -66,6 +74,45 @@ const PACKAGE_RANK: Record<PackageKey, number> = {
   "Professional System": 1,
   "Digital Workflow Solution": 2,
   "Enterprise System": 3,
+};
+
+const PACKAGE_ORDER: PackageKey[] = [
+  "Landing Page",
+  "Professional System",
+  "Digital Workflow Solution",
+  "Enterprise System",
+];
+
+/** Customer-facing solution names used on the Order Brief document. */
+const PACKAGE_LABEL: Record<PackageKey, string> = {
+  "Landing Page": "Basic System",
+  "Professional System": "Professional System",
+  "Digital Workflow Solution": "Business System",
+  "Enterprise System": "Enterprise System",
+};
+
+const PACKAGE_FIT: Record<PackageKey, string[]> = {
+  "Landing Page": [
+    "Website katalog / company profile",
+    "Portfolio bisnis",
+    "Komunikasi langsung via WhatsApp",
+  ],
+  "Professional System": [
+    "Update konten mandiri",
+    "Pengelolaan permintaan customer",
+    "Pengembangan operasional bisnis",
+    "Data bisnis lebih terstruktur",
+  ],
+  "Digital Workflow Solution": [
+    "Digitalisasi proses operasional harian",
+    "Transaksi dan pembayaran online",
+    "Alur kerja team lebih rapi",
+  ],
+  "Enterprise System": [
+    "Sistem terintegrasi antar divisi/cabang",
+    "Kebutuhan data dan user berskala besar",
+    "Integrasi dengan sistem lain",
+  ],
 };
 
 function normalize(value: string) {
@@ -120,7 +167,6 @@ function complexityCeiling(context: string): PackageKey {
     "follow up",
     "database customer",
     "data pelanggan",
-    "katalog",
     "booking",
     "reservasi",
     "member",
@@ -152,12 +198,11 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition) {
     `Berdasarkan kebutuhan ${business}, website difokuskan untuk ${
       goal || project || "memperkenalkan bisnis dan memudahkan calon customer terhubung"
     }.`,
-    `Rekomendasi paket ${pkg.key} dipilih karena ${complexityLabel(pkg)}${
+    `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}${
       brief.usersScale?.trim() ? ` dengan cakupan pengguna ${brief.usersScale.trim()}` : ""
     }.`,
     "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
   ];
-  if (pkg.benefits.length) parts.push(`${pkg.benefits.join(", ")}.`);
   return parts.join(" ");
 }
 
@@ -190,6 +235,100 @@ function optionalReason(feature: LibraryFeature, brief: OrderBriefData) {
     default:
       return `Relevan dengan kebutuhan ${business} pada Order Brief dan dapat dikembangkan bertahap.`;
   }
+}
+
+/**
+ * TEAM KERJAKU CONSULTANT RECOMMENDATION.
+ * Business insight + development option. Never changes the customer's own scope.
+ */
+function buildConsultantOption(
+  brief: OrderBriefData,
+  base: PackageKey,
+  coveredIds: Set<string>,
+): ConsultantOption | null {
+  const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
+  if (upgradeKey === base) return null;
+
+  const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
+  const business = brief.business?.trim() || "bisnis Anda";
+
+  const pool: { id: string; title: string; benefit: string; optional?: boolean }[] = [
+    {
+      id: "dashboard-admin",
+      title: "Dashboard Admin / Content Management",
+      benefit: `Dapat memperbarui konten, foto, dan portfolio terbaru ${business} secara mandiri tanpa perlu meminta perubahan setiap kali ada update.`,
+    },
+    {
+      id: "booking",
+      title: "Booking / Reservasi",
+      benefit:
+        "Membantu customer mengirim kebutuhan berdasarkan tanggal atau jadwal acara secara lebih terstruktur.",
+    },
+    {
+      id: "social-media",
+      title: "Social Media Integration",
+      benefit:
+        "Membantu calon customer melihat aktivitas terbaru dan meningkatkan kepercayaan sebelum melakukan pemesanan.",
+    },
+    {
+      id: "database-customer",
+      title: "Database Customer / Riwayat Pesanan",
+      benefit:
+        "Membantu menyimpan data customer dan riwayat pemesanan untuk kebutuhan follow up dan pelayanan pelanggan.",
+      optional: true,
+    },
+    {
+      id: "reporting",
+      title: "Laporan Penjualan Sederhana",
+      benefit:
+        "Membantu owner mengetahui jumlah transaksi dan pemasukan harian tanpa membuat sistem laporan yang kompleks.",
+      optional: true,
+    },
+  ];
+
+  const items = pool
+    .filter((item) => !coveredIds.has(item.id))
+    .slice(0, 5)
+    .map(({ id: _id, ...rest }) => rest);
+  if (!items.length) return null;
+
+  return {
+    packageName: PACKAGE_LABEL[upgradeKey],
+    intro: [
+      `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
+      `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
+      `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
+    ],
+    items,
+    comparison: [
+      { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
+      { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
+    ],
+  };
+}
+
+function buildNextSteps(base: string, upgrade: string | null) {
+  const lines = [
+    "Berdasarkan hasil konsultasi ini, Team KERJAKU akan menyiapkan penawaran berdasarkan opsi solusi berikut:",
+    "",
+    `1. ${base}`,
+    "Sesuai dengan kebutuhan awal yang disampaikan customer.",
+  ];
+  if (upgrade) {
+    lines.push(
+      "",
+      `2. ${upgrade}`,
+      "Sebagai opsi pengembangan dengan fitur tambahan yang direkomendasikan Team KERJAKU.",
+    );
+  }
+  lines.push(
+    "",
+    "Customer dapat memilih solusi yang paling sesuai dengan kebutuhan dan kesiapan bisnis saat ini.",
+    "Penawaran harga akan disesuaikan dengan fitur yang dipilih, prioritas kebutuhan, serta budget yang telah disiapkan agar mendapatkan solusi digital yang paling optimal.",
+    "Apabila ada fitur yang ingin ditambahkan, dikurangi, atau disesuaikan, customer dapat memberikan feedback melalui WhatsApp atau email.",
+    "Terima kasih sudah mempercayakan pengembangan digital bisnis kepada Team KERJAKU.",
+  );
+  return lines;
 }
 
 export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
@@ -238,15 +377,19 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     })
     .slice(0, 3);
 
+  const consultant = buildConsultantOption(brief, pkg.key, coreIds);
+
   return {
-    packageName: pkg.key,
+    packageName: PACKAGE_LABEL[pkg.key],
     reason: buildReason(brief, pkg),
     included,
+    consultant,
     optional: optional.map((f) => ({
       name: f.name,
       description: describeFeature(f, brief),
       reason: optionalReason(f, brief),
     })),
     disclaimer: OPTIONAL_DISCLAIMER,
+    nextSteps: buildNextSteps(PACKAGE_LABEL[pkg.key], consultant?.packageName ?? null),
   };
 }
