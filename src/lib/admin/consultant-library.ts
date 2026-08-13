@@ -493,6 +493,12 @@ export function selectConsultantFeatures(input: {
   const excluded = new Set(input.excludeIds ?? []);
   const excludedTitles = (input.excludeTitles ?? []).map(normalize);
 
+  // BUSINESS FLOW PATTERN LIBRARY: pahami alur bisnis dulu, baru pilih fitur.
+  const pattern = detectBusinessFlowPattern(input.businessText, input.context);
+  const priority = new Set(pattern?.priority ?? []);
+  const conditional = new Set(pattern?.conditional ?? []);
+  const notPriority = new Set(pattern?.notPriority ?? []);
+
   const picks: ConsultantPick[] = [];
   for (const feature of CONSULTANT_LIBRARY) {
     if (excluded.has(feature.id)) continue;
@@ -507,8 +513,13 @@ export function selectConsultantFeatures(input: {
     const fitsBusiness = includesAny(business, feature.fits) || includesAny(context, feature.fits);
     const hasSignal = includesAny(context, feature.signals);
 
+    // Bukan prioritas pada alur bisnis ini -> hanya boleh jika customer minta.
+    if (notPriority.has(feature.id) && !asked) continue;
+    // Fitur kondisional (mis. Inventory/Search) butuh sinyal kebutuhan nyata.
+    if (conditional.has(feature.id) && !asked && !hasSignal) continue;
+
     // Tanpa kecocokan bisnis maupun sinyal kebutuhan: bukan konsultasi, skip.
-    if (!fitsBusiness && !hasSignal) continue;
+    if (!fitsBusiness && !hasSignal && !priority.has(feature.id)) continue;
     if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
 
     // BUSINESS FEATURE VALIDATION RULE: minimal 2 alasan, jika tidak: dibuang.
@@ -517,16 +528,23 @@ export function selectConsultantFeatures(input: {
       context: input.context,
       problemText: input.problemText,
     });
-    if (!validation.valid) continue;
+    const onFlow = priority.has(feature.id);
+    if (!validation.valid && !onFlow) continue;
+
+    const reasons = onFlow
+      ? [`Memperbaiki alur bisnis ${pattern!.name}.`, ...validation.reasons]
+      : validation.reasons;
 
     const score =
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
+      (onFlow ? 3 : 0) +
       validation.reasons.length -
       TIER_RANK[feature.tier] * 0.25;
-    picks.push({ ...feature, score, reasons: validation.reasons });
+    picks.push({ ...feature, score, reasons });
   }
 
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
   return picks.slice(0, input.limit ?? 6);
 }
+
