@@ -60,19 +60,24 @@ export function parseCoreFeatures(value: unknown): CoreFeatureItem[] {
   );
 }
 
-function toCoreItem(feature: LibraryFeature): CoreFeatureItem {
-  return { name: feature.name, description: feature.description };
-}
-
-/** Core Solution = package scope + features the client already selected. */
+/**
+ * Core Solution = the client's Order Brief feature list, verbatim.
+ * No package default feature, no AI-invented feature, no renaming.
+ */
 export function buildCoreFeatures(input: {
   packageName: string | null | undefined;
   briefFeatures: string[];
   context?: string;
 }): CoreFeatureItem[] {
-  const selected = detectSelectedFeatures([...input.briefFeatures, input.context ?? ""]);
-  return coreSolutionFeatures(input.packageName, selected).map(toCoreItem);
+  return briefIncludedFeatures(input.briefFeatures).map((name) => {
+    const match = matchLibraryFeature(name);
+    return {
+      name,
+      description: match?.description ?? "Sesuai kebutuhan yang disampaikan client pada Order Brief.",
+    };
+  });
 }
+
 
 /* -------------------------------------------------------------------------
  * Payment terms (proposal agreement text only — Invoice does the math)
