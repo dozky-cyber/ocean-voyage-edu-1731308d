@@ -235,16 +235,23 @@ export const saveProposalFn = createServerFn({ method: "POST" })
               name: z.string().max(200),
               benefit: z.string().max(500),
               amount: z.number().min(0).max(1_000_000_000_000),
+              recommended: z.boolean().optional(),
             }),
           )
           .max(30)
           .optional(),
+        core_features: z
+          .array(z.object({ name: z.string().max(200), description: z.string().max(500) }))
+          .max(40)
+          .optional(),
+        payment_type: z.enum(["full", "termin"]).nullable().optional(),
+        payment_dp_percent: z.number().int().min(0).max(100).nullable().optional(),
+        payment_terms_text: z.string().max(2000).nullable().optional(),
         brief_timeline: z.string().max(300).nullable().optional(),
         estimated_timeline: z.string().max(300).nullable().optional(),
         currency: z.string().max(8).nullable().optional(),
         valid_until: z.string().max(20).nullable().optional(),
         investment_note: z.string().max(4000).nullable().optional(),
-        timeline_note: z.string().max(4000).nullable().optional(),
         version_note: z.string().max(300).nullable().optional(),
       })
       .parse(data),
