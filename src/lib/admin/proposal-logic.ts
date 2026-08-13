@@ -6,12 +6,13 @@
  */
 
 import {
-  coreSolutionFeatures,
+  briefCoveredFeatureIds,
+  briefIncludedFeatures,
   detectSelectedFeatures,
+  matchLibraryFeature,
   recommendFeatures,
-  resolvePackage,
-  type LibraryFeature,
 } from "./feature-library";
+
 
 export type EnhancementItem = {
   name: string;
