@@ -410,7 +410,62 @@ export function isCoveredByBrief(feature: ConsultantFeature, briefText: string) 
   return includesAny(text, [feature.name, ...feature.aliases]);
 }
 
-export type ConsultantPick = ConsultantFeature & { score: number };
+export type ConsultantPick = ConsultantFeature & { score: number; reasons: string[] };
+
+/**
+ * BUSINESS FEATURE VALIDATION RULE.
+ * Sebelum sebuah fitur boleh masuk rekomendasi, minimal 2 dari 4 pengecekan
+ * berikut harus terpenuhi:
+ *   1. Dipakai pada proses bisnis utama customer.
+ *   2. Kondisi bisnis customer memang membutuhkan fitur tersebut.
+ *   3. Fitur mengurangi masalah yang disebutkan pada Business Problem.
+ *   4. Tidak ada fitur lain yang lebih sederhana tetapi lebih berdampak.
+ * Selain itu, `requires` bersifat wajib: tanpa kondisi bisnis tersebut fitur
+ * langsung dibuang (Inventory pada laundry, Multi User pada bisnis personal,
+ * Search pada katalog kecil).
+ */
+export function validateConsultantFeature(
+  feature: ConsultantFeature,
+  input: { business: string; context: string; problemText?: string },
+): { valid: boolean; reasons: string[] } {
+  const business = normalize(input.business);
+  const context = normalize(`${input.business} ${input.context}`);
+  const problem = normalize(input.problemText ?? "");
+  const tokens = [feature.name, ...feature.aliases, ...feature.signals];
+
+  // Hard condition: kondisi bisnis wajib.
+  if (feature.requires?.length && !includesAny(context, feature.requires)) {
+    return { valid: false, reasons: [] };
+  }
+
+  const reasons: string[] = [];
+
+  // 1. Proses bisnis utama.
+  if (includesAny(business, feature.fits) || includesAny(context, feature.fits)) {
+    reasons.push("Digunakan pada proses bisnis utama customer.");
+  }
+  // 2. Kondisi bisnis membutuhkan fitur ini.
+  if (includesAny(context, feature.signals) || includesAny(context, feature.requires ?? [])) {
+    reasons.push("Kondisi bisnis pada brief membutuhkan fitur ini.");
+  }
+  // 3. Mengurangi masalah pada Business Problem.
+  if (problem && includesAny(problem, tokens)) {
+    reasons.push("Mengurangi masalah yang disebutkan customer.");
+  }
+  // 4. Tidak ada fitur lain yang lebih sederhana namun lebih berdampak.
+  const simpler = feature.simplerAlternativeId
+    ? consultantFeature(feature.simplerAlternativeId)
+    : undefined;
+  const simplerStillBetter =
+    !!simpler &&
+    !includesAny(context, [feature.name, ...feature.aliases]) &&
+    !isCoveredByBrief(simpler, context);
+  if (!simplerStillBetter) {
+    reasons.push("Tidak ada fitur lain yang lebih sederhana dengan dampak lebih besar.");
+  }
+
+  return { valid: reasons.length >= 2, reasons };
+}
 
 /**
  * CONSULTANT DECISION RULE.
