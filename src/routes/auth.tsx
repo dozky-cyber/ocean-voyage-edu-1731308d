@@ -75,20 +75,23 @@ function AuthPage() {
       await provision().catch(() => undefined);
 
       const session = data.session;
-      if (supported && !enrolledEmail && session?.refresh_token) {
-        const role = await access()
-          .then((r) => r.role)
-          .catch(() => null);
-        if (role === "owner") {
-          setEnrollOffer({
-            email: data.user?.email ?? email,
-            session: {
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            },
-          });
-          setLoading(false);
-          return;
+      if (session?.refresh_token) {
+        const stored: StoredSession = {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        };
+        if (enrolledEmail) {
+          // Quick unlock already armed: silently re-arm with the fresh session.
+          await syncStoredSession(stored);
+        } else if (supported) {
+          const role = await access()
+            .then((r) => r.role)
+            .catch(() => null);
+          if (role === "owner") {
+            setEnrollOffer({ email: data.user?.email ?? email, session: stored });
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -102,22 +105,33 @@ function AuthPage() {
 
   async function onBiometricUnlock() {
     setUnlocking(true);
+    setSessionExpired(false);
     try {
       const stored = await unlockWithBiometric();
-      const { error } = await supabase.auth.setSession(stored);
-      if (error) {
-        await disableBiometricUnlock();
-        setEnrolledEmail(null);
-        throw new Error("Sesi tersimpan sudah kedaluwarsa. Silakan masuk dengan password.");
+      const { data, error } = await supabase.auth.setSession(stored);
+      if (error || !data.session) {
+        // Soft fallback: keep the fingerprint armed, just ask for the password once.
+        setSessionExpired(true);
+        if (enrolledEmail) setEmail(enrolledEmail);
+        return;
+      }
+      if (data.session.refresh_token) {
+        await syncStoredSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
       }
       await provision().catch(() => undefined);
       navigate({ to: "/admin", replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Verifikasi sidik jari gagal.");
+      const message = error instanceof Error ? error.message : "";
+      // Cancelled or failed biometric prompt: stay quiet, form is right below.
+      if (message) toast.error(message);
     } finally {
       setUnlocking(false);
     }
   }
+
 
   async function acceptEnroll() {
     if (!enrollOffer) return;
