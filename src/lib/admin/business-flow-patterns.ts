@@ -149,6 +149,12 @@ export const BUSINESS_FLOW_PATTERNS: BusinessFlowPattern[] = [
       "klinik",
       "terapi",
       "spa",
+      "travel",
+      "tour",
+      "wisata",
+      "properti",
+      "event organizer",
+      "wedding organizer",
     ],
     priority: [
       "booking",
@@ -182,7 +188,19 @@ export const BUSINESS_FLOW_PATTERNS: BusinessFlowPattern[] = [
       "Data penjualan tidak terstruktur",
       "Banyak SKU dan merk",
     ],
-    match: ["distributor", "supplier", "agen", "grosir", "pabrik", "produksi", "sparepart"],
+    // "agen" saja terlalu luas (agen travel / agen properti bukan distribusi barang).
+    match: [
+      "distributor",
+      "supplier",
+      "agen grosir",
+      "agen sembako",
+      "agen distributor",
+      "keagenan",
+      "grosir",
+      "pabrik",
+      "produksi",
+      "sparepart",
+    ],
     priority: [
       "inventory",
       "order-management",
