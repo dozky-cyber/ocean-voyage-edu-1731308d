@@ -492,13 +492,26 @@ function SettingsPage() {
       )}
 
       <SectionCard title="Sesi" description="Keluar dari Business OS pada perangkat ini.">
-        <button
-          type="button"
-          onClick={signOut}
-          className="rounded-xl border border-border/60 px-4 py-2 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
-        >
-          Logout
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={signOut}
+            className="rounded-xl border border-border/60 px-4 py-2 text-sm text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+          >
+            Logout
+          </button>
+          <button
+            type="button"
+            onClick={signOutFully}
+            className="rounded-xl border border-destructive/40 px-4 py-2 text-sm text-destructive transition hover:bg-destructive/10"
+          >
+            Keluar total
+          </button>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Logout biasa menjaga buka cepat sidik jari tetap aktif di perangkat ini. Keluar total
+          mematikan sidik jari dan mengakhiri sesi di semua perangkat.
+        </p>
       </SectionCard>
     </div>
   );
