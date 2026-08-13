@@ -47,6 +47,111 @@ export type ConsultantFeature = {
   simplerAlternativeId?: string;
 };
 
+/**
+ * FEATURE RELATION MAP (Consultant Engine V7).
+ * Hubungan antar fitur ditulis sebagai data, bukan tebakan teks:
+ * - `enhances`     : memperkuat fitur yang sudah dipilih customer.
+ * - `complements`  : lanjutan wajar pada alur bisnis setelah fitur tersebut.
+ * Sebuah Potential Feature hanya boleh muncul jika punya salah satu relasi ini
+ * terhadap Feature List customer. Tanpa relasi = UNRELATED = dibuang.
+ */
+export const FEATURE_RELATIONS: Record<string, { enhances?: string[]; complements?: string[] }> = {
+  notification: { enhances: ["status-tracking", "order-management", "booking"] },
+  "digital-nota": {
+    complements: ["order-management", "status-tracking", "riwayat-transaksi", "booking"],
+  },
+  "customer-history": {
+    complements: ["order-management", "database-customer", "digital-nota", "booking"],
+  },
+  "database-customer": { complements: ["order-management", "booking", "form-konsultasi"] },
+  "form-konsultasi": { complements: ["portfolio", "katalog", "company-profile", "faq"] },
+  testimonial: { enhances: ["portfolio", "company-profile", "katalog"] },
+  "laporan-penjualan": {
+    complements: ["order-management", "digital-nota", "riwayat-transaksi", "status-tracking"],
+  },
+  "riwayat-transaksi": { complements: ["order-management", "digital-nota"] },
+  "schedule-management": { complements: ["order-management", "booking", "status-tracking"] },
+  cms: { enhances: ["portfolio", "katalog", "company-profile"] },
+  search: { enhances: ["katalog"] },
+  whatsapp: { enhances: ["company-profile", "katalog", "portfolio", "faq"] },
+  "social-media": { enhances: ["portfolio", "katalog"] },
+  maps: { complements: ["company-profile", "katalog"] },
+  membership: { complements: ["database-customer", "customer-history"] },
+  automation: { enhances: ["notification", "status-tracking", "order-management"] },
+  "dashboard-admin": { complements: ["order-management", "cms", "katalog", "status-tracking"] },
+  faq: { complements: ["company-profile", "katalog", "portfolio"] },
+  "order-management": { complements: ["katalog", "booking"] },
+  "status-tracking": { enhances: ["order-management"] },
+  booking: { complements: ["katalog", "company-profile"] },
+  "multi-user": { enhances: ["dashboard-admin"] },
+  crm: { complements: ["database-customer"] },
+  "landing-page": { complements: ["company-profile", "katalog"] },
+  portfolio: { complements: ["company-profile"] },
+  katalog: { complements: ["company-profile"] },
+  inventory: { complements: ["katalog", "order-management"] },
+};
+
+export type FeatureRelation = "enhancement" | "complementary";
+
+/** Urutan penulisan Potential Feature: efisiensi → penjualan → visibilitas. */
+export type GrowthCategory = "operational" | "sales" | "visibility";
+
+const GROWTH_CATEGORY: Record<string, GrowthCategory> = {
+  "order-management": "operational",
+  "status-tracking": "operational",
+  "digital-nota": "operational",
+  notification: "operational",
+  "schedule-management": "operational",
+  inventory: "operational",
+  automation: "operational",
+  "riwayat-transaksi": "operational",
+  "multi-user": "operational",
+  "dashboard-admin": "operational",
+  cms: "operational",
+  "laporan-penjualan": "visibility",
+};
+
+export function growthCategoryOf(id: string): GrowthCategory {
+  return GROWTH_CATEGORY[id] ?? "sales";
+}
+
+const CATEGORY_ORDER: Record<GrowthCategory, number> = {
+  operational: 0,
+  sales: 1,
+  visibility: 2,
+};
+
+export function growthCategoryRank(id: string): number {
+  return CATEGORY_ORDER[growthCategoryOf(id)];
+}
+
+/**
+ * Relasi fitur terhadap scope yang sudah dipilih customer.
+ * Mengembalikan null bila tidak berhubungan (UNRELATED).
+ */
+export function relationToScope(
+  featureId: string,
+  coveredIds: Iterable<string>,
+): { relation: FeatureRelation; relatedTo: string } | null {
+  const covered = new Set(coveredIds);
+  const map = FEATURE_RELATIONS[featureId];
+  if (!map) return null;
+  const enhanced = (map.enhances ?? []).find((id) => covered.has(id));
+  if (enhanced) return { relation: "enhancement", relatedTo: enhanced };
+  const complemented = (map.complements ?? []).find((id) => covered.has(id));
+  if (complemented) return { relation: "complementary", relatedTo: complemented };
+  return null;
+}
+
+/**
+ * BUSINESS MATURITY CONTEXT.
+ * - starter     : belum ada proses operasional rutin (fokus citra & informasi).
+ * - growing     : sudah ada order/produksi/transaksi yang perlu dirapikan.
+ * - established : sudah punya team, cabang, atau volume besar.
+ */
+export type BusinessMaturity = "starter" | "growing" | "established";
+
+
 export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
   {
     id: "company-profile",
