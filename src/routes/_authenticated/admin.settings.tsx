@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Chip, SectionCard } from "@/components/admin/ui";
-import { supabase } from "@/integrations/supabase/client";
 import {
   deleteWorkspaceMember,
   getAdminAccess,
