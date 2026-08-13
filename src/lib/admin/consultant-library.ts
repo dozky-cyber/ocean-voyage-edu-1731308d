@@ -1052,10 +1052,9 @@ export function selectConsultantFeatures(input: {
     if (feature.id === "digital-nota" && !receiptProblem && !asked && (isCore || !rel)) continue;
     // MULTI USER: bukan karena ada karyawan, tapi karena butuh hak akses beda.
     if (feature.id === "multi-user" && !accessProblem) continue;
-    // AUTOMATION: Core butuh permintaan eksplisit; Potential hanya sebagai
-    // enhancement dari notification/status tracking yang sudah ada.
-    if (feature.id === "automation" && !automationAsked && (isCore || rel?.relation !== "enhancement"))
-      continue;
+    // AUTOMATION FILTER: tetap dipertahankan — hanya bila customer memintanya.
+    if (feature.id === "automation" && !automationAsked) continue;
+
     // CRM: hanya untuk kebutuhan pengelolaan customer yang kompleks.
     if (feature.id === "crm" && !crmComplex) continue;
 
