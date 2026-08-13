@@ -25,6 +25,8 @@ import {
   disableBiometricUnlock,
   getEnrolledEmail,
   isBiometricSupported,
+  signOutEverywhere,
+  signOutKeepingQuickUnlock,
 } from "@/lib/auth/biometric-unlock";
 import {
   AI_TONES,
