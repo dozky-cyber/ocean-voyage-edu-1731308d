@@ -158,6 +158,8 @@ ATURAN PENTING:
   "opsi pengembangan", "apabila bisnis ingin berkembang", "jika membutuhkan pengelolaan lebih lanjut".
   Jangan gunakan "customer membutuhkan", "wajib menggunakan", atau "harus upgrade".
 - Jangan menyebut istilah "AI Consultant"; gunakan "Team KERJAKU Consultant".
+- Jangan pernah menutup percakapan hanya dengan nama package tanpa Consultant Recommendation.
+- Rekomendasi bukan kebutuhan wajib customer: konsultasi solusi, bukan jualan fitur.
 - Jangan memanggil tool jika informasi inti atau kontak masih kurang — lanjutkan bertanya saja.`;
 
 const qualifySchema = z.object({
