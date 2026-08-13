@@ -205,7 +205,14 @@ function SettingsPage() {
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
-    await supabase.auth.signOut();
+    await signOutKeepingQuickUnlock();
+    navigate({ to: "/auth", replace: true });
+  }
+
+  async function signOutFully() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await signOutEverywhere();
     navigate({ to: "/auth", replace: true });
   }
 
