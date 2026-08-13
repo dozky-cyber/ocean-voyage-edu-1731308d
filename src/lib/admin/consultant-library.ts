@@ -788,16 +788,18 @@ export function selectConsultantFeatures(input: {
   const picks: ConsultantPick[] = [];
   for (const feature of CONSULTANT_LIBRARY) {
     if (excluded.has(feature.id)) continue;
-    if (isCoveredByBrief(feature, context)) continue;
+
+    const solvesStated = plan.core.get(feature.id);
+    const isCore = Boolean(solvesStated);
+
+    // Penyebutan pada Business Problem bukan berarti fitur sudah ada di brief.
+    if (!isCore && isCoveredByBrief(feature, context)) continue;
 
     const key = normalize(feature.name);
     if (excludedTitles.some((title) => title.includes(key) || key.includes(title))) continue;
 
     const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
-
-    const solvesStated = plan.core.get(feature.id);
-    const isCore = Boolean(solvesStated);
 
     // SCALE RULE (hard block, tidak bisa dilewati oleh business flow priority):
     // bisnis personal tanpa team tidak boleh mendapat fitur bertim/enterprise.
