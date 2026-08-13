@@ -282,7 +282,10 @@ export type PackageKey =
 export type PackageDefinition = {
   key: PackageKey;
   basePrice: number;
-  /** Features included in the package scope by default. */
+  /**
+   * PACKAGE FEATURE ISOLATION: positioning/pricing metadata only.
+   * These ids must never be copied into an Order Brief / proposal scope.
+   */
   coreFeatureIds: string[];
   benefits: string[];
 };
