@@ -275,6 +275,8 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const picks = selectConsultantFeatures({
     businessText,
     context,
+    // CORE / GROWTH SPLIT RULE: tujuan sistem ikut dibaca sebagai masalah.
+    goalText: brief.goal ?? "",
     // BUSINESS FEATURE VALIDATION RULE poin 3: fitur harus mengurangi masalah.
     problemText: normalize(brief.problems.join(" | ")),
     // SCALE RULE: skala pengguna + kebutuhan admin/team menentukan fitur bertim.
