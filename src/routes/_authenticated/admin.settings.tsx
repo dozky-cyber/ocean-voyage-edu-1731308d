@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Trash2, UserPlus } from "lucide-react";
+import { Fingerprint, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,12 +22,76 @@ import {
   type WorkspaceRole,
 } from "@/lib/admin/roles";
 import {
+  disableBiometricUnlock,
+  getEnrolledEmail,
+  isBiometricSupported,
+} from "@/lib/auth/biometric-unlock";
+import {
   AI_TONES,
   loadWorkspaceSettings,
   saveWorkspaceSettings,
   type AiTone,
   type WorkspaceSettings,
 } from "@/lib/admin/workspace-settings";
+
+function BiometricCard() {
+  const [supported, setSupported] = useState(false);
+  const [enrolledEmail, setEnrolledEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const ok = await isBiometricSupported();
+      const enrolled = ok ? await getEnrolledEmail() : null;
+      if (!active) return;
+      setSupported(ok);
+      setEnrolledEmail(enrolled);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <SectionCard
+      title="Buka cepat sidik jari"
+      description="Status buka cepat biometrik untuk perangkat yang sedang dipakai."
+    >
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border/50">
+          <Fingerprint className="h-5 w-5 text-primary" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm text-foreground">
+            {!supported
+              ? "Perangkat ini tidak mendukung biometrik."
+              : enrolledEmail
+                ? `Aktif untuk ${enrolledEmail}`
+                : "Belum aktif di perangkat ini."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {enrolledEmail
+              ? "Sesi tersimpan terenkripsi di perangkat ini saja."
+              : "Aktifkan lewat tawaran yang muncul setelah masuk dengan password."}
+          </p>
+        </div>
+        {enrolledEmail ? (
+          <button
+            type="button"
+            onClick={async () => {
+              await disableBiometricUnlock();
+              setEnrolledEmail(null);
+              toast.success("Buka cepat dimatikan di perangkat ini.");
+            }}
+            className="rounded-xl border border-border/60 px-3 py-2 text-xs font-medium text-muted-foreground transition hover:text-foreground"
+          >
+            Matikan di perangkat ini
+          </button>
+        ) : null}
+      </div>
+    </SectionCard>
+  );
+}
 
 function TextField({
   label,
