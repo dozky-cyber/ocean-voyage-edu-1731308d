@@ -648,7 +648,21 @@ export function isCoveredByBrief(feature: ConsultantFeature, briefText: string) 
   return includesAny(text, [feature.name, ...feature.aliases]);
 }
 
-export type ConsultantPick = ConsultantFeature & { score: number; reasons: string[] };
+/**
+ * CORE = menyelesaikan masalah yang customer sebut pada brief.
+ * GROWTH = pengembangan lanjutan setelah masalah utama selesai.
+ */
+export type ConsultantRole = "core" | "growth";
+
+export type ConsultantPick = ConsultantFeature & {
+  score: number;
+  reasons: string[];
+  role: ConsultantRole;
+  /** Label masalah customer yang diselesaikan (khusus core). */
+  solves: string | null;
+  /** Core prasyarat untuk fitur growth (null jika berdiri sendiri). */
+  requiresCoreId: string | null;
+};
 
 /**
  * BUSINESS FEATURE VALIDATION RULE.
