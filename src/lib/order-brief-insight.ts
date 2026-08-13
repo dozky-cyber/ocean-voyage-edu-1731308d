@@ -81,22 +81,38 @@ export type ConsultantOption = {
 export const CONSULTANT_OPTION_NOTE =
   "Rekomendasi ini merupakan opsi pengembangan, bukan keharusan. Package pada Order Brief tetap mengikuti kebutuhan yang customer sampaikan. Opsi ini dapat dipertimbangkan apabila bisnis ingin berkembang atau jika membutuhkan pengelolaan yang lebih lanjut di kemudian hari.";
 
+export type ProblemMapRow = {
+  problem: string;
+  solution: string;
+  /** Dari mana solusi berasal: scope customer, core solution, atau opsional. */
+  source: "scope" | "core" | "optional" | "open";
+};
+
 export type BriefInsight = {
   packageName: string;
   reason: string;
   included: string[];
   consultant: ConsultantOption | null;
+  /** PROBLEM -> SOLUTION MAP: bukti setiap masalah customer ada jawabannya. */
+  problemMap: ProblemMapRow[];
+  /** Ringkasan kesiapan bisnis (maturity + catatan singkat). */
+  readiness: { level: string; lines: string[] };
   optional: {
     name: string;
     description: string;
     reason: string;
     impact?: string;
     relation?: string | null;
+    /** Urutan prioritas pengembangan (1 = paling berdampak). */
+    priority: number;
+    /** Fase 1 = dapat dikerjakan bersamaan, Fase 2 = pengembangan lanjutan. */
+    phase: 1 | 2;
   }[];
 
   disclaimer: string;
   nextSteps: string[];
 };
+
 
 export const OPTIONAL_DISCLAIMER =
   "Rekomendasi fitur tambahan merupakan hasil analisa kebutuhan bisnis Team KERJAKU dan dapat dikembangkan sesuai kebutuhan. Fitur ini bukan bagian dari scope utama sebelum dilakukan persetujuan lebih lanjut.";
