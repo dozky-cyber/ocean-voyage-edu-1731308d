@@ -51,7 +51,14 @@ export type BriefInsight = {
   reason: string;
   included: string[];
   consultant: ConsultantOption | null;
-  optional: { name: string; description: string; reason: string }[];
+  optional: {
+    name: string;
+    description: string;
+    reason: string;
+    impact?: string;
+    relation?: string | null;
+  }[];
+
   disclaimer: string;
   nextSteps: string[];
 };
