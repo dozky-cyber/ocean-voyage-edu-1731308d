@@ -349,6 +349,8 @@ export async function uploadDocumentPdf(input: {
   bytes: Uint8Array;
   leadId?: string | null;
   createdBy?: string | null;
+  /** Public route prefix for the short link ("d" for documents, "i" for invoices). */
+  linkPath?: string;
 }): Promise<{ url: string | null; path: string | null; reason: string | null }> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -368,7 +370,9 @@ export async function uploadDocumentPdf(input: {
       leadId: input.leadId ?? null,
       createdBy: input.createdBy ?? null,
     });
-    if (slug) return { url: `${publicSiteUrl()}/d/${slug}`, path, reason: null };
+    if (slug) {
+      return { url: `${publicSiteUrl()}/${input.linkPath ?? "d"}/${slug}`, path, reason: null };
+    }
 
     const { data, error: signError } = await storage.createSignedUrl(path, 60 * 60 * 24 * 365);
     if (signError) return { url: null, path, reason: signError.message };
