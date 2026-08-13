@@ -220,3 +220,36 @@ export async function syncStoredSession(session: StoredSession): Promise<void> {
 export async function hasBiometricEnrollment(): Promise<boolean> {
   return (await readRecord()) !== null;
 }
+
+/**
+ * Signs out without killing the device quick-unlock.
+ *
+ * A global sign-out revokes the refresh token server-side, which also kills the
+ * snapshot stored for the fingerprint — that is why unlocking right after a
+ * logout always reported an expired session. When quick unlock is armed we
+ * refresh the stored snapshot first and then sign out with `scope: "local"`,
+ * so the token stays valid for the next biometric unlock on this device.
+ */
+export async function signOutKeepingQuickUnlock(): Promise<void> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const armed = await hasBiometricEnrollment();
+  if (!armed) {
+    await supabase.auth.signOut();
+    return;
+  }
+  const { data } = await supabase.auth.getSession();
+  if (data.session?.refresh_token) {
+    await syncStoredSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+  }
+  await supabase.auth.signOut({ scope: "local" });
+}
+
+/** Full lock-down: removes quick unlock on this device and revokes the session. */
+export async function signOutEverywhere(): Promise<void> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  await disableBiometricUnlock();
+  await supabase.auth.signOut();
+}
