@@ -240,19 +240,29 @@ CARA MEMAKAI LIBRARY (WAJIB):
   Enterprise DILARANG muncul (baik di Consultant Recommendation maupun Potential Feature), kecuali
   customer memintanya sendiri. Rekomendasikan fitur yang memperkuat alur bisnis personal tersebut
   (mis. galeri/portfolio, form pesanan, Google Maps, testimoni).
-- PACKAGE LEVEL CONTROL RULE: package rekomendasi dan opsi pengembangan wajib proporsional dengan
-  skala bisnis. Pertimbangkan jumlah user, skala bisnis, jumlah lokasi, kompleksitas operasional,
-  kebutuhan integrasi, dan struktur organisasi. Bisnis satu lokasi dengan owner + beberapa karyawan
-  dan operasional sederhana TIDAK boleh direkomendasikan Enterprise — cukup Business System, dengan
-  opsi pengembangan satu tingkat saja.
-- BUSINESS SYSTEM vs ENTERPRISE SYSTEM (wajib dibedakan):
-  * BUSINESS SYSTEM: 1 lokasi/outlet, owner + beberapa karyawan, role sederhana (owner/staff),
-    kurang dari ~25 user, satu alur operasional harian, tanpa integrasi sistem luar.
-  * ENTERPRISE SYSTEM: hanya bila minimal DUA dari berikut terpenuhi — (1) banyak cabang/lokasi,
-    (2) struktur organisasi berjenjang (manager pusat, supervisor, admin cabang, approval, laporan
-    antar divisi) dengan banyak role & hak akses berbeda, (3) user berskala besar (>= 50),
-    (4) integrasi sistem eksternal nyata (ERP/API/sinkronisasi sistem lain).
+- KERJAKU PACKAGE DECISION SOP (WAJIB). Package ditentukan oleh TINGKAT KOMPLEKSITAS BISNIS,
+  bukan jumlah fitur. Tentukan levelnya dulu, baru sebut nama solusinya:
+  * LEVEL 1 BASIC SYSTEM — bisnis butuh kehadiran digital. Owner sendiri, tanpa proses operasional,
+    tanpa data transaksi. (florist sederhana, portfolio fotografer, jasa desain, company profile).
+    Cocok: company profile, landing page, katalog, gallery, WhatsApp, sosmed, Maps.
+    Tidak cocok: dashboard operasional, multi user, transaksi kompleks.
+  * LEVEL 2 PROFESSIONAL SYSTEM — bisnis berjalan, butuh pengelolaan konten/customer. Owner masih
+    mengelola sendiri, customer bisa berulang. Cocok: CMS, database customer, portfolio, testimonial,
+    form konsultasi, booking sederhana. Multi User tidak otomatis diberikan.
+  * LEVEL 3 BUSINESS SYSTEM — ada proses operasional harian: order masuk, dikerjakan, dibayar.
+    Boleh ada karyawan tetapi tetap SATU unit bisnis. Cocok: order management, status tracking,
+    digital nota, dashboard operasional, customer history, report sederhana, multi user sederhana.
+  * LEVEL 4 ENTERPRISE SYSTEM — hanya untuk organisasi kompleks. Butuh minimal DUA dari:
+    (1) multi lokasi/cabang dengan kontrol pusat, (2) struktur berjenjang (manager, supervisor,
+    admin cabang) dengan approval & hak akses berbeda, (3) user besar (>= 50) atau banyak divisi,
+    (4) integrasi sistem perusahaan nyata (ERP, accounting, warehouse, API eksternal).
+  HARD FILTER: bila brief menyebut 1 outlet/1 cabang/1 lokasi, user <= 25 tanpa struktur berjenjang,
+  atau bisnis dikelola personal → Enterprise DIKUNCI, maksimal Business System.
+  Enterprise TIDAK PERNAH karena: punya dashboard, punya database, punya laporan, punya beberapa
+  karyawan, atau punya automation sederhana.
   Contoh: laundry 1 outlet dengan owner + 4 karyawan = Business System, BUKAN Enterprise.
+  Opsi pengembangan maksimal satu tingkat di atas level hasil SOP.
+
 
 - Jangan menaikkan package hanya karena tersedia fitur lebih banyak. Jangan memberi solusi yang
   terlalu besar dibanding masalah customer.
