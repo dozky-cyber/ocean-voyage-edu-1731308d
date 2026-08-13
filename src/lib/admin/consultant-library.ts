@@ -401,6 +401,86 @@ function includesAny(haystack: string, tokens: string[]) {
   return tokens.some((token) => token && haystack.includes(normalize(token)));
 }
 
+/** Kata negasi pada brief: "tidak ada team", "tanpa admin", "belum punya stok". */
+const NEGATION_WORDS = [
+  "tidak",
+  "tdk",
+  "tanpa",
+  "belum",
+  "bukan",
+  "nggak",
+  "gak",
+  "ga ",
+  "no team",
+  "none",
+];
+
+/** Pecah konteks brief menjadi klausa agar negasi bisa dibaca per kalimat. */
+function clauses(haystack: string): string[] {
+  return haystack
+    .split(/[.;|\n]|,| - |\(|\)/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/**
+ * BRIEF NEGATION RULE.
+ * Kata kunci fitur hanya dihitung bila TIDAK berada pada kalimat yang
+ * dinegasikan. Contoh: "Kebutuhan admin/team: Tidak (dikelola personal)"
+ * tidak boleh dibaca sebagai kebutuhan admin/team.
+ */
+function includesAnyPositive(haystack: string, tokens: string[]) {
+  const parts = clauses(haystack);
+  return tokens.some((token) => {
+    const t = normalize(token);
+    if (!t) return false;
+    return parts.some((part) => part.includes(t) && !includesAny(part, NEGATION_WORDS));
+  });
+}
+
+/**
+ * PACKAGE LEVEL / SCALE RULE.
+ * Brief yang menyatakan bisnis dikelola personal (tanpa admin/team) tidak boleh
+ * mendapat rekomendasi fitur bertim.
+ */
+export function isPersonalScale(scaleText: string, context = ""): boolean {
+  const scale = normalize(scaleText);
+  const full = normalize(`${scaleText} ${context}`);
+  if (!scale && !full) return false;
+  const personalSignal = includesAny(scale, [
+    "personal",
+    "perorangan",
+    "pribadi",
+    "sendiri",
+    "1 user",
+    "satu user",
+    "owner saja",
+    "single user",
+  ]);
+  const noTeam = clauses(full).some(
+    (part) =>
+      includesAny(part, ["admin", "team", "tim", "karyawan", "pegawai", "staff", "staf"]) &&
+      includesAny(part, NEGATION_WORDS),
+  );
+  const hasTeam = includesAnyPositive(full, [
+    "karyawan",
+    "pegawai",
+    "staff",
+    "staf",
+    "divisi",
+    "cabang",
+    "kasir",
+    "beberapa user",
+    "multi user",
+  ]);
+  if (hasTeam) return false;
+  return personalSignal || noTeam;
+}
+
+/** Fitur yang hanya masuk akal jika bisnis dikelola lebih dari satu orang. */
+const TEAM_ONLY_FEATURES = new Set(["multi-user", "dashboard-admin", "automation", "crm", "api"]);
+
+
 export function consultantFeature(id: string): ConsultantFeature | undefined {
   return CONSULTANT_LIBRARY.find((f) => f.id === id);
 }
@@ -428,32 +508,43 @@ export type ConsultantPick = ConsultantFeature & { score: number; reasons: strin
  */
 export function validateConsultantFeature(
   feature: ConsultantFeature,
-  input: { business: string; context: string; problemText?: string },
+  input: { business: string; context: string; problemText?: string; scaleText?: string },
 ): { valid: boolean; reasons: string[] } {
   const business = normalize(input.business);
   const context = normalize(`${input.business} ${input.context}`);
   const problem = normalize(input.problemText ?? "");
   const tokens = [feature.name, ...feature.aliases, ...feature.signals];
 
-  // Hard condition: kondisi bisnis wajib.
-  if (feature.requires?.length && !includesAny(context, feature.requires)) {
+  // SCALE RULE: bisnis personal tanpa team tidak mendapat fitur bertim.
+  const personal = isPersonalScale(input.scaleText ?? "", context);
+  if (personal && (TEAM_ONLY_FEATURES.has(feature.id) || feature.tier === "enterprise")) {
+    const askedDirectly = includesAnyPositive(context, [feature.name, ...feature.aliases]);
+    if (!askedDirectly) return { valid: false, reasons: [] };
+  }
+
+  // Hard condition: kondisi bisnis wajib (negasi pada brief tidak dihitung).
+  if (feature.requires?.length && !includesAnyPositive(context, feature.requires)) {
     return { valid: false, reasons: [] };
   }
 
   const reasons: string[] = [];
 
   // 1. Proses bisnis utama.
-  if (includesAny(business, feature.fits) || includesAny(context, feature.fits)) {
+  if (includesAny(business, feature.fits) || includesAnyPositive(context, feature.fits)) {
     reasons.push("Digunakan pada proses bisnis utama customer.");
   }
   // 2. Kondisi bisnis membutuhkan fitur ini.
-  if (includesAny(context, feature.signals) || includesAny(context, feature.requires ?? [])) {
+  if (
+    includesAnyPositive(context, feature.signals) ||
+    includesAnyPositive(context, feature.requires ?? [])
+  ) {
     reasons.push("Kondisi bisnis pada brief membutuhkan fitur ini.");
   }
   // 3. Mengurangi masalah pada Business Problem.
-  if (problem && includesAny(problem, tokens)) {
+  if (problem && includesAnyPositive(problem, tokens)) {
     reasons.push("Mengurangi masalah yang disebutkan customer.");
   }
+
   // 4. Tidak ada fitur lain yang lebih sederhana namun lebih berdampak.
   const simpler = feature.simplerAlternativeId
     ? consultantFeature(feature.simplerAlternativeId)
@@ -487,13 +578,17 @@ export function selectConsultantFeatures(input: {
   excludeTitles?: string[];
   /** Business Problem pada brief (dipakai pengecekan validasi poin 3). */
   problemText?: string;
+  /** Skala pengguna + kebutuhan admin/team pada brief. */
+  scaleText?: string;
   limit?: number;
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
   const context = normalize(`${input.businessText} ${input.context}`);
+  const problem = normalize(input.problemText ?? "");
   const maxRank = TIER_RANK[input.maxTier ?? "business"];
   const excluded = new Set(input.excludeIds ?? []);
   const excludedTitles = (input.excludeTitles ?? []).map(normalize);
+  const personal = isPersonalScale(input.scaleText ?? "", context);
 
   // BUSINESS FLOW PATTERN LIBRARY: pahami alur bisnis dulu, baru pilih fitur.
   const pattern = detectBusinessFlowPattern(input.businessText, input.context);
@@ -509,11 +604,20 @@ export function selectConsultantFeatures(input: {
     const key = normalize(feature.name);
     if (excludedTitles.some((title) => title.includes(key) || key.includes(title))) continue;
 
-    const asked = includesAny(context, [feature.name, ...feature.aliases]);
+    const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
 
-    const fitsBusiness = includesAny(business, feature.fits) || includesAny(context, feature.fits);
-    const hasSignal = includesAny(context, feature.signals);
+    // SCALE RULE (hard block, tidak bisa dilewati oleh business flow priority):
+    // bisnis personal tanpa team tidak boleh mendapat fitur bertim/enterprise.
+    if (personal && !asked && (TEAM_ONLY_FEATURES.has(feature.id) || feature.tier === "enterprise"))
+      continue;
+
+    const fitsBusiness =
+      includesAny(business, feature.fits) || includesAnyPositive(context, feature.fits);
+    const hasSignal = includesAnyPositive(context, feature.signals);
+    const solvesProblem =
+      !!problem &&
+      includesAnyPositive(problem, [feature.name, ...feature.aliases, ...feature.signals]);
 
     // Bukan prioritas pada alur bisnis ini -> hanya boleh jika customer minta.
     if (notPriority.has(feature.id) && !asked) continue;
@@ -529,6 +633,7 @@ export function selectConsultantFeatures(input: {
       business: input.businessText,
       context: input.context,
       problemText: input.problemText,
+      scaleText: input.scaleText,
     });
     const onFlow = priority.has(feature.id);
     if (!validation.valid && !onFlow) continue;
@@ -541,10 +646,12 @@ export function selectConsultantFeatures(input: {
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
+      (solvesProblem ? 2 : 0) +
       validation.reasons.length -
       TIER_RANK[feature.tier] * 0.25;
     picks.push({ ...feature, score, reasons });
   }
+
 
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
   return picks.slice(0, input.limit ?? 6);

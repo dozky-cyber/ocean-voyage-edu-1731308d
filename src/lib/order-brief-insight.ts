@@ -342,11 +342,14 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     context,
     // BUSINESS FEATURE VALIDATION RULE poin 3: fitur harus mengurangi masalah.
     problemText: normalize(brief.problems.join(" | ")),
+    // SCALE RULE: skala pengguna + kebutuhan admin/team menentukan fitur bertim.
+    scaleText: [brief.usersScale, brief.adminNeeds].filter(Boolean).join(" | "),
     maxTier,
     excludeIds: [...coreIds],
     excludeTitles: included,
     limit: 7,
   });
+
 
   // CONSULTANT / POTENTIAL SPLIT RULE: 1-2 ide relevan cukup masuk ke
   // Consultant Recommendation; sisanya baru menjadi Potential Feature.

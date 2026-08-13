@@ -209,6 +209,15 @@ CARA MEMAKAI LIBRARY (WAJIB):
   florist personal tidak butuh Multi User Management (tidak ada team);
   website katalog kecil tidak butuh Search (jumlah produk belum besar).
   Jangan memberikan fitur hanya karena tersedia di library.
+- BRIEF NEGATION RULE: baca kalimat brief secara utuh. Jika brief menulis "Kebutuhan admin/team:
+  Tidak", "tanpa karyawan", "belum ada stok", atau "dikelola personal", maka kata "admin", "team",
+  "karyawan", atau "stok" pada kalimat itu adalah PENOLAKAN, bukan kebutuhan. Dilarang memakai kata
+  yang dinegasikan sebagai alasan merekomendasikan fitur.
+- PERSONAL SCALE RULE: jika user sistem = personal/perorangan/1 user atau brief menyatakan tidak ada
+  admin/team, maka Multi User Management, Dashboard Admin, Automation, CRM, API, dan seluruh fitur
+  Enterprise DILARANG muncul (baik di Consultant Recommendation maupun Potential Feature), kecuali
+  customer memintanya sendiri. Rekomendasikan fitur yang memperkuat alur bisnis personal tersebut
+  (mis. galeri/portfolio, form pesanan, Google Maps, testimoni).
 - PACKAGE LEVEL CONTROL RULE: package rekomendasi dan opsi pengembangan wajib proporsional dengan
   skala bisnis. Pertimbangkan jumlah user, skala bisnis, jumlah lokasi, kompleksitas operasional,
   kebutuhan integrasi, dan struktur organisasi. Bisnis satu lokasi dengan owner + beberapa karyawan
