@@ -262,7 +262,7 @@ function complexityLabel(pkg: PackageDefinition) {
   }
 }
 
-function buildReason(brief: OrderBriefData, pkg: PackageDefinition) {
+function buildReason(brief: OrderBriefData, pkg: PackageDefinition, allowEnterprise: boolean) {
   const business = brief.business?.trim() || "bisnis Anda";
   const goal = brief.goal?.trim();
   const project = brief.project?.trim();
@@ -273,10 +273,19 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition) {
     `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}${
       brief.usersScale?.trim() ? ` dengan cakupan pengguna ${brief.usersScale.trim()}` : ""
     }.`,
-    "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
   ];
+  // PACKAGE LEVEL CONTROL RULE: jelaskan kenapa belum masuk level Enterprise.
+  if (!allowEnterprise && pkg.key !== "Enterprise System") {
+    parts.push(
+      "Skala operasional pada brief masih satu lokasi dengan struktur team sederhana, sehingga sistem berskala Enterprise (multi cabang, banyak divisi/role, atau integrasi antar sistem) belum diperlukan.",
+    );
+  }
+  parts.push(
+    "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
+  );
   return parts.join(" ");
 }
+
 
 
 
