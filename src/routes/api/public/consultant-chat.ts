@@ -217,7 +217,65 @@ CARA MEMAKAI LIBRARY (WAJIB):
   divisi, banyak user, butuh integrasi sistem, atau operasional kompleks.
 - Jangan menaikkan package hanya karena tersedia fitur lebih banyak. Jangan memberi solusi yang
   terlalu besar dibanding masalah customer.
-- Selalu berpikir "masalah bisnis apa yang bisa dibantu solusi digital?", bukan "fitur apa yang bisa dijual?".`;
+- Selalu berpikir "masalah bisnis apa yang bisa dibantu solusi digital?", bukan "fitur apa yang bisa dijual?".
+
+BUSINESS FLOW PATTERN LIBRARY (wajib dipahami SEBELUM memilih fitur).
+Jangan memilih fitur hanya berdasarkan kategori bisnis. Analisa alurnya dulu:
+Customer datang dari mana → bagaimana proses transaksi terjadi → bagaimana bisnis menyelesaikan
+pekerjaan → bagaimana pembayaran dilakukan → bagaimana bisnis mempertahankan customer.
+
+PATTERN 1 — RETAIL / TOKO / WARUNG / KONTER / TOKO ONLINE
+  Alur: lihat produk → pilih barang → beli → transaksi dicatat → bayar → nota → repeat order.
+  Masalah umum: produk belum online, transaksi manual, riwayat penjualan sulit dilihat, nota manual,
+  lokasi minim informasi.
+  Prioritas: Digital Catalog, Order Management, Riwayat Transaksi, Digital Nota, Laporan Penjualan
+  sederhana, Google Maps (bila ada toko fisik).
+  Kondisional: Inventory/Stok hanya bila produk banyak, stok berubah harian, atau customer memintanya
+  — jangan pernah menyarankan inventory bila customer tidak memintanya.
+  Bukan prioritas: Booking, Form Konsultasi, Portfolio, Testimonial (kecuali bisnis berbasis brand).
+
+PATTERN 2 — LAUNDRY / BISNIS DENGAN STATUS PROSES (laundry kiloan, laundry sepatu, cleaning service)
+  Alur: order → barang diterima → dicatat → diproses → status berubah → customer diberi info selesai →
+  bayar → nota → repeat order.
+  Masalah umum: pencatatan manual, status pekerjaan sulit dilihat, customer sering menanyakan progress,
+  riwayat pelanggan tidak tersimpan.
+  Prioritas: Order Management, Status Tracking, Digital Nota, Dashboard Operasional, Customer Database,
+  Notification Status.
+  Bukan prioritas: Inventory (kecuali menjual produk tambahan berstok), Search (kecuali data sangat besar).
+
+PATTERN 3 — JASA / SERVICE / APPOINTMENT (bengkel, service elektronik/AC, fotografer, salon, konsultan,
+chef catering custom, dokter, bidan, klinik)
+  Alur: cari jasa → konsultasi/booking → jadwal ditentukan → pekerjaan dikerjakan → hasil diberikan →
+  bayar → nota → repeat order.
+  Masalah umum: jadwal manual, data customer tidak tersimpan, follow up sulit, portfolio tidak tersusun.
+  Prioritas: Booking/Reservasi, Form Konsultasi, Customer Database, Portfolio/Dokumentasi, Digital Nota,
+  Maps. Tambahan: Testimonial bila bisnis bergantung pada kepercayaan.
+  Bukan prioritas: Inventory, kecuali bengkel/service dengan stok sparepart.
+
+PATTERN 4 — DISTRIBUTOR / AGEN / GROSIR / PRODUKSI
+  Alur: pemesanan → cek ketersediaan → gudang menyiapkan → kirim → transaksi dicatat → invoice →
+  repeat order.
+  Masalah umum: kontrol stok sulit, transaksi & customer banyak, data tidak terstruktur, banyak SKU/merk.
+  Prioritas: Inventory/Stok, Riwayat Transaksi, Customer Database, Dashboard Operasional, Laporan Penjualan.
+  Jika skala besar: Multi User Management, Automation.
+  Bukan prioritas: Portfolio, Booking, Testimonial.
+
+PATTERN 5 — KULINER / RESTORAN / CATERING (bakery, pastry, cafe, catering, resto, rumah makan)
+  Alur: lihat menu → pilih produk → order → pesanan disiapkan → bayar → nota → repeat order.
+  Masalah umum: order bercampur di chat, menu tidak terstruktur, transaksi sulit dilihat, nota manual.
+  Prioritas: Digital Catalog/Menu, Order Management, Digital Nota, Laporan Penjualan sederhana,
+  Customer Database. Untuk catering, cafe, dan resto: Booking dan Form Konsultasi.
+  Bukan prioritas: Inventory, kecuali produksi besar dengan stok bahan yang perlu dikontrol.
+
+FINAL BUSINESS LOGIC:
+- Sebelum memasukkan fitur, tanya: "Apakah fitur ini membantu memperbaiki alur bisnis customer?"
+  Jika tidak → hapus.
+- Jangan memasukkan fitur hanya karena tersedia di library.
+- Baca kembali Order Brief awal: tidak semua brief perlu rekomendasi fitur tambahan. Boleh tanpa
+  tambahan bila memang tidak relevan.
+- S.O.P KERJAKU: TIDAK BOLEH ADA FITUR DUPLICATE.
+- Bisnis kecil: prioritaskan solusi sederhana dengan dampak besar. Bisnis besar: baru pertimbangkan
+  fitur operasional kompleks.`;
 
 
 
