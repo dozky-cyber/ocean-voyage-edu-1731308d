@@ -270,6 +270,23 @@ function buildProblemMap(input: {
         source: "open" as const,
       };
 
+/** Kalimat relevansi ditulis ulang agar spesifik ke bisnis customer. */
+function humanizeRelevance(raw: string, business: string): string {
+  const text = raw.trim();
+  const flow = text.match(/^memperbaiki alur bisnis\s+(.+?)\.?$/i);
+  if (flow?.[1]) {
+    return `Sesuai karakter alur bisnis ${flow[1].toLowerCase()} yang dijalankan ${business}.`;
+  }
+  if (/kondisi bisnis pada brief/i.test(text)) {
+    return `Kebutuhan ini muncul dari cara kerja ${business} yang dijelaskan pada brief.`;
+  }
+  if (/proses operasional utama pada brief/i.test(text)) {
+    return `Menyentuh proses operasional harian ${business} yang disebut pada brief.`;
+  }
+  return text;
+}
+
+
     })
     .slice(0, 8);
 }
