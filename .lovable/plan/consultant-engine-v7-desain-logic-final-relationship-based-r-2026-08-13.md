@@ -64,14 +64,16 @@ Urutan: efisiensi operasional lebih dulu, lalu pertumbuhan penjualan, lalu visib
 
 Filter khusus tetap hidup, tapi jalurnya dibedakan secara terkontrol:
 
-| Fitur | Core | Potential |
-| --- | --- | --- |
-| Inventory | butuh masalah stok | tetap butuh sinyal stok — tidak dilonggarkan |
-| Multi User | butuh masalah hak akses | tetap diblokir untuk skala personal |
-| CRM | butuh kompleksitas customer | tetap butuh sinyal; tidak muncul untuk owner tunggal |
-| Automation | butuh permintaan eksplisit | boleh sebagai enhancement bila ada Notification/Status Tracking |
-| Digital Invoice / Nota | butuh masalah nota/pembayaran | boleh sebagai complementary bila ada pencatatan order/project |
-| Enterprise tier | hard filter | hard filter, tanpa pengecualian |
+
+| Fitur                  | Core                          | Potential                                                       |
+| ---------------------- | ----------------------------- | --------------------------------------------------------------- |
+| Inventory              | butuh masalah stok            | tetap butuh sinyal stok — tidak dilonggarkan                    |
+| Multi User             | butuh masalah hak akses       | tetap diblokir untuk skala personal                             |
+| CRM                    | butuh kompleksitas customer   | tetap butuh sinyal; tidak muncul untuk owner tunggal            |
+| Automation             | butuh permintaan eksplisit    | boleh sebagai enhancement bila ada Notification/Status Tracking |
+| Digital Invoice / Nota | butuh masalah nota/pembayaran | boleh sebagai complementary bila ada pencatatan order/project   |
+| Enterprise tier        | hard filter                   | hard filter, tanpa pengecualian                                 |
+
 
 Jadi yang dilonggarkan hanya dua: Automation dan Digital Invoice, dan hanya lewat jalur relasi ke fitur yang sudah dipilih customer.
 
@@ -126,3 +128,14 @@ Assertion negatif: tidak ada Status Tracking, Portfolio, FAQ, Pencatatan Project
 ## Catatan teknis
 
 File yang disentuh: `consultant-library.ts` (field relasi + jalur seleksi), `problem-solution-map.ts`, `business-flow-patterns.ts` (pasangan alur), `order-brief-insight.ts` (kuota + penghapusan pelipatan), `order-brief-pdf.ts` (format 3 baris + section kondisional), `consultant-chat.ts`, `consultant-scenarios.test.ts`. Tidak ada perubahan database, harga, atau struktur input Order Brief.
+
+Kesimpulan saya:
+
+ saya minta tambahkan 4 revisi kecil:
+
+1. Potential maksimal 5, bukan wajib 3-5.
+2. Tambahkan business maturity context.
+3. Tambahkan scoring relationship agar pemilihan fitur tidak random.
+4. Bantu Rapikan ALASAN package
+
+Berhenti menyalin ulang seluruh Project Summary. Alasan diringkas jadi tiga kalimat: kebutuhan bisnis, karakter proses yang cocok dengan level solusi, skala pengguna. Isi Project Summary tetap utuh di halaman pertama. Dan buat lebih rapi , ada enter tidak rapat text seperti saat ini di perhatikan juga visual nya agar menarik dan rapih
