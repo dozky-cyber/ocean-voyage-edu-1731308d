@@ -301,13 +301,17 @@ function aiRecommendation(doc: Doc, brief: OrderBriefData) {
     doc.y -= 8;
 
     insight.optional.forEach((item, index) => {
-      doc.ensure(56);
+      doc.ensure(80);
       doc.text("*", MARGIN, doc.y, 11, true, BRAND);
       doc.text(item.name, MARGIN + 14, doc.y, 10.5, true, INK);
       doc.y -= 15;
       doc.text("DESKRIPSI", MARGIN + 14, doc.y, 7, false, MUTED);
       doc.y -= 12;
       doc.paragraph(item.description, MARGIN + 14, 10, false, CONTENT_W - 14);
+      doc.y -= 6;
+      doc.text("ALASAN RELEVANSI", MARGIN + 14, doc.y, 7, false, MUTED);
+      doc.y -= 12;
+      doc.paragraph(item.reason, MARGIN + 14, 10, false, CONTENT_W - 14);
       doc.y -= 6;
       if (index < insight.optional.length - 1) {
         doc.ensure(14);
