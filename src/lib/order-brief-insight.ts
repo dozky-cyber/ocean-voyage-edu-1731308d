@@ -107,6 +107,34 @@ function hasAny(context: string, tokens: string[]) {
 }
 
 /**
+ * PACKAGE LEVEL CONTROL RULE: Enterprise hanya dipertimbangkan jika skala bisnis
+ * benar-benar besar (multi cabang, banyak divisi, banyak user, integrasi sistem).
+ */
+function enterpriseScaleJustified(brief: OrderBriefData, context: string): boolean {
+  const scaleSignal = hasAny(context, [
+    "multi cabang",
+    "multi-cabang",
+    "banyak cabang",
+    "beberapa cabang",
+    "multi lokasi",
+    "banyak lokasi",
+    "banyak divisi",
+    "antar divisi",
+    "franchise",
+    "erp",
+    "integrasi sistem",
+    "api",
+    "holding",
+    "perusahaan besar",
+  ]);
+  const users = normalize(brief.usersScale ?? "");
+  const bigUsers =
+    /\b(50|100|200|500|1000)\b/.test(users) ||
+    hasAny(users, ["lebih dari 100", "ratusan", "ribuan", "enterprise"]);
+  return scaleSignal || bigUsers;
+}
+
+/**
  * Complexity ceiling derived only from the client's own brief.
  * Admin/dashboard needs alone never raise the ceiling.
  */
@@ -121,6 +149,7 @@ function complexityCeiling(context: string): PackageKey {
     "enterprise",
   ]);
   if (enterprise) return "Enterprise System";
+
 
   const workflow = hasAny(context, [
     "payment gateway",
