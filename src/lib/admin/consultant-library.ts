@@ -930,7 +930,9 @@ export function selectConsultantFeatures(input: {
       scaleText: input.scaleText,
     });
     const onFlow = priority.has(feature.id);
-    if (!validation.valid && !onFlow && !isCore) continue;
+    // A business-flow pattern only affects ranking. It must never bypass the
+    // four-question validation or turn the library into a feature generator.
+    if (!validation.valid && !isCore) continue;
 
     const reasons = isCore
       ? [`Menyelesaikan masalah customer: ${solvesStated}.`, ...validation.reasons]

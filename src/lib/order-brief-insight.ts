@@ -166,7 +166,7 @@ function buildConsultantOption(
               : `${PACKAGE_LABEL[base]} tetap menjadi acuan Order Brief; pengerjaan fitur di bawah ini dapat menyesuaikan ke ${PACKAGE_LABEL[upgradeKey]} apabila dibutuhkan.`,
           ]
         : [
-            `Feature List ${name} sudah mencakup solusi utama untuk masalah pencatatan project, portfolio, FAQ, dan update progress yang disampaikan.`,
+            `Feature List ${name} sudah mencakup solusi utama untuk masalah bisnis yang disampaikan.`,
             `Karena kebutuhan inti sudah ter-cover, Team KERJAKU tidak menambahkan Core Solution baru dan tidak mengulang fitur yang sama.`,
             `Pengembangan berikut hanya berupa penyempurnaan alur ${business} di dalam ${PACKAGE_LABEL[base]} yang sama.`,
           ],
