@@ -304,9 +304,12 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     // benar-benar kompleks (multi cabang, struktur berjenjang, user besar).
     allowEnterprise,
 
+    // DUPLICATE PREVENTION RULE: fitur pada brief tidak direkomendasikan ulang.
+    briefFeatureText: brief.features.join(" | "),
     excludeIds: [...coreIds],
     excludeTitles: included,
     limit: 7,
+
   });
 
 
