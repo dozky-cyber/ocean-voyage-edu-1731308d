@@ -260,6 +260,10 @@ function optionalReason(feature: LibraryFeature, brief: OrderBriefData) {
       return "Membantu menampilkan produk atau layanan secara lebih lengkap dan rapi.";
     case "live-chat":
       return "Membantu merespon pertanyaan calon customer lebih cepat langsung dari website.";
+    case "contact-form":
+      return "Memberikan jalur kontak alternatif bagi calon customer yang belum siap menghubungi via WhatsApp.";
+    case "email":
+      return "Memastikan permintaan customer tetap tercatat rapi melalui email bisnis.";
     default:
       return `Relevan dengan kebutuhan ${business} pada Order Brief dan dapat dikembangkan bertahap.`;
   }
