@@ -500,8 +500,12 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const built = buildConsultantOption(brief, pkg.key, voicedCorePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
   const optional = growthPicks.slice(0, potentialLimit).map((f, index) => {
+    // Nama fitur yang diperkuat juga ikut kosakata industri.
+    const relatedId = f.relatedTo
+      ? (CONSULTANT_LIBRARY.find((item) => item.name === f.relatedTo)?.id ?? f.relatedTo)
+      : null;
     const relatedName = f.relatedTo
-      ? featureNameForIndustry(f.relatedTo, f.relatedTo, industry)
+      ? featureNameForIndustry(relatedId!, f.relatedTo, industry)
       : null;
     const fallbackRelation = relatedName
       ? f.relation === "enhancement"
@@ -525,7 +529,10 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       stage: maturity,
       relation: f.relation,
       relatedTo: relatedName,
+      // Catatan tahap bisnis cukup satu kali agar tidak terasa berulang.
+      withStageNote: index === 0,
     });
+
     return {
       name: f.name,
       description: f.fn,
