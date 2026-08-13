@@ -827,6 +827,10 @@ export function selectConsultantFeatures(input: {
       // Tanpa kecocokan bisnis maupun sinyal kebutuhan: bukan konsultasi, skip.
       if (!fitsBusiness && !hasSignal && !priority.has(feature.id) && !plan.growth.has(feature.id))
         continue;
+      // Bila masalah customer sudah punya core solution, potential feature
+      // dibatasi pada pengembangan lanjutan yang relevan dengan alur bisnis.
+      if (plan.core.size && !plan.growth.has(feature.id) && !priority.has(feature.id) && !asked)
+        continue;
       if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
     }
 
