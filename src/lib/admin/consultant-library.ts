@@ -511,8 +511,20 @@ export function selectConsultantFeatures(input: {
     if (!fitsBusiness && !hasSignal) continue;
     if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
 
-    const score = (fitsBusiness ? 2 : 0) + (hasSignal ? 2 : 0) - TIER_RANK[feature.tier] * 0.25;
-    picks.push({ ...feature, score });
+    // BUSINESS FEATURE VALIDATION RULE: minimal 2 alasan, jika tidak: dibuang.
+    const validation = validateConsultantFeature(feature, {
+      business: input.businessText,
+      context: input.context,
+      problemText: input.problemText,
+    });
+    if (!validation.valid) continue;
+
+    const score =
+      (fitsBusiness ? 2 : 0) +
+      (hasSignal ? 2 : 0) +
+      validation.reasons.length -
+      TIER_RANK[feature.tier] * 0.25;
+    picks.push({ ...feature, score, reasons: validation.reasons });
   }
 
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
