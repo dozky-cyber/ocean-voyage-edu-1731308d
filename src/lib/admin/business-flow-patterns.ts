@@ -208,7 +208,7 @@ export const BUSINESS_FLOW_PATTERNS: BusinessFlowPattern[] = [
       "kuliner",
       "warung makan",
       "kedai",
-ては    ].filter(Boolean),
+],
     priority: ["katalog", "riwayat-transaksi", "laporan-penjualan", "database-customer"],
     conditional: ["booking", "form-konsultasi", "inventory"],
     notPriority: ["portfolio", "multi-user"],
