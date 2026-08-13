@@ -113,19 +113,23 @@ function complexityLabel(pkg: PackageDefinition) {
 
 function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: string) {
   const business = brief.business?.trim() || "bisnis Anda";
+  // ALASAN PACKAGE: tiga kalimat saja — kebutuhan bisnis, karakter proses, dan
+  // skala pengguna. Project Summary tidak disalin ulang di sini.
   const goal = brief.goal?.trim();
-  const project = brief.project?.trim();
-  const focus = (goal || project || "memperkenalkan bisnis dan memudahkan calon customer terhubung")
-    .replace(/[.!?]+$/, "");
+  const focus = (goal || "merapikan kebutuhan digital bisnis")
+    .replace(/^tujuan\s*:\s*/i, "")
+    .replace(/[.!?]+$/, "")
+    .split(/\.\s+/)[0]!
+    .trim();
+  const scale = brief.usersScale?.trim();
   const parts = [
-    `Berdasarkan kebutuhan ${business}, website difokuskan untuk ${focus}.`,
-    `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
-    // KERJAKU PACKAGE DECISION SOP: alasan berbasis kompleksitas bisnis.
-    rationale,
+    `Kebutuhan ${business} difokuskan untuk ${focus}.`,
+    `Solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
+    scale ? `Cakupan pengguna sistem: ${scale}.` : rationale,
   ];
-  return parts.join(" ");
-
+  return parts.join("\n\n");
 }
+
 
 
 
