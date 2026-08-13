@@ -9,6 +9,8 @@
 import { describe, expect, it } from "vitest";
 import { selectConsultantFeatures } from "./consultant-library";
 import { buildProblemSolutionPlan } from "./problem-solution-map";
+import { decidePackageLevel } from "./package-decision-sop";
+import type { OrderBriefData } from "../order-brief";
 
 type Scenario = {
   name: string;
@@ -424,5 +426,43 @@ describe("Problem → solution map", () => {
       });
       for (const id of plan.core.keys()) expect(plan.growth.has(id)).toBe(false);
     }
+  });
+});
+
+describe("Enterprise hard filter", () => {
+  const brief = (over: Partial<OrderBriefData>): OrderBriefData => ({
+    version: 1,
+    customerName: "Test",
+    whatsapp: null,
+    email: null,
+    business: "Toko retail",
+    project: "Website sistem",
+    goal: "Merapikan operasional",
+    problems: ["Order dicatat manual"],
+    usersScale: "owner dan 10 karyawan",
+    adminNeeds: "Ya",
+    features: [],
+    timeline: null,
+    budget: null,
+    recommendation: null,
+    createdAt: new Date().toISOString(),
+    ...over,
+  });
+
+  it("dashboard/database/laporan/karyawan/automation saja tidak menghasilkan Enterprise", () => {
+    const decision = decidePackageLevel(
+      brief({
+        features: ["Dashboard admin", "Database customer", "Laporan penjualan", "Automation reminder"],
+      }),
+    );
+    expect(decision.level).not.toBe("enterprise");
+    expect(decision.allowEnterprise).toBe(false);
+  });
+
+  it("bisnis satu lokasi tidak pernah Enterprise", () => {
+    const decision = decidePackageLevel(
+      brief({ business: "Laundry kiloan 1 outlet", usersScale: "owner dan 4 karyawan" }),
+    );
+    expect(decision.level).not.toBe("enterprise");
   });
 });
