@@ -1001,12 +1001,17 @@ export type Database = {
           lead_id: string
           notes: string | null
           number: string
+          optional_items: Json
           package: string | null
+          paid_amount: number
           paid_at: string | null
           payment_link: string | null
+          payment_type: string
+          project_name: string | null
           proposal_id: string | null
           provider: string
           provider_reference: string | null
+          schedule: Json
           status: string
           title: string
           updated_at: string
@@ -1026,12 +1031,17 @@ export type Database = {
           lead_id: string
           notes?: string | null
           number: string
+          optional_items?: Json
           package?: string | null
+          paid_amount?: number
           paid_at?: string | null
           payment_link?: string | null
+          payment_type?: string
+          project_name?: string | null
           proposal_id?: string | null
           provider?: string
           provider_reference?: string | null
+          schedule?: Json
           status?: string
           title?: string
           updated_at?: string
@@ -1051,12 +1061,17 @@ export type Database = {
           lead_id?: string
           notes?: string | null
           number?: string
+          optional_items?: Json
           package?: string | null
+          paid_amount?: number
           paid_at?: string | null
           payment_link?: string | null
+          payment_type?: string
+          project_name?: string | null
           proposal_id?: string | null
           provider?: string
           provider_reference?: string | null
+          schedule?: Json
           status?: string
           title?: string
           updated_at?: string
