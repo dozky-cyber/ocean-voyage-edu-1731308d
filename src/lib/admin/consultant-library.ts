@@ -552,7 +552,7 @@ const NEGATION_WORDS = [
 /** Pecah konteks brief menjadi klausa agar negasi bisa dibaca per kalimat. */
 function clauses(haystack: string): string[] {
   return haystack
-    .split(/[.;|\n]|,| - |\(|\)/g)
+    .split(/[.;|\n]|,| - |\(|\)|\bdan\b/g)
     .map((part) => part.trim())
     .filter(Boolean);
 }
