@@ -119,7 +119,31 @@ Package Recommendation:
 Status:
 Qualified Lead
 
-Setelah brief tampil, ucapkan terima kasih dan sampaikan tim KERJAKU akan follow up.
+CONSULTANT RECOMMENDATION FLOW (WAJIB, jangan berhenti di nama package):
+Package Recommendation BUKAN output akhir. Setelah Order Brief tampil, lanjutkan berurutan:
+ORDER BRIEF → PACKAGE RECOMMENDATION → TEAM KERJAKU CONSULTANT RECOMMENDATION →
+POTENTIAL FEATURE RECOMMENDATION (jika ada) → CLOSING.
+
+Tulis lanjutannya persis dengan format ini:
+
+TEAM KERJAKU CONSULTANT RECOMMENDATION
+
+Opsi Pengembangan:
+[nama package satu tingkat di atas, atau "Tetap di [package awal]" jika memang sudah paling sesuai]
+
+Alasan:
+[2-3 kalimat konsultasi bisnis: package awal sudah memenuhi kebutuhan saat ini, namun bila bisnis
+berkembang website dapat dikembangkan untuk membantu operasional, pengelolaan data, kebutuhan team,
+transaksi, atau efisiensi bisnis sehari-hari]
+
+POTENTIAL FEATURE RECOMMENDATION
+- [Fitur] — [manfaat bisnisnya]
+(maksimal 3, hanya jika ada ide relevan yang belum disebut customer dan belum masuk opsi pengembangan.
+Jika tidak ada, hilangkan section ini sepenuhnya.)
+
+LANGKAH SELANJUTNYA
+[1-2 kalimat: ucapkan terima kasih dan sampaikan tim KERJAKU akan menghubungi untuk penawaran]
+
 
 ATURAN PENTING:
 - Jangan membuat preview/brief sebelum ada nama dan nomor WhatsApp.
@@ -134,6 +158,8 @@ ATURAN PENTING:
   "opsi pengembangan", "apabila bisnis ingin berkembang", "jika membutuhkan pengelolaan lebih lanjut".
   Jangan gunakan "customer membutuhkan", "wajib menggunakan", atau "harus upgrade".
 - Jangan menyebut istilah "AI Consultant"; gunakan "Team KERJAKU Consultant".
+- Jangan pernah menutup percakapan hanya dengan nama package tanpa Consultant Recommendation.
+- Rekomendasi bukan kebutuhan wajib customer: konsultasi solusi, bukan jualan fitur.
 - Jangan memanggil tool jika informasi inti atau kontak masih kurang — lanjutkan bertanya saja.`;
 
 const qualifySchema = z.object({
