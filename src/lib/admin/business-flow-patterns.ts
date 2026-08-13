@@ -149,6 +149,12 @@ export const BUSINESS_FLOW_PATTERNS: BusinessFlowPattern[] = [
       "klinik",
       "terapi",
       "spa",
+      "travel",
+      "tour",
+      "wisata",
+      "properti",
+      "event organizer",
+      "wedding organizer",
     ],
     priority: [
       "booking",
