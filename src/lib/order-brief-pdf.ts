@@ -249,118 +249,150 @@ function footer(doc: Doc) {
 /** Build a modern, proposal-style Order Brief PDF from stored data. */
 export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   const doc = new Doc();
+  const insight = buildBriefInsight(brief);
+
   header(doc, brief);
   customerCard(doc, brief);
   summaryBox(doc, brief);
 
-  sectionTitle(doc, "Business Problems");
-  bulletList(doc, brief.problems);
-  doc.y -= 10;
+  doc.keep((d) => {
+    sectionTitle(d, "Business Problems");
+    bulletList(d, brief.problems);
+    d.y -= 10;
+  });
 
-  sectionTitle(doc, "Feature List");
-  bulletList(doc, brief.features);
-  doc.y -= 10;
+  doc.keep((d) => {
+    sectionTitle(d, "Feature List");
+    bulletList(d, brief.features);
+    d.y -= 10;
+  });
 
-  sectionTitle(doc, "Project Detail");
-  keyValueGrid(doc, [
-    { label: "User Sistem", value: brief.usersScale || "-" },
-    { label: "Kebutuhan Admin/Team", value: brief.adminNeeds || "-" },
-    { label: "Timeline", value: brief.timeline || "-" },
-    { label: "Budget", value: brief.budget || "-" },
-  ]);
+  doc.keep((d) => {
+    sectionTitle(d, "Project Detail");
+    keyValueGrid(d, [
+      { label: "User Sistem", value: brief.usersScale || "-" },
+      { label: "Kebutuhan Admin/Team", value: brief.adminNeeds || "-" },
+      { label: "Timeline", value: brief.timeline || "-" },
+      { label: "Budget", value: brief.budget || "-" },
+    ]);
+  });
 
-  packageRecommendation(doc, brief);
-
-  aiRecommendation(doc, brief);
-
+  packageRecommendation(doc, insight);
+  consultantRecommendation(doc, insight);
+  potentialFeatures(doc, insight);
+  nextSteps(doc, insight);
 
   footer(doc);
   return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
 }
 
-/** Package recommendation derived from the customer's own brief (never inflated). */
-function packageRecommendation(doc: Doc, brief: OrderBriefData) {
-  sectionTitle(doc, "Package Recommendation");
-  doc.text(buildBriefInsight(brief).packageName, MARGIN, doc.y, 12, true, BRAND);
-  doc.y -= 22;
+/**
+ * PACKAGE RECOMMENDATION — rendered as one unbreakable block:
+ * package name + customer need + reason.
+ */
+function packageRecommendation(doc: Doc, insight: BriefInsight) {
+  doc.keep((d) => {
+    sectionTitle(d, "Package Recommendation");
+    d.text(insight.packageName, MARGIN, d.y, 12, true, BRAND);
+    d.y -= 24;
+
+    if (insight.included.length) {
+      d.text("CUSTOMER NEED (SESUAI ORDER BRIEF)", MARGIN, d.y, 7.5, false, MUTED);
+      d.y -= 14;
+      for (const item of insight.included) {
+        wrap(item, 10, false, CONTENT_W - 26).forEach((row, index) => {
+          if (index === 0) d.text("v", MARGIN + 4, d.y, 10, true, BRAND);
+          d.text(row, MARGIN + 18, d.y, 10, false);
+          d.y -= 15;
+        });
+      }
+      d.y -= 10;
+    }
+
+    d.text("ALASAN", MARGIN, d.y, 7.5, false, MUTED);
+    d.y -= 13;
+    d.paragraph(insight.reason, MARGIN, 10, false, CONTENT_W);
+    d.y -= 12;
+  });
 }
 
-
-/** Consultant block: package reason, brief scope, development option, optional ideas. */
-function aiRecommendation(doc: Doc, brief: OrderBriefData) {
-  const insight = buildBriefInsight(brief);
-
-  if (insight.included.length) {
-    doc.ensure(30);
-    doc.text("CUSTOMER NEED (SESUAI ORDER BRIEF)", MARGIN, doc.y, 7.5, false, MUTED);
-    doc.y -= 14;
-    for (const item of insight.included) {
-      const lines = wrap(item, 10, false, CONTENT_W - 26);
-      lines.forEach((row, index) => {
-        doc.ensure(15);
-        if (index === 0) doc.text("v", MARGIN + 4, doc.y, 10, true, BRAND);
-        doc.text(row, MARGIN + 18, doc.y, 10, false);
-        doc.y -= 15;
-      });
-    }
-    doc.y -= 10;
-  }
-
-  doc.text("ALASAN", MARGIN, doc.y, 7.5, false, MUTED);
-  doc.y -= 13;
-  doc.paragraph(insight.reason, MARGIN, 10, false, CONTENT_W);
-  doc.y -= 12;
-
+/** Consultant block: development option, reason, and benefit per feature. */
+function consultantRecommendation(doc: Doc, insight: BriefInsight) {
   const consultant = insight.consultant;
-  if (consultant) {
-    sectionTitle(doc, "Team KERJAKU Consultant Recommendation");
-    doc.text("OPSI PENGEMBANGAN", MARGIN, doc.y, 7.5, false, MUTED);
-    doc.y -= 14;
-    doc.text(consultant.packageName, MARGIN, doc.y, 12, true, INK);
-    doc.y -= 20;
+  if (!consultant) return;
+
+  // Heading + intro + first benefit stay together so a title never sits alone.
+  const first = consultant.items[0];
+  doc.keep((d) => {
+    sectionTitle(d, "Team KERJAKU Consultant Recommendation");
+    d.text("OPSI PENGEMBANGAN", MARGIN, d.y, 7.5, false, MUTED);
+    d.y -= 14;
+    d.text(consultant.packageName, MARGIN, d.y, 12, true, INK);
+    d.y -= 20;
     consultant.intro.forEach((line) => {
-      doc.paragraph(line, MARGIN, 10, false, CONTENT_W);
-      doc.y -= 4;
+      d.paragraph(line, MARGIN, 10, false, CONTENT_W);
+      d.y -= 4;
     });
-    doc.y -= 6;
+    d.y -= 6;
+    d.text(`KENAPA ${consultant.packageName.toUpperCase()}?`, MARGIN, d.y, 7.5, false, MUTED);
+    d.y -= 16;
+    if (first) consultantItem(d, first, 0);
+  });
 
-    doc.ensure(24);
-    doc.text(`KENAPA ${consultant.packageName.toUpperCase()}?`, MARGIN, doc.y, 7.5, false, MUTED);
-    doc.y -= 16;
-    consultant.items.forEach((item, index) => {
-      doc.ensure(56);
-      const title = `${index + 1}. ${item.title}${item.optional ? " (Opsional)" : ""}`;
-      doc.text(title, MARGIN, doc.y, 10.5, true, INK);
-      doc.y -= 15;
-      doc.text("MANFAAT", MARGIN + 14, doc.y, 7, false, MUTED);
-      doc.y -= 12;
-      doc.paragraph(item.benefit, MARGIN + 14, 10, false, CONTENT_W - 14);
-      doc.y -= 10;
-    });
+  consultant.items.slice(1).forEach((item, index) => {
+    doc.keep((d) => consultantItem(d, item, index + 1));
+  });
 
-    sectionTitle(doc, "Perbandingan Solusi");
+  doc.keep((d) => {
+    sectionTitle(d, "Perbandingan Solusi");
     consultant.comparison.forEach((column) => {
-      doc.ensure(30);
-      doc.text(column.name, MARGIN, doc.y, 10.5, true, INK);
-      doc.y -= 15;
-      doc.text("COCOK UNTUK", MARGIN + 14, doc.y, 7, false, MUTED);
-      doc.y -= 13;
+      d.text(column.name, MARGIN, d.y, 10.5, true, INK);
+      d.y -= 15;
+      d.text("COCOK UNTUK", MARGIN + 14, d.y, 7, false, MUTED);
+      d.y -= 13;
       column.points.forEach((point) => {
-        const lines = wrap(point, 10, false, CONTENT_W - 40);
-        lines.forEach((row, index) => {
-          doc.ensure(15);
-          if (index === 0) doc.text("v", MARGIN + 18, doc.y, 10, true, BRAND);
-          doc.text(row, MARGIN + 32, doc.y, 10, false);
-          doc.y -= 15;
+        wrap(point, 10, false, CONTENT_W - 40).forEach((row, index) => {
+          if (index === 0) d.text("v", MARGIN + 18, d.y, 10, true, BRAND);
+          d.text(row, MARGIN + 32, d.y, 10, false);
+          d.y -= 15;
         });
       });
-      doc.y -= 8;
+      d.y -= 8;
     });
-  }
+  });
+}
 
-  if (insight.optional.length) {
-    sectionTitle(doc, "Potential Feature Recommendation");
-    doc.paragraph(
+function consultantItem(
+  doc: Doc,
+  item: { title: string; benefit: string; optional?: boolean },
+  index: number,
+) {
+  doc.text(
+    `${index + 1}. ${item.title}${item.optional ? " (Opsional)" : ""}`,
+    MARGIN,
+    doc.y,
+    10.5,
+    true,
+    INK,
+  );
+  doc.y -= 15;
+  doc.text("MANFAAT", MARGIN + 14, doc.y, 7, false, MUTED);
+  doc.y -= 12;
+  doc.paragraph(item.benefit, MARGIN + 14, 10, false, CONTENT_W - 14);
+  doc.y -= 10;
+}
+
+/**
+ * POTENTIAL FEATURE INTELLIGENCE: optional section — rendered only when the
+ * consultant engine still has non-duplicate, relevant ideas left over.
+ */
+function potentialFeatures(doc: Doc, insight: BriefInsight) {
+  if (!insight.optional.length) return;
+  const items = insight.optional;
+
+  doc.keep((d) => {
+    sectionTitle(d, "Potential Feature Recommendation");
+    d.paragraph(
       "Contoh pengembangan tambahan yang relevan untuk bisnis Anda. Fitur ini bukan bagian dari penawaran utama dan tidak termasuk dalam harga.",
       MARGIN,
       9.5,
@@ -368,52 +400,65 @@ function aiRecommendation(doc: Doc, brief: OrderBriefData) {
       CONTENT_W,
       MUTED,
     );
-    doc.y -= 8;
+    d.y -= 8;
+    optionalItem(d, items[0]!, items.length > 1);
+  });
 
-    insight.optional.forEach((item, index) => {
-      doc.ensure(80);
-      doc.text("*", MARGIN, doc.y, 11, true, BRAND);
-      doc.text(item.name, MARGIN + 14, doc.y, 10.5, true, INK);
-      doc.y -= 15;
-      doc.text("DESKRIPSI", MARGIN + 14, doc.y, 7, false, MUTED);
-      doc.y -= 12;
-      doc.paragraph(item.description, MARGIN + 14, 10, false, CONTENT_W - 14);
-      doc.y -= 6;
-      doc.text("ALASAN RELEVANSI", MARGIN + 14, doc.y, 7, false, MUTED);
-      doc.y -= 12;
-      doc.paragraph(item.reason, MARGIN + 14, 10, false, CONTENT_W - 14);
-      doc.y -= 6;
-      if (index < insight.optional.length - 1) {
-        doc.ensure(14);
-        doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4);
-        doc.y -= 12;
-      }
-    });
+  items.slice(1).forEach((item, index) => {
+    doc.keep((d) => optionalItem(d, item, index + 2 < items.length));
+  });
 
-    doc.y -= 6;
+  doc.keep((d) => {
+    d.y -= 6;
     const lines = wrap(insight.disclaimer, 9, false, CONTENT_W - 32);
     const h = 22 + lines.length * 12;
-    doc.ensure(h + 10);
-    const top = doc.y - h;
-    doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
-    doc.rect(MARGIN, top, 3, h, BRAND);
+    const top = d.y - h;
+    d.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
+    d.rect(MARGIN, top, 3, h, BRAND);
     let y = top + h - 16;
     lines.forEach((row) => {
-      doc.text(row, MARGIN + 16, y, 9, false, MUTED);
+      d.text(row, MARGIN + 16, y, 9, false, MUTED);
       y -= 12;
     });
-    doc.y = top - 18;
-  }
-
-  sectionTitle(doc, "Langkah Selanjutnya");
-  insight.nextSteps.forEach((line) => {
-    if (!line.trim()) {
-      doc.y -= 6;
-      return;
-    }
-    doc.paragraph(line, MARGIN, 10, false, CONTENT_W);
+    d.y = top - 18;
   });
 }
+
+function optionalItem(
+  doc: Doc,
+  item: { name: string; description: string; reason: string },
+  divider: boolean,
+) {
+  doc.text("*", MARGIN, doc.y, 11, true, BRAND);
+  doc.text(item.name, MARGIN + 14, doc.y, 10.5, true, INK);
+  doc.y -= 15;
+  doc.text("DESKRIPSI", MARGIN + 14, doc.y, 7, false, MUTED);
+  doc.y -= 12;
+  doc.paragraph(item.description, MARGIN + 14, 10, false, CONTENT_W - 14);
+  doc.y -= 6;
+  doc.text("ALASAN RELEVANSI", MARGIN + 14, doc.y, 7, false, MUTED);
+  doc.y -= 12;
+  doc.paragraph(item.reason, MARGIN + 14, 10, false, CONTENT_W - 14);
+  doc.y -= 6;
+  if (divider) {
+    doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4);
+    doc.y -= 12;
+  }
+}
+
+function nextSteps(doc: Doc, insight: BriefInsight) {
+  doc.keep((d) => {
+    sectionTitle(d, "Langkah Selanjutnya");
+    insight.nextSteps.forEach((line) => {
+      if (!line.trim()) {
+        d.y -= 6;
+        return;
+      }
+      d.paragraph(line, MARGIN, 10, false, CONTENT_W);
+    });
+  });
+}
+
 
 
 
