@@ -5,6 +5,12 @@
  * strategy brief and a full proposal draft. No network calls, no AI credits.
  */
 
+import {
+  coreSolutionFeatures,
+  detectSelectedFeatures,
+  resolvePackage,
+} from "./feature-library";
+
 export const PROPOSAL_STATUSES = [
   "Draft",
   "Sent",
@@ -91,7 +97,7 @@ function clientLabel(lead: SalesLead): string {
 }
 
 export function recommendPackage(lead: SalesLead): string {
-  if (lead.ai_recommended_package) return lead.ai_recommended_package;
+  if (lead.ai_recommended_package) return resolvePackage(lead.ai_recommended_package).key;
   const req = toStrings(lead.ai_requirements).join(" ").toLowerCase();
   const text = `${lead.requirement ?? ""} ${lead.features ?? ""} ${lead.project_type ?? ""}`.toLowerCase();
   const all = `${req} ${text}`;
@@ -99,10 +105,10 @@ export function recommendPackage(lead: SalesLead): string {
   if (category.includes("enterprise") || all.includes("erp") || all.includes("enterprise"))
     return "Enterprise System";
   if (all.includes("ai") || all.includes("automation") || all.includes("otomat"))
-    return "Business System";
+    return "Digital Workflow Solution";
   if (all.includes("dashboard") || all.includes("aplikasi") || all.includes("custom"))
     return "Professional System";
-  return "Basic Digital Presence";
+  return "Landing Page";
 }
 
 export function painPointsOf(lead: SalesLead): string[] {
@@ -254,37 +260,25 @@ export function buildSalesBrief(lead: SalesLead): SalesBrief {
 export type ProposalSection = { heading: string; body: string };
 export type PricingItem = { item: string; detail: string; amount: number };
 
-/** Indicative price anchors per package (IDR), used as an editable starting point. */
-const PACKAGE_BASE: Record<string, number> = {
-  "Basic Digital Presence": 4_500_000,
-  "Professional System": 12_000_000,
-  "Business System": 28_000_000,
-  "Enterprise System": 65_000_000,
-};
-
+/**
+ * Core Solution pricing. The price comes from the CORE SOLUTION PACKAGE —
+ * it is never auto-calculated from the number of features.
+ */
 export function buildPricingItems(lead: SalesLead): PricingItem[] {
-  const pkg = recommendPackage(lead);
-  const base = PACKAGE_BASE[pkg] ?? 12_000_000;
+  const definition = resolvePackage(recommendPackage(lead));
+  const included = coreSolutionFeatures(
+    definition.key,
+    detectSelectedFeatures([lead.features, lead.requirement, lead.project_type]),
+  )
+    .map((f) => f.name)
+    .join(", ");
   return [
     {
-      item: "Discovery & Blueprint",
-      detail: "Pemetaan proses, struktur data, dan alur kerja",
-      amount: Math.round(base * 0.15),
-    },
-    {
-      item: `Pengembangan ${pkg}`,
-      detail: "Desain UI, pengembangan fitur inti, dan integrasi",
-      amount: Math.round(base * 0.6),
-    },
-    {
-      item: "Testing, UAT & Deployment",
-      detail: "Pengujian bersama tim klien, migrasi data, go-live",
-      amount: Math.round(base * 0.15),
-    },
-    {
-      item: "Pelatihan & Pendampingan 30 Hari",
-      detail: "Onboarding tim dan perbaikan minor pasca go-live",
-      amount: Math.round(base * 0.1),
+      item: `Core Solution — ${definition.key}`,
+      detail: included
+        ? `Termasuk: ${included}`
+        : "Scope utama sesuai Final Order Brief dan Client Discovery",
+      amount: definition.basePrice,
     },
   ];
 }
