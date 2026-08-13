@@ -182,7 +182,9 @@ function buildConsultantOption(
     : PACKAGE_RANK["Digital Workflow Solution"];
   const upgradeIndex = Math.min(PACKAGE_RANK[base] + 1, maxRank);
   const upgradeKey = PACKAGE_ORDER[upgradeIndex]!;
-  if (upgradeKey === base) return null;
+  // Tanpa core solution, section ini hanya berguna bila ada opsi pengembangan.
+  if (upgradeKey === base && !hasCore) return null;
+  const sameLevel = upgradeKey === base;
 
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
@@ -196,7 +198,9 @@ function buildConsultantOption(
         ? [
             `Dari masalah yang ${name} sampaikan, Team KERJAKU melihat ada beberapa bagian operasional ${business} yang paling terasa dampaknya bila dibantu sistem.`,
             `Fitur berikut dipilih karena langsung menjawab masalah tersebut, bukan sekadar menambah fitur.`,
-            `${PACKAGE_LABEL[base]} tetap menjadi acuan Order Brief; pengerjaan fitur di bawah ini dapat menyesuaikan ke ${PACKAGE_LABEL[upgradeKey]} apabila dibutuhkan.`,
+            sameLevel
+              ? `${PACKAGE_LABEL[base]} pada Order Brief sudah cukup untuk menjalankan fitur-fitur ini, jadi tidak perlu menaikkan level solusi.`
+              : `${PACKAGE_LABEL[base]} tetap menjadi acuan Order Brief; pengerjaan fitur di bawah ini dapat menyesuaikan ke ${PACKAGE_LABEL[upgradeKey]} apabila dibutuhkan.`,
           ]
         : [
             `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
@@ -208,10 +212,12 @@ function buildConsultantOption(
         benefit: item.benefit,
         solves: item.solves,
       })),
-      comparison: [
-        { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
-        { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
-      ],
+      comparison: sameLevel
+        ? []
+        : [
+            { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
+            { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
+          ],
       note: CONSULTANT_OPTION_NOTE,
     },
   };
