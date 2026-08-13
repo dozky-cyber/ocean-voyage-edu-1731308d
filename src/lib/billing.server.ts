@@ -75,19 +75,37 @@ export async function createInvoiceFromProposal(
   if (leadError) throw new Error(leadError.message);
 
   const items: PricingItem[] = parsePricingItems(proposal.pricing_items);
+  const optionalItems: PricingItem[] = Array.isArray(proposal.enhancements)
+    ? (proposal.enhancements as unknown[]).map((row) => ({
+        item: String((row as { name?: unknown })?.name ?? ""),
+        detail: String((row as { benefit?: unknown })?.benefit ?? ""),
+        amount: Number((row as { amount?: unknown })?.amount ?? 0) || 0,
+      }))
+    : [];
+  const total = invoiceTotal(items) + invoiceTotal(optionalItems);
+  const projectName =
+    (proposal.recommended_package as string) ??
+    lead?.project_type ??
+    proposal.title ??
+    "Project Digital";
+
   const payload = {
     lead_id: proposal.lead_id,
     proposal_id: proposal.id,
     number: buildInvoiceNumber(),
     title: `Invoice — ${proposal.title}`,
+    project_name: projectName,
     client_name: proposal.client_name ?? lead?.name ?? null,
     client_email: lead?.email ?? null,
     client_whatsapp: lead?.whatsapp ?? null,
     client_company: lead?.company ?? lead?.business_name ?? null,
     package: proposal.recommended_package,
     items,
+    optional_items: optionalItems,
     currency: proposal.currency ?? "IDR",
-    amount: invoiceTotal(items),
+    amount: total,
+    payment_type: "full",
+    schedule: fullPaymentSchedule(total),
     due_date: dueDateFromNow(7),
     status: "Pending",
     provider: "manual_transfer",
@@ -108,38 +126,94 @@ export async function saveInvoice(
   input: {
     id: string;
     title: string;
+    project_name: string | null;
     client_name: string | null;
     client_email: string | null;
     client_whatsapp: string | null;
     client_company: string | null;
     package: string | null;
     items: PricingItem[];
+    optional_items: PricingItem[];
     currency: string;
     due_date: string | null;
     notes: string | null;
     provider: PaymentProviderId;
+    payment_type: PaymentType;
+    schedule: Installment[];
   },
 ) {
+  const total = invoiceTotal(input.items) + invoiceTotal(input.optional_items);
+  const schedule = recalcSchedule(input.schedule, total);
+  const check = validateSchedule(schedule, total);
+  if (!check.valid) throw new Error(check.message ?? "Payment schedule tidak valid.");
+
   const { error } = await supabase
     .from("invoices")
     .update({
       title: input.title,
+      project_name: input.project_name,
       client_name: input.client_name,
       client_email: input.client_email,
       client_whatsapp: input.client_whatsapp,
       client_company: input.client_company,
       package: input.package,
       items: input.items,
-      amount: invoiceTotal(input.items),
+      optional_items: input.optional_items,
+      amount: total,
       currency: input.currency,
       due_date: input.due_date || null,
       notes: input.notes,
       provider: input.provider,
+      payment_type: input.payment_type,
+      schedule,
+      paid_amount: paidAmount(schedule),
     })
     .eq("id", input.id);
   if (error) throw new Error(error.message);
   return { ok: true as const };
 }
+
+/** PART 10 — flip a single installment and re-derive the invoice payment state. */
+export async function setInstallmentStatus(
+  supabase: Client,
+  input: { id: string; index: number; status: "Pending" | "Paid" },
+) {
+  const invoice = await fetchInvoice(supabase, input.id);
+  if (!invoice) throw new Error("Invoice tidak ditemukan.");
+
+  const total = Number(invoice.amount) || 0;
+  const schedule = recalcSchedule(parseSchedule((invoice as { schedule?: unknown }).schedule), total);
+  const target = schedule[input.index];
+  if (!target) throw new Error("Termin pembayaran tidak ditemukan.");
+  schedule[input.index] = {
+    ...target,
+    status: input.status,
+    paid_at: input.status === "Paid" ? new Date().toISOString() : null,
+  };
+
+  const paid = paidAmount(schedule);
+  const state = derivePaymentState(schedule, total);
+  const fully = state === "Fully Paid";
+
+  const { error } = await supabase
+    .from("invoices")
+    .update({
+      schedule,
+      paid_amount: paid,
+      status: fully ? "Paid" : invoice.status === "Paid" ? "Pending" : invoice.status,
+      paid_at: fully ? new Date().toISOString() : null,
+    })
+    .eq("id", input.id);
+  if (error) throw new Error(error.message);
+
+  let clientId: string | null = null;
+  if (fully) {
+    const client = await convertInvoiceToClient(supabase, input.id);
+    clientId = client?.id ?? null;
+  }
+  return { ok: true as const, state, paid, clientId };
+}
+
 
 /** Provider-agnostic payment link creation. */
 export async function createInvoicePaymentLink(
