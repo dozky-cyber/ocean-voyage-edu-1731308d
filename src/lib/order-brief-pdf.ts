@@ -2,7 +2,7 @@
 // Runs both in the browser (download) and in the Worker runtime (email attachment).
 
 import { briefFields, briefFileName, wibStamp, type OrderBriefData } from "./order-brief";
-import { buildBriefInsight } from "./order-brief-insight";
+import { buildBriefInsight, type BriefInsight } from "./order-brief-insight";
 
 export const PAGE_W = 595.28; // A4
 export const PAGE_H = 841.89;
