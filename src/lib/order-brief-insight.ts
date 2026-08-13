@@ -389,13 +389,14 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // jumlah user, dan proses operasional — bukan generator fitur.
   const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
   const maxTier: ConsultantTier =
-    pkg.key === "Enterprise System"
+    pkg.key === "Enterprise System" && allowEnterprise
       ? "enterprise"
       : pkg.key === "Digital Workflow Solution"
         ? "business"
         : pkg.key === "Professional System"
           ? "business"
           : "professional";
+
 
   const picks = selectConsultantFeatures({
     businessText,
