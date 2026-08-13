@@ -1,11 +1,24 @@
 /**
- * KERJAKU Proposal Generator V2 — feature mapping, timeline/deadline logic,
- * recommended enhancements, and split investment (core vs optional).
+ * KERJAKU Proposal Generator V5 — feature recommendation (master library),
+ * core solution, timeline/deadline logic, split investment and payment terms.
  *
- * Pure client-safe helpers. Order Brief = source of client requirements.
+ * Pure client-safe helpers. Order Brief + Client Discovery = source of truth.
  */
 
-export type EnhancementItem = { name: string; benefit: string; amount: number };
+import {
+  coreSolutionFeatures,
+  detectSelectedFeatures,
+  recommendFeatures,
+  resolvePackage,
+  type LibraryFeature,
+} from "./feature-library";
+
+export type EnhancementItem = {
+  name: string;
+  benefit: string;
+  amount: number;
+  recommended?: boolean;
+};
 
 export function parseEnhancements(value: unknown): EnhancementItem[] {
   if (!Array.isArray(value)) return [];
@@ -16,6 +29,7 @@ export function parseEnhancements(value: unknown): EnhancementItem[] {
             name: String((row as { name?: unknown }).name ?? ""),
             benefit: String((row as { benefit?: unknown }).benefit ?? ""),
             amount: Number((row as { amount?: unknown }).amount ?? 0) || 0,
+            recommended: Boolean((row as { recommended?: unknown }).recommended),
           },
         ]
       : [],
@@ -25,6 +39,69 @@ export function parseEnhancements(value: unknown): EnhancementItem[] {
 export function enhancementsTotal(items: EnhancementItem[]): number {
   return items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
 }
+
+/* -------------------------------------------------------------------------
+ * Core Solution feature list (stored on the proposal, editable by admin)
+ * ---------------------------------------------------------------------- */
+
+export type CoreFeatureItem = { name: string; description: string };
+
+export function parseCoreFeatures(value: unknown): CoreFeatureItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((row) =>
+    row && typeof row === "object"
+      ? [
+          {
+            name: String((row as { name?: unknown }).name ?? ""),
+            description: String((row as { description?: unknown }).description ?? ""),
+          },
+        ]
+      : [],
+  );
+}
+
+function toCoreItem(feature: LibraryFeature): CoreFeatureItem {
+  return { name: feature.name, description: feature.description };
+}
+
+/** Core Solution = package scope + features the client already selected. */
+export function buildCoreFeatures(input: {
+  packageName: string | null | undefined;
+  briefFeatures: string[];
+  context?: string;
+}): CoreFeatureItem[] {
+  const selected = detectSelectedFeatures([...input.briefFeatures, input.context ?? ""]);
+  return coreSolutionFeatures(input.packageName, selected).map(toCoreItem);
+}
+
+/* -------------------------------------------------------------------------
+ * Payment terms (proposal agreement text only — Invoice does the math)
+ * ---------------------------------------------------------------------- */
+
+export type PaymentType = "full" | "termin";
+
+export type PaymentTermsInput = {
+  type: PaymentType | null | undefined;
+  dpPercent?: number | null;
+  customText?: string | null;
+};
+
+/**
+ * Default = FULL PAYMENT. No assumption about DP or schedule is ever made
+ * unless the admin explicitly chooses DP / Termin.
+ */
+export function buildPaymentTermsLines(input: PaymentTermsInput): string[] {
+  const custom = (input.customText ?? "").trim();
+  if (custom) return custom.split("\n").map((line) => line.trimEnd());
+  if (input.type !== "termin") return ["Full Payment"];
+  const dp = Number(input.dpPercent ?? 0);
+  if (!dp || dp <= 0 || dp >= 100) return ["DP saat kick-off project", "Sisa pembayaran setelah project selesai"];
+  return [
+    `${dp}% DP saat kick-off project`,
+    `Sisa pembayaran ${100 - dp}% setelah project selesai`,
+  ];
+}
+
 
 /* -------------------------------------------------------------------------
  * Timeline & deadline
