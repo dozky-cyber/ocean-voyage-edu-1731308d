@@ -9,16 +9,19 @@
 //   POTENTIAL FEATURE RECOMMENDATION, each with a clear business reason.
 
 import {
-  FEATURE_LIBRARY,
   briefCoveredFeatureIds,
   briefIncludedFeatures,
-  detectSelectedFeatures,
   resolvePackage,
-  type LibraryFeature,
   type PackageDefinition,
   type PackageKey,
 } from "./admin/feature-library";
+import {
+  selectConsultantFeatures,
+  type ConsultantPick,
+  type ConsultantTier,
+} from "./admin/consultant-library";
 import type { OrderBriefData } from "./order-brief";
+
 
 export type ConsultantOption = {
   packageName: string;
@@ -46,62 +49,8 @@ export type BriefInsight = {
 export const OPTIONAL_DISCLAIMER =
   "Rekomendasi fitur tambahan merupakan hasil analisa kebutuhan bisnis Team KERJAKU dan dapat dikembangkan sesuai kebutuhan. Fitur ini bukan bagian dari scope utama sebelum dilakukan persetujuan lebih lanjut.";
 
-/** Features that may only appear when the brief explicitly asks for them. */
-const RESTRICTED_FEATURE_IDS = new Set([
-  "api",
-  "payment-gateway",
-  "order-online",
-  "invoice-system",
-  "crm",
-  "notification",
-  "login-user",
-  "dashboard-admin",
-  "custom",
-]);
 
-/**
- * FLEXIBLE RECOMMENDATION RULE — light, business-safe development ideas that
- * fit almost any small business. Never enterprise (API, CRM, payment, automation).
- */
-const GENERIC_IDEAS = [
-  {
-    name: "Customer Review / Testimonial",
-    keywords: ["testimoni", "review", "ulasan", "rating"],
-    description:
-      "Menampilkan pengalaman pelanggan sebelumnya pada halaman website secara rapi dan terpercaya.",
-    reason: "Meningkatkan kepercayaan calon customer melalui pengalaman pelanggan sebelumnya.",
-  },
-  {
-    name: "SEO Basic Optimization",
-    keywords: ["seo", "google search", "pencarian google", "mesin pencari"],
-    description:
-      "Penataan judul, deskripsi, struktur halaman, dan kecepatan website agar siap diindeks mesin pencari.",
-    reason: "Membantu website lebih mudah ditemukan calon customer melalui pencarian online.",
-  },
-  {
-    name: "Galeri Foto / Dokumentasi",
-    keywords: ["galeri", "gallery", "dokumentasi foto"],
-    description: "Halaman galeri untuk menampilkan dokumentasi hasil kerja atau produk terbaru.",
-    reason: "Membantu calon customer melihat kualitas hasil kerja sebelum menghubungi bisnis.",
-  },
-];
 
-/** Low-complexity features that are safe to suggest for most businesses. */
-
-const SAFE_OPTIONAL_IDS = [
-  "social-media",
-  "maps",
-  "download-dokumen",
-  "form-konsultasi",
-  "database-customer",
-  "request-quotation",
-  "booking",
-  "katalog",
-  "live-chat",
-  "email",
-  "whatsapp",
-  "contact-form",
-];
 
 const PACKAGE_RANK: Record<PackageKey, number> = {
   "Landing Page": 0,
@@ -240,40 +189,8 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition) {
   return parts.join(" ");
 }
 
-function describeFeature(feature: LibraryFeature, brief: OrderBriefData) {
-  const business = brief.business?.trim() || "bisnis Anda";
-  return `${feature.description} Membantu ${business} mengembangkan proses ini secara lebih terstruktur.`;
-}
 
-function optionalReason(feature: LibraryFeature, brief: OrderBriefData) {
-  const business = brief.business?.trim() || "bisnis Anda";
-  switch (feature.id) {
-    case "social-media":
-      return `Membantu calon client melihat aktivitas dan kredibilitas ${business} melalui sosial media.`;
-    case "database-customer":
-      return "Membantu pengelolaan data customer/kontak agar pencarian dan follow up lebih mudah.";
-    case "booking":
-      return "Memudahkan customer mengirim kebutuhan atau memesan jadwal secara lebih terstruktur.";
-    case "form-konsultasi":
-      return "Memudahkan calon customer mengirim kebutuhan awal secara lebih rapi.";
-    case "request-quotation":
-      return "Memudahkan calon customer meminta penawaran tanpa proses manual bolak-balik.";
-    case "download-dokumen":
-      return "Membantu calon customer mendapatkan company profile atau katalog secara mandiri.";
-    case "maps":
-      return "Membantu customer menemukan lokasi bisnis dengan cepat.";
-    case "katalog":
-      return "Membantu menampilkan produk atau layanan secara lebih lengkap dan rapi.";
-    case "live-chat":
-      return "Membantu merespon pertanyaan calon customer lebih cepat langsung dari website.";
-    case "contact-form":
-      return "Memberikan jalur kontak alternatif bagi calon customer yang belum siap menghubungi via WhatsApp.";
-    case "email":
-      return "Memastikan permintaan customer tetap tercatat rapi melalui email bisnis.";
-    default:
-      return `Relevan dengan kebutuhan ${business} pada Order Brief dan dapat dikembangkan bertahap.`;
-  }
-}
+
 
 /**
  * TEAM KERJAKU CONSULTANT RECOMMENDATION.
@@ -282,53 +199,17 @@ function optionalReason(feature: LibraryFeature, brief: OrderBriefData) {
 function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
-  coveredIds: Set<string>,
+  picks: ConsultantPick[],
 ): { option: ConsultantOption; ids: string[] } | null {
+  if (!picks.length) return null;
   const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
   if (upgradeKey === base) return null;
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
   const business = brief.business?.trim() || "bisnis Anda";
 
-  const pool: { id: string; title: string; benefit: string; optional?: boolean }[] = [
-    {
-      id: "dashboard-admin",
-      title: "Dashboard Admin / Content Management",
-      benefit: `Dapat memperbarui konten, foto, dan portfolio terbaru ${business} secara mandiri tanpa perlu meminta perubahan setiap kali ada update.`,
-    },
-    {
-      id: "booking",
-      title: "Booking / Reservasi",
-      benefit:
-        "Membantu customer mengirim kebutuhan berdasarkan tanggal atau jadwal acara secara lebih terstruktur.",
-    },
-    {
-      id: "social-media",
-      title: "Social Media Integration",
-      benefit:
-        "Membantu calon customer melihat aktivitas terbaru dan meningkatkan kepercayaan sebelum melakukan pemesanan.",
-    },
-    {
-      id: "database-customer",
-      title: "Database Customer / Riwayat Pesanan",
-      benefit:
-        "Membantu menyimpan data customer dan riwayat pemesanan untuk kebutuhan follow up dan pelayanan pelanggan.",
-      optional: true,
-    },
-    {
-      id: "reporting",
-      title: "Laporan Penjualan Sederhana",
-      benefit:
-        "Membantu owner mengetahui jumlah transaksi dan pemasukan harian tanpa membuat sistem laporan yang kompleks.",
-      optional: true,
-    },
-  ];
-
-  const picked = pool.filter((item) => !coveredIds.has(item.id)).slice(0, 5);
-  if (!picked.length) return null;
-
   return {
-    ids: picked.map((item) => item.id),
+    ids: picks.map((item) => item.id),
     option: {
       packageName: PACKAGE_LABEL[upgradeKey],
       intro: [
@@ -336,7 +217,7 @@ function buildConsultantOption(
         `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
         `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
       ],
-      items: picked.map(({ id: _id, ...rest }) => rest),
+      items: picks.map((item) => ({ title: item.name, benefit: item.benefit })),
       comparison: [
         { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
         { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
@@ -345,6 +226,7 @@ function buildConsultantOption(
     },
   };
 }
+
 
 
 function buildNextSteps(base: string, upgrade: string | null) {
@@ -394,61 +276,48 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       ? resolvePackage(ceilingKey)
       : requested;
 
-  const selected = detectSelectedFeatures([context]);
-
   // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
   // list, verbatim. Package defaults never enter the scope.
   const included = briefIncludedFeatures(brief.features);
   const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
 
+  // BUSINESS FEATURE CONSULTANT LIBRARY: analisa jenis bisnis, masalah, tujuan,
+  // jumlah user, dan proses operasional — bukan generator fitur.
+  const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
+  const maxTier: ConsultantTier =
+    pkg.key === "Enterprise System"
+      ? "enterprise"
+      : pkg.key === "Digital Workflow Solution"
+        ? "business"
+        : pkg.key === "Professional System"
+          ? "business"
+          : "professional";
+
+  const picks = selectConsultantFeatures({
+    businessText,
+    context,
+    maxTier,
+    excludeIds: [...coreIds],
+    excludeTitles: included,
+    limit: 7,
+  });
+
+  // CONSULTANT / POTENTIAL SPLIT RULE: 1-2 ide relevan cukup masuk ke
+  // Consultant Recommendation; sisanya baru menjadi Potential Feature.
+  const consultantPicks = picks.length <= 2 ? picks : picks.slice(0, 4);
+  const leftover = picks.length <= 2 ? [] : picks.slice(4, 7);
+
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, coreIds);
+  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
   const consultant = built?.option ?? null;
-  const consultantIds = new Set(built?.ids ?? []);
   const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
 
-  // DUPLICATE PROTECTION: skip anything already covered by the brief, by the
-  // detected features, or by the consultant development option.
-  const isDuplicate = (feature: LibraryFeature) => {
-    if (coreIds.has(feature.id) || consultantIds.has(feature.id)) return true;
-    if (selected.some((s) => s.id === feature.id)) return true;
-    const key = normalize(feature.name);
-    return consultantTitles.some((title) => title.includes(key) || key.includes(title));
-  };
-
-  // Optional recommendations: relevant, non-duplicate, never package-inflating.
-  let optional: { name: string; description: string; reason: string }[] = FEATURE_LIBRARY.filter(
-    (feature) => {
-      if (feature.id === "custom") return false;
-      if (isDuplicate(feature)) return false;
-      const explicitlyAsked = hasAny(context, [feature.name, ...feature.keywords]);
-      if (RESTRICTED_FEATURE_IDS.has(feature.id)) return explicitlyAsked;
-      return explicitlyAsked || SAFE_OPTIONAL_IDS.includes(feature.id);
-    },
-  )
-    .sort((a, b) => {
-      const aSafe = SAFE_OPTIONAL_IDS.indexOf(a.id);
-      const bSafe = SAFE_OPTIONAL_IDS.indexOf(b.id);
-      return a.priority - b.priority || aSafe - bSafe || a.no - b.no;
-    })
-    .slice(0, 3)
-    .map((f) => ({
-      name: f.name,
-      description: describeFeature(f, brief),
-      reason: optionalReason(f, brief),
-    }));
-
-  // FLEXIBLE RECOMMENDATION RULE: light, business-safe ideas (no enterprise
-  // features) to complete the section when the library has little to offer.
-  for (const idea of GENERIC_IDEAS) {
-    if (optional.length >= 3) break;
-    const key = normalize(idea.name);
-    if (context.includes(key) || hasAny(context, idea.keywords)) continue;
-    if (consultantTitles.some((title) => title.includes(key) || key.includes(title))) continue;
-    if (optional.some((item) => normalize(item.name).includes(key))) continue;
-    optional.push({ name: idea.name, description: idea.description, reason: idea.reason });
-  }
+  let optional = (consultant ? leftover : picks.slice(0, 3)).map((f) => ({
+    name: f.name,
+    description: f.fn,
+    reason: f.benefit,
+  }));
 
   // POTENTIAL FEATURE LIMIT RULE: a single leftover idea is folded into the
   // consultant option instead of creating a nearly empty section.
@@ -460,6 +329,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     });
     optional = [];
   }
+
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
