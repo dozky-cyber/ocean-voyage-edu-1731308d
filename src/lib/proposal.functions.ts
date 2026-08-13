@@ -60,6 +60,15 @@ async function loadProposalDoc(
     timelineNote: (proposal.timeline_note as string) ?? null,
     sections,
     pricing,
+    briefTimeline: (proposal.brief_timeline as string) ?? null,
+    estimatedTimeline: (proposal.estimated_timeline as string) ?? null,
+    enhancements: Array.isArray(proposal.enhancements)
+      ? (proposal.enhancements as unknown[]).map((row) => ({
+          name: String((row as { name?: unknown })?.name ?? ""),
+          benefit: String((row as { benefit?: unknown })?.benefit ?? ""),
+          amount: Number((row as { amount?: unknown })?.amount ?? 0) || 0,
+        }))
+      : [],
     createdAt: String(proposal.created_at ?? new Date().toISOString()),
   };
 

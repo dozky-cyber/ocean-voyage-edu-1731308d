@@ -229,6 +229,18 @@ export const saveProposalFn = createServerFn({ method: "POST" })
           )
           .max(30)
           .optional(),
+        enhancements: z
+          .array(
+            z.object({
+              name: z.string().max(200),
+              benefit: z.string().max(500),
+              amount: z.number().min(0).max(1_000_000_000_000),
+            }),
+          )
+          .max(30)
+          .optional(),
+        brief_timeline: z.string().max(300).nullable().optional(),
+        estimated_timeline: z.string().max(300).nullable().optional(),
         currency: z.string().max(8).nullable().optional(),
         valid_until: z.string().max(20).nullable().optional(),
         investment_note: z.string().max(4000).nullable().optional(),
