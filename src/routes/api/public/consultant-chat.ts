@@ -186,7 +186,29 @@ Maps/Lokasi (toko fisik, resto, laundry, salon, showroom, bengkel — wajib untu
 Membership (gym, laundry, salon, subscription) · API Integration (hanya kebutuhan khusus) ·
 CRM (sales team, banyak customer) · Automation (notifikasi, reminder, workflow) ·
 Multi User Management (owner + karyawan) · Notification System (status order, booking masuk) ·
-Search Feature (katalog besar, distributor) · FAQ/Knowledge · Customer Review/Testimonial.
+Search Feature (katalog besar, distributor) · FAQ/Knowledge · Customer Review/Testimonial ·
+Order Management (laundry, bakery, catering, bengkel, service, florist custom, percetakan, konveksi —
+mengelola pesanan dari masuk sampai selesai; JANGAN untuk company profile/portfolio tanpa transaksi) ·
+Digital Nota/Digital Invoice (bukti transaksi digital: laundry, retail, kuliner, bengkel, jasa) ·
+Status Tracking (progress pekerjaan: laundry, service, bengkel, produksi custom, catering, percetakan) ·
+Customer History/Follow Up (riwayat customer untuk repeat order — BUKAN Multi User, bisa dipakai owner
+sendiri tanpa team) · Schedule Management (jadwal kerja internal bisnis, berbeda dari Booking yang
+dipilih customer: fotografer, bengkel, service, catering event, wedding organizer).
+
+BUSINESS OPERATION PRIORITY RULE:
+- Masalah order manual → prioritaskan Order Management.
+- Masalah nota/bukti pembayaran → prioritaskan Digital Nota.
+- Customer sering bertanya status → prioritaskan Status Tracking + Notification.
+- Masalah repeat order → pertimbangkan Customer History.
+- Masalah jadwal pekerjaan → pertimbangkan Schedule Management.
+
+FEATURE RELATION RULE:
+- Database Customer/Customer History = menyimpan data & riwayat customer (boleh untuk owner personal).
+- Multi User = mengatur banyak pengguna sistem (hanya bila ada team/karyawan).
+- Keduanya berbeda dan tidak boleh dipertukarkan.
+
+FINAL RULE OPERASIONAL: fitur operasional dipakai untuk menyelesaikan proses bisnis, bukan untuk dijual.
+Jangan memberikan fitur kompleks bila solusi sederhana sudah menyelesaikan masalah customer.
 
 CARA MEMAKAI LIBRARY (WAJIB):
 - Jangan menjadi feature generator. Analisa dulu: jenis bisnis, masalah bisnis, tujuan sistem,

@@ -384,6 +384,130 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     signals: ["testimoni", "review", "ulasan", "kepercayaan", "rating"],
     aliases: ["testimoni", "review", "ulasan", "rating"],
   },
+  // ==== BUSINESS OPERATION FEATURE LIBRARY (26-30) ====
+  // Bukan fitur wajib. Hanya dipakai bila Business Problem, Business Flow,
+  // skala bisnis, dan tujuan customer benar-benar membutuhkannya.
+  {
+    id: "order-management",
+    name: "Order Management",
+    fn: "Mengelola perjalanan pesanan customer dari order masuk sampai pesanan selesai.",
+    benefit: "Pesanan tidak tertukar dan owner mudah melihat pekerjaan yang sedang berjalan.",
+    tier: "professional",
+    fits: [
+      "laundry",
+      "bakery",
+      "pastry",
+      "catering",
+      "bengkel",
+      "service",
+      "servis",
+      "florist",
+      "percetakan",
+      "konveksi",
+      "produksi",
+    ],
+    signals: [
+      "order",
+      "pesanan",
+      "order manual",
+      "catat manual",
+      "pencatatan",
+      "pesanan tertukar",
+      "antrian pekerjaan",
+    ],
+    aliases: ["order management", "manajemen order", "kelola pesanan", "manajemen pesanan"],
+    // Tidak relevan untuk company profile / portfolio tanpa transaksi.
+    requires: [
+      "order",
+      "pesanan",
+      "transaksi",
+      "pembelian",
+      "pekerjaan",
+      "produksi",
+      "jual",
+      "customer order",
+    ],
+  },
+  {
+    id: "digital-nota",
+    name: "Digital Nota / Digital Invoice",
+    fn: "Membuat bukti transaksi digital yang dikirim ke customer setelah pembelian atau pekerjaan selesai.",
+    benefit: "Bukti transaksi rapi, tidak mudah hilang, dan mudah ditelusuri kembali.",
+    tier: "professional",
+    fits: [
+      "laundry",
+      "retail",
+      "toko",
+      "kuliner",
+      "bakery",
+      "bengkel",
+      "service",
+      "servis",
+      "catering",
+      "jasa",
+    ],
+    signals: ["nota", "invoice", "kwitansi", "bukti transaksi", "struk", "pembayaran"],
+    aliases: ["digital nota", "nota digital", "invoice", "nota", "struk digital"],
+    requires: ["nota", "invoice", "struk", "kwitansi", "transaksi", "pembayaran", "order", "pesanan"],
+  },
+  {
+    id: "status-tracking",
+    name: "Status Tracking / Progress Tracking",
+    fn: "Memberikan informasi perkembangan pekerjaan atau pesanan kepada customer.",
+    benefit: "Customer tidak perlu bertanya progress karena status pekerjaan terlihat jelas.",
+    tier: "professional",
+    fits: ["laundry", "service", "servis", "bengkel", "produksi", "catering", "percetakan", "konveksi"],
+    signals: [
+      "status",
+      "progress",
+      "tahapan",
+      "sedang dikerjakan",
+      "sudah selesai",
+      "bertanya progress",
+      "update pekerjaan",
+    ],
+    aliases: ["status tracking", "progress tracking", "tracking status", "lacak status"],
+    requires: ["status", "progress", "proses", "pengerjaan", "dikerjakan", "tahapan", "order", "pesanan"],
+  },
+  {
+    id: "customer-history",
+    name: "Customer History / Follow Up",
+    fn: "Menyimpan riwayat customer dan transaksinya untuk pelayanan dan follow up berikutnya.",
+    benefit: "Owner bisa follow up pelanggan lama dan mendorong repeat order tanpa catatan manual.",
+    tier: "professional",
+    // FEATURE RELATION RULE: berbeda dengan Multi User — dapat dipakai owner
+    // sendiri tanpa membutuhkan team.
+    fits: ["laundry", "salon", "bengkel", "florist", "catering", "jasa", "service", "servis", "klinik"],
+    signals: [
+      "repeat order",
+      "pelanggan lama",
+      "follow up",
+      "riwayat pembelian",
+      "promo pelanggan",
+      "pelanggan kembali",
+    ],
+    aliases: ["customer history", "riwayat customer", "riwayat pelanggan", "follow up customer"],
+    simplerAlternativeId: "database-customer",
+  },
+  {
+    id: "schedule-management",
+    name: "Schedule Management",
+    fn: "Mengatur jadwal pekerjaan internal bisnis (berbeda dengan Booking yang dipilih customer).",
+    benefit: "Jadwal pekerjaan harian tersusun rapi sehingga tidak ada bentrok atau job terlewat.",
+    tier: "business",
+    fits: ["fotografer", "bengkel", "service", "servis", "catering", "event", "wedding", "organizer"],
+    signals: [
+      "jadwal pekerjaan",
+      "atur jadwal",
+      "jadwal event",
+      "penjadwalan",
+      "jadwal harian",
+      "bentrok jadwal",
+    ],
+    aliases: ["schedule management", "manajemen jadwal", "jadwal internal", "penjadwalan"],
+    requires: ["jadwal", "event", "schedule", "penjadwalan", "agenda"],
+    simplerAlternativeId: "booking",
+  },
 ];
 
 const TIER_RANK: Record<ConsultantTier, number> = {
@@ -475,6 +599,38 @@ export function isPersonalScale(scaleText: string, context = ""): boolean {
   ]);
   if (hasTeam) return false;
   return personalSignal || noTeam;
+}
+
+/**
+ * BUSINESS OPERATION PRIORITY RULE.
+ * Jika Business Problem menyebut masalah operasional tertentu, fitur operasional
+ * yang menyelesaikan masalah itu diprioritaskan (bukan diwajibkan).
+ */
+const OPERATION_PRIORITY: { tokens: string[]; ids: string[] }[] = [
+  {
+    tokens: ["order manual", "catat manual", "pencatatan manual", "pesanan tertukar", "order masih", "pesanan manual"],
+    ids: ["order-management"],
+  },
+  {
+    tokens: ["nota", "invoice", "struk", "kwitansi", "bukti transaksi", "bukti pembayaran"],
+    ids: ["digital-nota"],
+  },
+  {
+    tokens: ["bertanya status", "bertanya progress", "tanya progress", "update status", "status pekerjaan"],
+    ids: ["status-tracking", "notification"],
+  },
+  { tokens: ["repeat order", "pelanggan lama", "follow up", "pelanggan kembali"], ids: ["customer-history"] },
+  { tokens: ["jadwal pekerjaan", "atur jadwal", "bentrok jadwal", "jadwal event", "penjadwalan"], ids: ["schedule-management"] },
+];
+
+function operationPriorityIds(problem: string, context: string): Set<string> {
+  const ids = new Set<string>();
+  for (const rule of OPERATION_PRIORITY) {
+    if (includesAnyPositive(problem, rule.tokens) || includesAnyPositive(context, rule.tokens)) {
+      rule.ids.forEach((id) => ids.add(id));
+    }
+  }
+  return ids;
 }
 
 /** Fitur yang hanya masuk akal jika bisnis dikelola lebih dari satu orang. */
@@ -593,6 +749,8 @@ export function selectConsultantFeatures(input: {
   // BUSINESS FLOW PATTERN LIBRARY: pahami alur bisnis dulu, baru pilih fitur.
   const pattern = detectBusinessFlowPattern(input.businessText, input.context);
   const priority = new Set(pattern?.priority ?? []);
+  const opPriority = operationPriorityIds(problem, context);
+  opPriority.forEach((id) => priority.add(id));
   const conditional = new Set(pattern?.conditional ?? []);
   const notPriority = new Set(pattern?.notPriority ?? []);
 
@@ -646,6 +804,7 @@ export function selectConsultantFeatures(input: {
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
+      (opPriority.has(feature.id) ? 2 : 0) +
       (solvesProblem ? 2 : 0) +
       validation.reasons.length -
       TIER_RANK[feature.tier] * 0.25;
