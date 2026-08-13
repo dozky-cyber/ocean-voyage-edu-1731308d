@@ -480,14 +480,24 @@ function potentialFeatures(doc: Doc, insight: BriefInsight) {
   doc.keep((d) => {
     sectionTitle(d, "Potential Feature Recommendation");
     d.paragraph(
-      "Contoh pengembangan tambahan yang relevan untuk bisnis Anda. Fitur ini bukan bagian dari penawaran utama dan tidak termasuk dalam harga.",
+      "Pengembangan tambahan yang relevan untuk bisnis Anda, bukan bagian dari penawaran utama dan tidak termasuk dalam harga.",
       MARGIN,
       9.5,
       false,
       CONTENT_W,
       MUTED,
     );
-    d.y -= 8;
+    d.y -= 2;
+    d.paragraph(
+      "Fase 1 dapat dikerjakan bersamaan dengan kebutuhan utama bila budget memungkinkan. Fase 2 disiapkan sebagai pengembangan lanjutan agar biaya awal tetap terkendali.",
+      MARGIN,
+      9.5,
+      false,
+      CONTENT_W,
+      MUTED,
+    );
+    d.y -= 10;
+
     optionalItem(d, items[0]!, items.length > 1);
   });
 
