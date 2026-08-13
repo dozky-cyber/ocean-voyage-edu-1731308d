@@ -270,17 +270,20 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   doc.keep((d) => {
     sectionTitle(d, "Project Detail");
     keyValueGrid(d, [
-      { label: "User Sistem", value: brief.usersScale || "-" },
-      { label: "Kebutuhan Admin/Team", value: brief.adminNeeds || "-" },
-      { label: "Timeline", value: brief.timeline || "-" },
-      { label: "Budget", value: brief.budget || "-" },
+      { label: "User Sistem", value: brief.usersScale || "Belum disampaikan saat konsultasi awal" },
+      { label: "Kebutuhan Admin/Team", value: resolveAdminNeeds(brief) },
+      { label: "Timeline", value: brief.timeline || "Belum ditentukan" },
+      { label: "Budget", value: brief.budget || "Belum disampaikan" },
     ]);
   });
 
   packageRecommendation(doc, insight);
+  readinessBlock(doc, insight);
+  problemSolutionMap(doc, insight);
   consultantRecommendation(doc, insight);
   potentialFeatures(doc, insight);
   nextSteps(doc, insight);
+
 
   footer(doc);
   return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
