@@ -173,6 +173,8 @@ function buildConsultantOption(
   allowEnterprise: boolean,
 ): { option: ConsultantOption; ids: string[] } | null {
   if (!picks.length) return null;
+  // CORE / GROWTH SPLIT RULE: bahasa berbeda saat fitur menyelesaikan masalah.
+  const hasCore = picks.some((item) => item.role === "core");
   // PACKAGE LEVEL CONTROL RULE: opsi pengembangan maksimal satu tingkat, dan
   // tidak pernah menyentuh Enterprise untuk bisnis satu lokasi/skala kecil.
   const maxRank = allowEnterprise
@@ -190,11 +192,17 @@ function buildConsultantOption(
     ids: picks.map((item) => item.id),
     option: {
       packageName: PACKAGE_LABEL[upgradeKey],
-      intro: [
-        `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
-        `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
-        `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
-      ],
+      intro: hasCore
+        ? [
+            `Dari masalah yang ${name} sampaikan, Team KERJAKU melihat ada beberapa bagian operasional ${business} yang paling terasa dampaknya bila dibantu sistem.`,
+            `Fitur berikut dipilih karena langsung menjawab masalah tersebut, bukan sekadar menambah fitur.`,
+            `${PACKAGE_LABEL[base]} tetap menjadi acuan Order Brief; pengerjaan fitur di bawah ini dapat menyesuaikan ke ${PACKAGE_LABEL[upgradeKey]} apabila dibutuhkan.`,
+          ]
+        : [
+            `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
+            `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
+            `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
+          ],
       items: picks.map((item) => ({
         title: item.name,
         benefit: item.benefit,
