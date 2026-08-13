@@ -601,6 +601,38 @@ export function isPersonalScale(scaleText: string, context = ""): boolean {
   return personalSignal || noTeam;
 }
 
+/**
+ * BUSINESS OPERATION PRIORITY RULE.
+ * Jika Business Problem menyebut masalah operasional tertentu, fitur operasional
+ * yang menyelesaikan masalah itu diprioritaskan (bukan diwajibkan).
+ */
+const OPERATION_PRIORITY: { tokens: string[]; ids: string[] }[] = [
+  {
+    tokens: ["order manual", "catat manual", "pencatatan manual", "pesanan tertukar", "order masih", "pesanan manual"],
+    ids: ["order-management"],
+  },
+  {
+    tokens: ["nota", "invoice", "struk", "kwitansi", "bukti transaksi", "bukti pembayaran"],
+    ids: ["digital-nota"],
+  },
+  {
+    tokens: ["bertanya status", "bertanya progress", "tanya progress", "update status", "status pekerjaan"],
+    ids: ["status-tracking", "notification"],
+  },
+  { tokens: ["repeat order", "pelanggan lama", "follow up", "pelanggan kembali"], ids: ["customer-history"] },
+  { tokens: ["jadwal pekerjaan", "atur jadwal", "bentrok jadwal", "jadwal event", "penjadwalan"], ids: ["schedule-management"] },
+];
+
+function operationPriorityIds(problem: string, context: string): Set<string> {
+  const ids = new Set<string>();
+  for (const rule of OPERATION_PRIORITY) {
+    if (includesAnyPositive(problem, rule.tokens) || includesAnyPositive(context, rule.tokens)) {
+      rule.ids.forEach((id) => ids.add(id));
+    }
+  }
+  return ids;
+}
+
 /** Fitur yang hanya masuk akal jika bisnis dikelola lebih dari satu orang. */
 const TEAM_ONLY_FEATURES = new Set(["multi-user", "dashboard-admin", "automation", "crm", "api"]);
 
@@ -717,6 +749,8 @@ export function selectConsultantFeatures(input: {
   // BUSINESS FLOW PATTERN LIBRARY: pahami alur bisnis dulu, baru pilih fitur.
   const pattern = detectBusinessFlowPattern(input.businessText, input.context);
   const priority = new Set(pattern?.priority ?? []);
+  const opPriority = operationPriorityIds(problem, context);
+  opPriority.forEach((id) => priority.add(id));
   const conditional = new Set(pattern?.conditional ?? []);
   const notPriority = new Set(pattern?.notPriority ?? []);
 
@@ -770,6 +804,7 @@ export function selectConsultantFeatures(input: {
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
+      (opPriority.has(feature.id) ? 2 : 0) +
       (solvesProblem ? 2 : 0) +
       validation.reasons.length -
       TIER_RANK[feature.tier] * 0.25;
