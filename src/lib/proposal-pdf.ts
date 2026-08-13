@@ -130,28 +130,24 @@ function bodyBlock(doc: Doc, body: string) {
   doc.y -= 8;
 }
 
-function pricingTable(doc: Doc, data: ProposalDocData) {
-  if (!data.pricing.length) return;
-  sectionTitle(doc, "Investment");
-  const amountW = 120;
-  const itemW = CONTENT_W - amountW - 12;
+type Row = { item: string; detail: string; amount: number };
 
-  const firstDetail = data.pricing[0]?.detail
-    ? wrap(data.pricing[0]!.detail!, 9, false, itemW).length
-    : 0;
-  doc.ensure(62 + firstDetail * 12);
-  doc.text("ITEM", MARGIN, doc.y, 7.5, true, MUTED);
-  doc.text("JUMLAH", PAGE_W - MARGIN - textWidth("JUMLAH", 7.5, true), doc.y, 7.5, true, MUTED);
+function groupHeader(doc: Doc, label: string) {
+  doc.ensure(34);
+  doc.text(label.toUpperCase(), MARGIN, doc.y, 8.5, true, INK);
   doc.y -= 8;
   doc.line(MARGIN, doc.y, PAGE_W - MARGIN, doc.y);
   doc.y -= 16;
+}
 
-  let total = 0;
-  for (const row of data.pricing) {
-    total += Number(row.amount) || 0;
+function priceRows(doc: Doc, rows: Row[], currency: string) {
+  const itemW = CONTENT_W - 132;
+  let subtotal = 0;
+  for (const row of rows) {
+    subtotal += Number(row.amount) || 0;
     const detailLines = row.detail ? wrap(row.detail, 9, false, itemW) : [];
     doc.ensure(38 + detailLines.length * 12);
-    const amount = money(row.amount, data.currency);
+    const amount = money(row.amount, currency);
     doc.text(row.item || "-", MARGIN, doc.y, 10, true);
     doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false);
     doc.y -= 14;
@@ -163,10 +159,85 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
     doc.line(MARGIN, doc.y, PAGE_W - MARGIN, doc.y, "0.92 0.94 0.96");
     doc.y -= 12;
   }
+  return subtotal;
+}
+
+function subtotalLine(doc: Doc, label: string, value: number, currency: string) {
+  doc.ensure(24);
+  const text = money(value, currency);
+  doc.text(label.toUpperCase(), MARGIN, doc.y, 8.5, true, MUTED);
+  doc.text(text, PAGE_W - MARGIN - textWidth(text, 10, true), doc.y, 10, true, INK);
+  doc.y -= 22;
+}
+
+function enhancementSection(doc: Doc, data: ProposalDocData) {
+  const items = data.enhancements ?? [];
+  if (!items.length) return;
+  sectionTitle(doc, "Recommended Enhancement");
+  doc.paragraph(
+    "Rekomendasi pengembangan tambahan berdasarkan analisa kebutuhan bisnis. Bersifat opsional dan dapat dikerjakan bertahap.",
+    MARGIN,
+    9.5,
+    false,
+    CONTENT_W,
+    MUTED,
+    14,
+  );
+  doc.y -= 6;
+  for (const item of items) {
+    const benefitLines = item.benefit ? wrap(item.benefit, 9, false, CONTENT_W - 140) : [];
+    doc.ensure(34 + benefitLines.length * 12);
+    const amount = money(item.amount, data.currency);
+    doc.text(item.name || "-", MARGIN, doc.y, 10, true);
+    doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false, BRAND);
+    doc.y -= 14;
+    benefitLines.forEach((line) => {
+      doc.text(line, MARGIN, doc.y, 9, false, MUTED);
+      doc.y -= 12;
+    });
+    doc.y -= 10;
+  }
+}
+
+function timelineSection(doc: Doc, data: ProposalDocData) {
+  const block = buildTimelineBlock({
+    briefTimeline: data.briefTimeline ?? null,
+    estimatedTimeline: data.estimatedTimeline ?? null,
+    createdAt: data.createdAt,
+  });
+  if (!block) return;
+  sectionTitle(doc, block.heading);
+  bodyBlock(doc, block.lines.join("\n"));
+}
+
+function pricingTable(doc: Doc, data: ProposalDocData) {
+  const core = data.pricing;
+  const optional = (data.enhancements ?? []).map((e) => ({
+    item: e.name,
+    detail: e.benefit,
+    amount: Number(e.amount) || 0,
+  }));
+  if (!core.length && !optional.length) return;
+
+  sectionTitle(doc, "Investment");
+
+  let coreTotal = 0;
+  if (core.length) {
+    groupHeader(doc, "Core Solution");
+    coreTotal = priceRows(doc, core, data.currency);
+    subtotalLine(doc, "Subtotal Core Solution", coreTotal, data.currency);
+  }
+
+  let optionalTotal = 0;
+  if (optional.length) {
+    groupHeader(doc, "Optional Enhancement");
+    optionalTotal = priceRows(doc, optional, data.currency);
+    subtotalLine(doc, "Subtotal Optional Enhancement", optionalTotal, data.currency);
+  }
 
   doc.ensure(34);
-  const totalLabel = "TOTAL INVESTASI";
-  const totalValue = money(total, data.currency);
+  const totalLabel = "TOTAL INVESTMENT";
+  const totalValue = money(coreTotal + optionalTotal, data.currency);
   const boxTop = doc.y - 30;
   doc.rect(MARGIN, boxTop, CONTENT_W, 30, CARD_BG);
   doc.text(totalLabel, MARGIN + 14, boxTop + 11, 9, true, MUTED);
