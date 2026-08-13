@@ -174,9 +174,9 @@ export const PROBLEM_RULES: ProblemRule[] = [
 /** Pengembangan default per pola alur bisnis (dipakai bila core sudah ada). */
 const PATTERN_GROWTH: Record<string, string[]> = {
   retail: ["notification", "database-customer", "laporan-penjualan"],
-  process: ["notification", "database-customer", "laporan-penjualan"],
-  service: ["notification", "customer-history", "laporan-penjualan"],
-  distributor: ["laporan-penjualan", "database-customer", "riwayat-transaksi"],
+  "process-status": ["notification", "database-customer", "laporan-penjualan"],
+  "service-appointment": ["notification", "customer-history", "laporan-penjualan"],
+  distribution: ["laporan-penjualan", "database-customer", "riwayat-transaksi"],
   culinary: ["notification", "database-customer", "laporan-penjualan"],
 };
 
