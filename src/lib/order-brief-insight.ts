@@ -229,10 +229,18 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   picks: ConsultantPick[],
+  allowEnterprise: boolean,
 ): { option: ConsultantOption; ids: string[] } | null {
   if (!picks.length) return null;
-  const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
+  // PACKAGE LEVEL CONTROL RULE: opsi pengembangan maksimal satu tingkat, dan
+  // tidak pernah menyentuh Enterprise untuk bisnis satu lokasi/skala kecil.
+  const maxRank = allowEnterprise
+    ? PACKAGE_ORDER.length - 1
+    : PACKAGE_RANK["Digital Workflow Solution"];
+  const upgradeIndex = Math.min(PACKAGE_RANK[base] + 1, maxRank);
+  const upgradeKey = PACKAGE_ORDER[upgradeIndex]!;
   if (upgradeKey === base) return null;
+
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
   const business = brief.business?.trim() || "bisnis Anda";
