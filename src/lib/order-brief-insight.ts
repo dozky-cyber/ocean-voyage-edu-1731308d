@@ -353,7 +353,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
+  const built = buildConsultantOption(brief, pkg.key, consultantPicks, allowEnterprise);
   const consultant = built?.option ?? null;
   const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
 
