@@ -251,11 +251,25 @@ function buildProblemMap(input: {
       if (growth) {
         return { problem, solution: growthById.get(growth)!, source: "optional" as const };
       }
+      // Fallback kata kunci: masalah yang sudah dijawab langsung oleh fitur
+      // pilihan customer (mis. "belum punya website portfolio" -> Portfolio).
+      const words = new Set(
+        normalize(problem)
+          .split(/[^a-z0-9]+/)
+          .filter((w) => w.length > 4),
+      );
+      const matched = brief.features.find((feature) =>
+        normalize(feature)
+          .split(/[^a-z0-9]+/)
+          .some((w) => w.length > 4 && words.has(w)),
+      );
+      if (matched) return { problem, solution: matched, source: "scope" as const };
       return {
         problem,
         solution: "Dibahas pada tahap pengecekan kebutuhan bersama Team KERJAKU",
         source: "open" as const,
       };
+
     })
     .slice(0, 8);
 }
