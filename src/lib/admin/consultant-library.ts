@@ -9,6 +9,8 @@
  * FINAL PRINCIPLE: jangan menjual package — berikan konsultasi.
  */
 
+import { detectBusinessFlowPattern } from "./business-flow-patterns";
+
 export type ConsultantTier = "basic" | "professional" | "business" | "enterprise";
 
 export type ConsultantFeature = {
