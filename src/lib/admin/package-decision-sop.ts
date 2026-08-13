@@ -296,7 +296,6 @@ function buildRationale(
   blockedReasons: string[],
 ) {
   const parts: string[] = [];
-  parts.push(`Penilaian dilakukan berdasarkan tingkat kompleksitas bisnis, bukan jumlah fitur.`);
   parts.push(`Dari brief terlihat bahwa ${levelCharacter(level)}.`);
   if (signals.length) {
     parts.push(`Dasar penilaian: ${signals.join("; ")}.`);

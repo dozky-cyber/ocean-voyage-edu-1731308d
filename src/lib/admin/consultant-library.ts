@@ -800,6 +800,16 @@ export function selectConsultantFeatures(input: {
     "barang habis",
     "inventory",
   ]);
+  const receiptProblem = includesAnyPositive(problemScope, [
+    "nota",
+    "invoice",
+    "struk",
+    "kwitansi",
+    "bukti transaksi",
+    "bukti pembayaran",
+    "tagihan manual",
+    "pembayaran manual",
+  ]);
   const accessProblem = includesAnyPositive(context, [
     "hak akses",
     "akses berbeda",
@@ -867,6 +877,9 @@ export function selectConsultantFeatures(input: {
     // ATURAN KHUSUS — hard block, berlaku juga untuk core.
     // INVENTORY: hanya bila stok memang masalah/tujuan customer.
     if (feature.id === "inventory" && !stockProblem && !asked) continue;
+    // DIGITAL NOTA: transaksi/order saja bukan alasan. Harus ada masalah bukti
+    // transaksi, nota, tagihan, atau pembayaran manual yang disebut customer.
+    if (feature.id === "digital-nota" && !receiptProblem && !asked) continue;
     // MULTI USER: bukan karena ada karyawan, tapi karena butuh hak akses beda.
     if (feature.id === "multi-user" && !accessProblem) continue;
     // AUTOMATION: selalu potential kecuali customer memintanya.
@@ -952,7 +965,12 @@ export function selectConsultantFeatures(input: {
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
 
   // Growth yang merupakan lanjutan dari core yang tidak terpilih ikut gugur.
-  const coreIds = new Set(picks.filter((p) => p.role === "core").map((p) => p.id));
+  const coreIds = new Set([
+    ...picks.filter((p) => p.role === "core").map((p) => p.id),
+    // ENHANCEMENT RULE: a Core feature already selected by the customer still
+    // satisfies the prerequisite for a non-duplicate enhancement.
+    ...consultantCoveredFeatureIds(input.briefFeatureText ?? ""),
+  ]);
   const filtered = picks.filter(
     (p) => p.role === "core" || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
   );
