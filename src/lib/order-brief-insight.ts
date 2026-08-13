@@ -49,62 +49,8 @@ export type BriefInsight = {
 export const OPTIONAL_DISCLAIMER =
   "Rekomendasi fitur tambahan merupakan hasil analisa kebutuhan bisnis Team KERJAKU dan dapat dikembangkan sesuai kebutuhan. Fitur ini bukan bagian dari scope utama sebelum dilakukan persetujuan lebih lanjut.";
 
-/** Features that may only appear when the brief explicitly asks for them. */
-const RESTRICTED_FEATURE_IDS = new Set([
-  "api",
-  "payment-gateway",
-  "order-online",
-  "invoice-system",
-  "crm",
-  "notification",
-  "login-user",
-  "dashboard-admin",
-  "custom",
-]);
 
-/**
- * FLEXIBLE RECOMMENDATION RULE — light, business-safe development ideas that
- * fit almost any small business. Never enterprise (API, CRM, payment, automation).
- */
-const GENERIC_IDEAS = [
-  {
-    name: "Customer Review / Testimonial",
-    keywords: ["testimoni", "review", "ulasan", "rating"],
-    description:
-      "Menampilkan pengalaman pelanggan sebelumnya pada halaman website secara rapi dan terpercaya.",
-    reason: "Meningkatkan kepercayaan calon customer melalui pengalaman pelanggan sebelumnya.",
-  },
-  {
-    name: "SEO Basic Optimization",
-    keywords: ["seo", "google search", "pencarian google", "mesin pencari"],
-    description:
-      "Penataan judul, deskripsi, struktur halaman, dan kecepatan website agar siap diindeks mesin pencari.",
-    reason: "Membantu website lebih mudah ditemukan calon customer melalui pencarian online.",
-  },
-  {
-    name: "Galeri Foto / Dokumentasi",
-    keywords: ["galeri", "gallery", "dokumentasi foto"],
-    description: "Halaman galeri untuk menampilkan dokumentasi hasil kerja atau produk terbaru.",
-    reason: "Membantu calon customer melihat kualitas hasil kerja sebelum menghubungi bisnis.",
-  },
-];
 
-/** Low-complexity features that are safe to suggest for most businesses. */
-
-const SAFE_OPTIONAL_IDS = [
-  "social-media",
-  "maps",
-  "download-dokumen",
-  "form-konsultasi",
-  "database-customer",
-  "request-quotation",
-  "booking",
-  "katalog",
-  "live-chat",
-  "email",
-  "whatsapp",
-  "contact-form",
-];
 
 const PACKAGE_RANK: Record<PackageKey, number> = {
   "Landing Page": 0,
