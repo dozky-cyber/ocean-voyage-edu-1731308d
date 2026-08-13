@@ -341,6 +341,7 @@ function buildConsultantOption(
         { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
         { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
       ],
+      note: CONSULTANT_OPTION_NOTE,
     },
   };
 }
