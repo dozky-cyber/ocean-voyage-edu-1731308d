@@ -401,6 +401,86 @@ function includesAny(haystack: string, tokens: string[]) {
   return tokens.some((token) => token && haystack.includes(normalize(token)));
 }
 
+/** Kata negasi pada brief: "tidak ada team", "tanpa admin", "belum punya stok". */
+const NEGATION_WORDS = [
+  "tidak",
+  "tdk",
+  "tanpa",
+  "belum",
+  "bukan",
+  "nggak",
+  "gak",
+  "ga ",
+  "no team",
+  "none",
+];
+
+/** Pecah konteks brief menjadi klausa agar negasi bisa dibaca per kalimat. */
+function clauses(haystack: string): string[] {
+  return haystack
+    .split(/[.;|\n]|,| - |\(|\)/g)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/**
+ * BRIEF NEGATION RULE.
+ * Kata kunci fitur hanya dihitung bila TIDAK berada pada kalimat yang
+ * dinegasikan. Contoh: "Kebutuhan admin/team: Tidak (dikelola personal)"
+ * tidak boleh dibaca sebagai kebutuhan admin/team.
+ */
+function includesAnyPositive(haystack: string, tokens: string[]) {
+  const parts = clauses(haystack);
+  return tokens.some((token) => {
+    const t = normalize(token);
+    if (!t) return false;
+    return parts.some((part) => part.includes(t) && !includesAny(part, NEGATION_WORDS));
+  });
+}
+
+/**
+ * PACKAGE LEVEL / SCALE RULE.
+ * Brief yang menyatakan bisnis dikelola personal (tanpa admin/team) tidak boleh
+ * mendapat rekomendasi fitur bertim.
+ */
+export function isPersonalScale(scaleText: string, context = ""): boolean {
+  const scale = normalize(scaleText);
+  const full = normalize(`${scaleText} ${context}`);
+  if (!scale && !full) return false;
+  const personalSignal = includesAny(scale, [
+    "personal",
+    "perorangan",
+    "pribadi",
+    "sendiri",
+    "1 user",
+    "satu user",
+    "owner saja",
+    "single user",
+  ]);
+  const noTeam = clauses(full).some(
+    (part) =>
+      includesAny(part, ["admin", "team", "tim", "karyawan", "pegawai", "staff", "staf"]) &&
+      includesAny(part, NEGATION_WORDS),
+  );
+  const hasTeam = includesAnyPositive(full, [
+    "karyawan",
+    "pegawai",
+    "staff",
+    "staf",
+    "divisi",
+    "cabang",
+    "kasir",
+    "beberapa user",
+    "multi user",
+  ]);
+  if (hasTeam) return false;
+  return personalSignal || noTeam;
+}
+
+/** Fitur yang hanya masuk akal jika bisnis dikelola lebih dari satu orang. */
+const TEAM_ONLY_FEATURES = new Set(["multi-user", "dashboard-admin", "automation", "crm", "api"]);
+
+
 export function consultantFeature(id: string): ConsultantFeature | undefined {
   return CONSULTANT_LIBRARY.find((f) => f.id === id);
 }
