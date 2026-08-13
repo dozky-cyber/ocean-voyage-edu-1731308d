@@ -175,6 +175,10 @@ function SettingsPage() {
         </dl>
       </SectionCard>
 
+      {currentRole === "owner" ? <BiometricCard /> : null}
+
+
+
       <SectionCard
         title="Company Profile"
         description="Identitas bisnis yang dipakai di proposal dan komunikasi sales."
