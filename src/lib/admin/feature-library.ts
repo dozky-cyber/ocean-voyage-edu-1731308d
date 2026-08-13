@@ -282,7 +282,10 @@ export type PackageKey =
 export type PackageDefinition = {
   key: PackageKey;
   basePrice: number;
-  /** Features included in the package scope by default. */
+  /**
+   * PACKAGE FEATURE ISOLATION: positioning/pricing metadata only.
+   * These ids must never be copied into an Order Brief / proposal scope.
+   */
   coreFeatureIds: string[];
   benefits: string[];
 };
@@ -376,14 +379,12 @@ export function matchLibraryFeature(text: string): LibraryFeature | null {
   );
 }
 
-/** @deprecated Package defaults must not enter scope. Kept for legacy reads. */
-export function coreSolutionFeatures(
-  pkg: string | null | undefined,
-  selected: LibraryFeature[],
-): LibraryFeature[] {
-  const ids = new Set<string>(selected.map((f) => f.id));
-  return FEATURE_LIBRARY.filter((f) => ids.has(f.id));
-}
+// PACKAGE FEATURE ISOLATION RULE:
+// package feature ids are pricing/positioning metadata only. There is no
+// exported helper that turns them into scope — an Included Feature can only
+// come from briefIncludedFeatures(). Package-only features may appear solely
+// in Team KERJAKU Consultant Recommendation or Potential Feature Recommendation.
+
 
 
 /**
