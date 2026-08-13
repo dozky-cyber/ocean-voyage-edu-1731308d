@@ -743,6 +743,8 @@ export function selectConsultantFeatures(input: {
   allowEnterprise?: boolean;
   limit?: number;
 
+  /** Tujuan sistem pada brief (dipakai peta problem → solution). */
+  goalText?: string;
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
   const context = normalize(`${input.businessText} ${input.context}`);
@@ -760,6 +762,14 @@ export function selectConsultantFeatures(input: {
   const conditional = new Set(pattern?.conditional ?? []);
   const notPriority = new Set(pattern?.notPriority ?? []);
 
+  // CORE / GROWTH SPLIT RULE: masalah customer menentukan core solution.
+  const plan = buildProblemSolutionPlan({
+    businessText: input.businessText,
+    problemText: input.problemText ?? "",
+    goalText: input.goalText,
+    context: input.context,
+  });
+
   const picks: ConsultantPick[] = [];
   for (const feature of CONSULTANT_LIBRARY) {
     if (excluded.has(feature.id)) continue;
@@ -770,6 +780,9 @@ export function selectConsultantFeatures(input: {
 
     const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
+
+    const solvesStated = plan.core.get(feature.id);
+    const isCore = Boolean(solvesStated);
 
     // SCALE RULE (hard block, tidak bisa dilewati oleh business flow priority):
     // bisnis personal tanpa team tidak boleh mendapat fitur bertim/enterprise.
@@ -788,14 +801,17 @@ export function selectConsultantFeatures(input: {
       !!problem &&
       includesAnyPositive(problem, [feature.name, ...feature.aliases, ...feature.signals]);
 
-    // Bukan prioritas pada alur bisnis ini -> hanya boleh jika customer minta.
-    if (notPriority.has(feature.id) && !asked) continue;
-    // Fitur kondisional (mis. Inventory/Search) butuh sinyal kebutuhan nyata.
-    if (conditional.has(feature.id) && !asked && !hasSignal) continue;
+    if (!isCore) {
+      // Bukan prioritas pada alur bisnis ini -> hanya boleh jika customer minta.
+      if (notPriority.has(feature.id) && !asked) continue;
+      // Fitur kondisional (mis. Inventory/Search) butuh sinyal kebutuhan nyata.
+      if (conditional.has(feature.id) && !asked && !hasSignal) continue;
 
-    // Tanpa kecocokan bisnis maupun sinyal kebutuhan: bukan konsultasi, skip.
-    if (!fitsBusiness && !hasSignal && !priority.has(feature.id)) continue;
-    if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
+      // Tanpa kecocokan bisnis maupun sinyal kebutuhan: bukan konsultasi, skip.
+      if (!fitsBusiness && !hasSignal && !priority.has(feature.id) && !plan.growth.has(feature.id))
+        continue;
+      if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
+    }
 
     // BUSINESS FEATURE VALIDATION RULE: minimal 2 alasan, jika tidak: dibuang.
     const validation = validateConsultantFeature(feature, {
@@ -805,13 +821,16 @@ export function selectConsultantFeatures(input: {
       scaleText: input.scaleText,
     });
     const onFlow = priority.has(feature.id);
-    if (!validation.valid && !onFlow) continue;
+    if (!validation.valid && !onFlow && !isCore) continue;
 
-    const reasons = onFlow
-      ? [`Memperbaiki alur bisnis ${pattern!.name}.`, ...validation.reasons]
-      : validation.reasons;
+    const reasons = isCore
+      ? [`Menyelesaikan masalah customer: ${solvesStated}.`, ...validation.reasons]
+      : onFlow
+        ? [`Memperbaiki alur bisnis ${pattern!.name}.`, ...validation.reasons]
+        : validation.reasons;
 
     const score =
+      (isCore ? 12 : 0) +
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
@@ -819,11 +838,25 @@ export function selectConsultantFeatures(input: {
       (solvesProblem ? 2 : 0) +
       validation.reasons.length -
       TIER_RANK[feature.tier] * 0.25;
-    picks.push({ ...feature, score, reasons });
+    picks.push({
+      ...feature,
+      score,
+      reasons,
+      role: isCore ? "core" : "growth",
+      solves: solvesStated ?? null,
+      requiresCoreId: isCore ? null : (plan.growth.get(feature.id) ?? null),
+    });
   }
 
 
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
-  return picks.slice(0, input.limit ?? 6);
+
+  // Growth yang merupakan lanjutan dari core yang tidak terpilih ikut gugur.
+  const coreIds = new Set(picks.filter((p) => p.role === "core").map((p) => p.id));
+  const filtered = picks.filter(
+    (p) => p.role === "core" || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
+  );
+
+  return filtered.slice(0, input.limit ?? 6);
 }
 
