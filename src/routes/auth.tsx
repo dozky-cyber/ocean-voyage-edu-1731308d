@@ -1,10 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { Fingerprint } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { supabase } from "@/integrations/supabase/client";
-import { provisionWorkspaceAccess } from "@/lib/admin.functions";
+import { getAdminAccess, provisionWorkspaceAccess } from "@/lib/admin.functions";
+import {
+  disableBiometricUnlock,
+  enrollBiometricUnlock,
+  getEnrolledEmail,
+  isBiometricSupported,
+  unlockWithBiometric,
+  type StoredSession,
+} from "@/lib/auth/biometric-unlock";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -25,9 +34,16 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const navigate = useNavigate();
   const provision = useServerFn(provisionWorkspaceAccess);
+  const access = useServerFn(getAdminAccess);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [supported, setSupported] = useState(false);
+  const [enrolledEmail, setEnrolledEmail] = useState<string | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
+  const [enrollOffer, setEnrollOffer] = useState<{ email: string; session: StoredSession } | null>(
+    null,
+  );
 
   useEffect(() => {
     void supabase.auth.getUser().then(({ data }) => {
@@ -35,20 +51,121 @@ function AuthPage() {
     });
   }, [navigate]);
 
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const ok = await isBiometricSupported();
+      const enrolled = ok ? await getEnrolledEmail() : null;
+      if (!active) return;
+      setSupported(ok);
+      setEnrolledEmail(enrolled);
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       // Grants the workspace role only when the account is on the approved team list.
       await provision().catch(() => undefined);
+
+      const session = data.session;
+      if (supported && !enrolledEmail && session?.refresh_token) {
+        const role = await access()
+          .then((r) => r.role)
+          .catch(() => null);
+        if (role === "owner") {
+          setEnrollOffer({
+            email: data.user?.email ?? email,
+            session: {
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            },
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       navigate({ to: "/admin", replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal masuk.");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function onBiometricUnlock() {
+    setUnlocking(true);
+    try {
+      const stored = await unlockWithBiometric();
+      const { error } = await supabase.auth.setSession(stored);
+      if (error) {
+        await disableBiometricUnlock();
+        setEnrolledEmail(null);
+        throw new Error("Sesi tersimpan sudah kedaluwarsa. Silakan masuk dengan password.");
+      }
+      await provision().catch(() => undefined);
+      navigate({ to: "/admin", replace: true });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Verifikasi sidik jari gagal.");
+    } finally {
+      setUnlocking(false);
+    }
+  }
+
+  async function acceptEnroll() {
+    if (!enrollOffer) return;
+    try {
+      await enrollBiometricUnlock(enrollOffer);
+      toast.success("Buka cepat sidik jari aktif di perangkat ini.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Pendaftaran biometrik gagal.");
+    } finally {
+      setEnrollOffer(null);
+      navigate({ to: "/admin", replace: true });
+    }
+  }
+
+  if (enrollOffer) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-abyss px-4 py-16">
+        <div className="w-full max-w-sm rounded-3xl border border-border/40 bg-card/40 p-8 text-center shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-primary/40 bg-primary/10">
+            <Fingerprint className="h-7 w-7 text-primary" />
+          </div>
+          <h1 className="mt-5 text-xl font-semibold text-foreground">Aktifkan buka cepat?</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Lain kali cukup tap sidik jari untuk masuk ke workspace di perangkat ini. Password tetap
+            bisa dipakai kapan saja.
+          </p>
+          <div className="mt-6 space-y-2">
+            <button
+              type="button"
+              onClick={acceptEnroll}
+              className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+            >
+              Aktifkan sidik jari
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEnrollOffer(null);
+                navigate({ to: "/admin", replace: true });
+              }}
+              className="w-full rounded-xl border border-border/60 px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:text-foreground"
+            >
+              Nanti saja
+            </button>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -61,6 +178,28 @@ function AuthPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           Area internal. Hanya akun tim yang sudah disetujui yang dapat masuk.
         </p>
+
+        {supported && enrolledEmail ? (
+          <div className="mt-6 space-y-3">
+            <button
+              type="button"
+              onClick={onBiometricUnlock}
+              disabled={unlocking}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-60"
+            >
+              <Fingerprint className="h-5 w-5" />
+              {unlocking ? "Memverifikasi…" : "Masuk dengan sidik jari"}
+            </button>
+            <p className="text-center text-xs text-muted-foreground">{enrolledEmail}</p>
+            <div className="flex items-center gap-3 pt-1">
+              <span className="h-px flex-1 bg-border/60" />
+              <span className="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+                atau password
+              </span>
+              <span className="h-px flex-1 bg-border/60" />
+            </div>
+          </div>
+        ) : null}
 
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div className="space-y-1.5">
@@ -108,4 +247,3 @@ function AuthPage() {
     </main>
   );
 }
-
