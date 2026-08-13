@@ -359,61 +359,48 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       ? resolvePackage(ceilingKey)
       : requested;
 
-  const selected = detectSelectedFeatures([context]);
-
   // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
   // list, verbatim. Package defaults never enter the scope.
   const included = briefIncludedFeatures(brief.features);
   const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
 
+  // BUSINESS FEATURE CONSULTANT LIBRARY: analisa jenis bisnis, masalah, tujuan,
+  // jumlah user, dan proses operasional — bukan generator fitur.
+  const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
+  const maxTier: ConsultantTier =
+    pkg.key === "Enterprise System"
+      ? "enterprise"
+      : pkg.key === "Digital Workflow Solution"
+        ? "business"
+        : pkg.key === "Professional System"
+          ? "business"
+          : "professional";
+
+  const picks = selectConsultantFeatures({
+    businessText,
+    context,
+    maxTier,
+    excludeIds: [...coreIds],
+    excludeTitles: included,
+    limit: 7,
+  });
+
+  // CONSULTANT / POTENTIAL SPLIT RULE: 1-2 ide relevan cukup masuk ke
+  // Consultant Recommendation; sisanya baru menjadi Potential Feature.
+  const consultantPicks = picks.length <= 2 ? picks : picks.slice(0, 4);
+  const leftover = picks.length <= 2 ? [] : picks.slice(4, 7);
+
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, coreIds);
+  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
   const consultant = built?.option ?? null;
-  const consultantIds = new Set(built?.ids ?? []);
   const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
 
-  // DUPLICATE PROTECTION: skip anything already covered by the brief, by the
-  // detected features, or by the consultant development option.
-  const isDuplicate = (feature: LibraryFeature) => {
-    if (coreIds.has(feature.id) || consultantIds.has(feature.id)) return true;
-    if (selected.some((s) => s.id === feature.id)) return true;
-    const key = normalize(feature.name);
-    return consultantTitles.some((title) => title.includes(key) || key.includes(title));
-  };
-
-  // Optional recommendations: relevant, non-duplicate, never package-inflating.
-  let optional: { name: string; description: string; reason: string }[] = FEATURE_LIBRARY.filter(
-    (feature) => {
-      if (feature.id === "custom") return false;
-      if (isDuplicate(feature)) return false;
-      const explicitlyAsked = hasAny(context, [feature.name, ...feature.keywords]);
-      if (RESTRICTED_FEATURE_IDS.has(feature.id)) return explicitlyAsked;
-      return explicitlyAsked || SAFE_OPTIONAL_IDS.includes(feature.id);
-    },
-  )
-    .sort((a, b) => {
-      const aSafe = SAFE_OPTIONAL_IDS.indexOf(a.id);
-      const bSafe = SAFE_OPTIONAL_IDS.indexOf(b.id);
-      return a.priority - b.priority || aSafe - bSafe || a.no - b.no;
-    })
-    .slice(0, 3)
-    .map((f) => ({
-      name: f.name,
-      description: describeFeature(f, brief),
-      reason: optionalReason(f, brief),
-    }));
-
-  // FLEXIBLE RECOMMENDATION RULE: light, business-safe ideas (no enterprise
-  // features) to complete the section when the library has little to offer.
-  for (const idea of GENERIC_IDEAS) {
-    if (optional.length >= 3) break;
-    const key = normalize(idea.name);
-    if (context.includes(key) || hasAny(context, idea.keywords)) continue;
-    if (consultantTitles.some((title) => title.includes(key) || key.includes(title))) continue;
-    if (optional.some((item) => normalize(item.name).includes(key))) continue;
-    optional.push({ name: idea.name, description: idea.description, reason: idea.reason });
-  }
+  let optional = (consultant ? leftover : picks.slice(0, 3)).map((f) => ({
+    name: f.name,
+    description: f.fn,
+    reason: f.benefit,
+  }));
 
   // POTENTIAL FEATURE LIMIT RULE: a single leftover idea is folded into the
   // consultant option instead of creating a nearly empty section.
@@ -425,6 +412,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     });
     optional = [];
   }
+
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
