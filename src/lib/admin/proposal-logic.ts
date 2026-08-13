@@ -204,7 +204,9 @@ export function buildEnhancements(input: {
   limit?: number;
 }): EnhancementItem[] {
   const selected = detectSelectedFeatures([...input.features, input.context]);
-  const core = resolvePackage(input.packageName).coreFeatureIds;
+  // Anti duplicate: never recommend what the brief already covers.
+  const core = briefCoveredFeatureIds(input.features);
+
   const picked = recommendFeatures({
     selected,
     excludeIds: core,
