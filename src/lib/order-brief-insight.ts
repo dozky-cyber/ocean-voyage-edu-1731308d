@@ -20,7 +20,16 @@ import {
   type ConsultantPick,
   type ConsultantTier,
 } from "./admin/consultant-library";
+import {
+  decidePackageLevel,
+  type PackageLevel,
+} from "./admin/package-decision-sop";
 import type { OrderBriefData } from "./order-brief";
+
+function normalize(value: string) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
 
 
 export type ConsultantOption = {
@@ -98,155 +107,25 @@ const PACKAGE_FIT: Record<PackageKey, string[]> = {
   ],
 };
 
-function normalize(value: string) {
-  return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function hasAny(context: string, tokens: string[]) {
-  return tokens.some((token) => context.includes(normalize(token)));
-}
-
 /**
- * PACKAGE LEVEL CONTROL RULE (Business System vs Enterprise System).
- *
- * Enterprise hanya untuk organisasi yang benar-benar kompleks. Dibutuhkan
- * minimal DUA sinyal kuat dari:
- *   1. Multi lokasi / banyak cabang.
- *   2. Struktur organisasi berjenjang (manager, supervisor, admin cabang,
- *      approval, antar divisi) dengan banyak role berbeda.
- *   3. Skala user besar (>= 50 user).
- *   4. Integrasi sistem eksternal nyata (ERP, API eksternal, sinkronisasi
- *      sistem lain).
- * Bisnis satu outlet dengan owner + beberapa karyawan TIDAK pernah Enterprise.
+ * KERJAKU PACKAGE DECISION SOP.
+ * Level package berasal dari `decidePackageLevel` (satu sumber aturan), bukan
+ * dari jumlah fitur pada brief.
  */
-function enterpriseScaleJustified(brief: OrderBriefData, context: string): boolean {
-  const users = normalize(brief.usersScale ?? "");
-  const all = `${context} | ${users}`;
+const LEVEL_TO_PACKAGE: Record<PackageLevel, PackageKey> = {
+  basic: "Landing Page",
+  professional: "Professional System",
+  business: "Digital Workflow Solution",
+  enterprise: "Enterprise System",
+};
 
-  // Hard block: skala kecil / satu lokasi.
-  const singleLocation = hasAny(all, [
-    "1 outlet",
-    "satu outlet",
-    "1 cabang",
-    "satu cabang",
-    "1 lokasi",
-    "satu lokasi",
-    "tanpa cabang",
-    "belum ada cabang",
-  ]);
+const LEVEL_TO_TIER: Record<PackageLevel, ConsultantTier> = {
+  basic: "basic",
+  professional: "professional",
+  business: "business",
+  enterprise: "enterprise",
+};
 
-  const userNumbers = (all.match(/\b\d{1,4}\b/g) ?? []).map(Number);
-  const maxUsers = userNumbers.length ? Math.max(...userNumbers) : 0;
-  const bigUsers =
-    maxUsers >= 50 || hasAny(all, ["lebih dari 100", "ratusan", "ribuan", "puluhan user"]);
-  const smallUsers = !bigUsers && maxUsers > 0 && maxUsers <= 25;
-
-  const multiBranch = hasAny(all, [
-    "multi cabang",
-    "multi-cabang",
-    "banyak cabang",
-    "beberapa cabang",
-    "multi lokasi",
-    "multi-lokasi",
-    "banyak lokasi",
-    "beberapa lokasi",
-    "antar cabang",
-    "per cabang",
-    "franchise",
-    "holding",
-  ]);
-
-  const complexOrg = hasAny(all, [
-    "banyak divisi",
-    "antar divisi",
-    "supervisor",
-    "manager pusat",
-    "manajer pusat",
-    "admin cabang",
-    "approval",
-    "persetujuan berjenjang",
-    "hak akses berbeda",
-    "banyak role",
-    "multi role",
-    "struktur organisasi",
-  ]);
-
-  const realIntegration = hasAny(all, [
-    "integrasi api",
-    "api eksternal",
-    "integrasi sistem",
-    "integrasi dengan sistem",
-    "sinkron dengan sistem",
-    "sinkronisasi data",
-    "erp",
-    "sap",
-    "middleware",
-  ]);
-
-  if (singleLocation && !multiBranch) return false;
-  if (smallUsers && !multiBranch && !complexOrg) return false;
-
-  const signals = [multiBranch, complexOrg, bigUsers, realIntegration].filter(Boolean).length;
-  return signals >= 2;
-}
-
-/**
- * Complexity ceiling derived only from the client's own brief.
- * Admin/dashboard needs alone never raise the ceiling.
- */
-function complexityCeiling(context: string): PackageKey {
-  const enterprise = hasAny(context, [
-    "integrasi api",
-    "api eksternal",
-    "integrasi sistem",
-    "integrasi dengan sistem",
-    "sinkronisasi data",
-    "multi cabang",
-    "multi-cabang",
-    "banyak cabang",
-    "antar cabang",
-    "erp",
-  ]);
-  if (enterprise) return "Enterprise System";
-
-
-  const workflow = hasAny(context, [
-    "payment gateway",
-    "pembayaran online",
-    "midtrans",
-    "xendit",
-    "order online",
-    "checkout",
-    "keranjang",
-    "invoice",
-    "tagihan",
-    "billing",
-    "kasir",
-    "pos",
-    "automation",
-    "otomatis",
-    "workflow",
-    "login user",
-    "akun user",
-    "role",
-  ]);
-  if (workflow) return "Digital Workflow Solution";
-
-  const professional = hasAny(context, [
-    "crm",
-    "lead",
-    "follow up",
-    "database customer",
-    "data pelanggan",
-    "booking",
-    "reservasi",
-    "member",
-    "transaksi",
-  ]);
-  if (professional) return "Professional System";
-
-  return "Landing Page";
-}
 
 
 function complexityLabel(pkg: PackageDefinition) {
@@ -262,7 +141,7 @@ function complexityLabel(pkg: PackageDefinition) {
   }
 }
 
-function buildReason(brief: OrderBriefData, pkg: PackageDefinition, allowEnterprise: boolean) {
+function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: string) {
   const business = brief.business?.trim() || "bisnis Anda";
   const goal = brief.goal?.trim();
   const project = brief.project?.trim();
@@ -270,20 +149,13 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, allowEnterpr
     `Berdasarkan kebutuhan ${business}, website difokuskan untuk ${
       goal || project || "memperkenalkan bisnis dan memudahkan calon customer terhubung"
     }.`,
-    `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}${
-      brief.usersScale?.trim() ? ` dengan cakupan pengguna ${brief.usersScale.trim()}` : ""
-    }.`,
-  ];
-  // PACKAGE LEVEL CONTROL RULE: jelaskan kenapa belum masuk level Enterprise.
-  if (!allowEnterprise && pkg.key !== "Enterprise System") {
-    parts.push(
-      "Skala operasional pada brief masih satu lokasi dengan struktur team sederhana, sehingga sistem berskala Enterprise (multi cabang, banyak divisi/role, atau integrasi antar sistem) belum diperlukan.",
-    );
-  }
-  parts.push(
+    `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
+    // KERJAKU PACKAGE DECISION SOP: alasan berbasis kompleksitas bisnis.
+    rationale,
     "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
-  );
+  ];
   return parts.join(" ");
+
 }
 
 
@@ -374,17 +246,16 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       .join(" | "),
   );
 
-  // Package: never above the complexity the brief actually justifies, and never
-  // Enterprise unless the business scale itself justifies it.
-  const allowEnterprise = enterpriseScaleJustified(brief, context);
+  // KERJAKU PACKAGE DECISION SOP: level ditentukan oleh kompleksitas bisnis.
+  const decision = decidePackageLevel(brief, context);
+  const allowEnterprise = decision.allowEnterprise;
   const requested = resolvePackage(brief.recommendation);
-  const rawCeiling = complexityCeiling(context);
-  const ceilingKey: PackageKey =
-    rawCeiling === "Enterprise System" && !allowEnterprise
-      ? "Digital Workflow Solution"
-      : rawCeiling;
-  const pkg =
-    PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
+  const ceilingKey: PackageKey = LEVEL_TO_PACKAGE[decision.level];
+  // Tanpa rekomendasi eksplisit pada brief, level SOP yang dipakai. Bila ada,
+  // package tidak boleh melebihi level SOP.
+  const pkg = !brief.recommendation?.trim()
+    ? resolvePackage(ceilingKey)
+    : PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
       ? resolvePackage(ceilingKey)
       : requested;
 
@@ -397,14 +268,8 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // BUSINESS FEATURE CONSULTANT LIBRARY: analisa jenis bisnis, masalah, tujuan,
   // jumlah user, dan proses operasional — bukan generator fitur.
   const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
-  const maxTier: ConsultantTier =
-    pkg.key === "Enterprise System" && allowEnterprise
-      ? "enterprise"
-      : pkg.key === "Digital Workflow Solution"
-        ? "business"
-        : pkg.key === "Professional System"
-          ? "business"
-          : "professional";
+  const maxTier: ConsultantTier = LEVEL_TO_TIER[decision.level];
+
 
 
   const picks = selectConsultantFeatures({
@@ -456,7 +321,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
-    reason: buildReason(brief, pkg, allowEnterprise),
+    reason: buildReason(brief, pkg, decision.rationale),
     included,
     consultant,
     optional,
