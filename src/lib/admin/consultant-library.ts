@@ -258,6 +258,16 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: ["gym", "laundry", "salon", "spa", "kursus", "komunitas", "klinik"],
     signals: ["member", "langganan", "subscription", "pelanggan tetap", "paket bulanan"],
     aliases: ["membership", "member", "langganan"],
+    requires: [
+      "member",
+      "langganan",
+      "subscription",
+      "pelanggan tetap",
+      "repeat order",
+      "paket bulanan",
+      "loyal",
+    ],
+    simplerAlternativeId: "database-customer",
   },
   {
     id: "api",
