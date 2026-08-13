@@ -166,6 +166,7 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     ],
     signals: ["jadwal", "booking", "reservasi", "appointment", "antrian"],
     aliases: ["booking", "reservasi", "jadwal", "appointment"],
+    requires: ["jadwal", "booking", "reservasi", "appointment", "antrian", "slot waktu"],
   },
   {
     id: "database-customer",
@@ -416,7 +417,16 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
       "pesanan tertukar",
       "antrian pekerjaan",
     ],
-    aliases: ["order management", "manajemen order", "kelola pesanan", "manajemen pesanan"],
+    aliases: [
+      "order management",
+      "manajemen order",
+      "kelola pesanan",
+      "manajemen pesanan",
+      "pencatatan project",
+      "pencatatan proyek",
+      "pencatatan project / order",
+      "pencatatan proyek / order",
+    ],
     // Tidak relevan untuk company profile / portfolio tanpa transaksi.
     requires: [
       "order",
@@ -543,7 +553,7 @@ const NEGATION_WORDS = [
 /** Pecah konteks brief menjadi klausa agar negasi bisa dibaca per kalimat. */
 function clauses(haystack: string): string[] {
   return haystack
-    .split(/[.;|\n]|,| - |\(|\)/g)
+    .split(/[.;|\n]|,| - |\(|\)|\bdan\b/g)
     .map((part) => part.trim())
     .filter(Boolean);
 }
@@ -647,6 +657,13 @@ export function isCoveredByBrief(feature: ConsultantFeature, briefText: string) 
   const text = normalize(briefText);
   if (!text) return false;
   return includesAny(text, [feature.name, ...feature.aliases]);
+}
+
+/** Canonical Consultant Library ids already selected in the customer's scope. */
+export function consultantCoveredFeatureIds(briefText: string): string[] {
+  return CONSULTANT_LIBRARY.filter((feature) => isCoveredByBrief(feature, briefText)).map(
+    (feature) => feature.id,
+  );
 }
 
 /**
@@ -784,6 +801,16 @@ export function selectConsultantFeatures(input: {
     "barang habis",
     "inventory",
   ]);
+  const receiptProblem = includesAnyPositive(problemScope, [
+    "nota",
+    "invoice",
+    "struk",
+    "kwitansi",
+    "bukti transaksi",
+    "bukti pembayaran",
+    "tagihan manual",
+    "pembayaran manual",
+  ]);
   const accessProblem = includesAnyPositive(context, [
     "hak akses",
     "akses berbeda",
@@ -837,14 +864,10 @@ export function selectConsultantFeatures(input: {
     // Penyebutan pada Business Problem bukan berarti fitur sudah ada di brief.
     if (!isCore && isCoveredByBrief(feature, context)) continue;
 
-    // DUPLICATE PREVENTION RULE: fitur yang sudah ada pada Feature List brief
-    // tidak boleh direkomendasikan ulang dengan nama berbeda. Core hanya lolos
-    // bila customer menyebut masalah pada proses tersebut.
-    if (briefFeatures && isCoveredByBrief(feature, briefFeatures)) {
-      if (!isCore) continue;
-      if (!includesAnyPositive(problemScope, [feature.name, ...feature.aliases, ...feature.signals]))
-        continue;
-    }
+    // CUSTOMER SCOPE PRIORITY RULE: once a feature is selected in the Order
+    // Brief it is already the customer's solution. Never re-evaluate it as a
+    // new Core or Potential Feature, even when its problem is still mentioned.
+    if (briefFeatures && isCoveredByBrief(feature, briefFeatures)) continue;
 
     const key = normalize(feature.name);
     if (excludedTitles.some((title) => title.includes(key) || key.includes(title))) continue;
@@ -855,6 +878,9 @@ export function selectConsultantFeatures(input: {
     // ATURAN KHUSUS — hard block, berlaku juga untuk core.
     // INVENTORY: hanya bila stok memang masalah/tujuan customer.
     if (feature.id === "inventory" && !stockProblem && !asked) continue;
+    // DIGITAL NOTA: transaksi/order saja bukan alasan. Harus ada masalah bukti
+    // transaksi, nota, tagihan, atau pembayaran manual yang disebut customer.
+    if (feature.id === "digital-nota" && !receiptProblem && !asked) continue;
     // MULTI USER: bukan karena ada karyawan, tapi karena butuh hak akses beda.
     if (feature.id === "multi-user" && !accessProblem) continue;
     // AUTOMATION: selalu potential kecuali customer memintanya.
@@ -904,7 +930,9 @@ export function selectConsultantFeatures(input: {
       scaleText: input.scaleText,
     });
     const onFlow = priority.has(feature.id);
-    if (!validation.valid && !onFlow && !isCore) continue;
+    // A business-flow pattern only affects ranking. It must never bypass the
+    // four-question validation or turn the library into a feature generator.
+    if (!validation.valid && !isCore) continue;
 
     const reasons = isCore
       ? [`Menyelesaikan masalah customer: ${solvesStated}.`, ...validation.reasons]
@@ -940,7 +968,12 @@ export function selectConsultantFeatures(input: {
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
 
   // Growth yang merupakan lanjutan dari core yang tidak terpilih ikut gugur.
-  const coreIds = new Set(picks.filter((p) => p.role === "core").map((p) => p.id));
+  const coreIds = new Set([
+    ...picks.filter((p) => p.role === "core").map((p) => p.id),
+    // ENHANCEMENT RULE: a Core feature already selected by the customer still
+    // satisfies the prerequisite for a non-duplicate enhancement.
+    ...consultantCoveredFeatureIds(input.briefFeatureText ?? ""),
+  ]);
   const filtered = picks.filter(
     (p) => p.role === "core" || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
   );

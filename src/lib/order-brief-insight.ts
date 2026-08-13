@@ -16,6 +16,7 @@ import {
   type PackageKey,
 } from "./admin/feature-library";
 import {
+  consultantCoveredFeatureIds,
   selectConsultantFeatures,
   type ConsultantPick,
   type ConsultantTier,
@@ -68,43 +69,12 @@ const PACKAGE_RANK: Record<PackageKey, number> = {
   "Enterprise System": 3,
 };
 
-const PACKAGE_ORDER: PackageKey[] = [
-  "Landing Page",
-  "Professional System",
-  "Digital Workflow Solution",
-  "Enterprise System",
-];
-
 /** Customer-facing solution names used on the Order Brief document. */
 const PACKAGE_LABEL: Record<PackageKey, string> = {
   "Landing Page": "Basic System",
   "Professional System": "Professional System",
   "Digital Workflow Solution": "Business System",
   "Enterprise System": "Enterprise System",
-};
-
-const PACKAGE_FIT: Record<PackageKey, string[]> = {
-  "Landing Page": [
-    "Website katalog / company profile",
-    "Portfolio bisnis",
-    "Komunikasi langsung via WhatsApp",
-  ],
-  "Professional System": [
-    "Update konten mandiri",
-    "Pengelolaan permintaan customer",
-    "Pengembangan operasional bisnis",
-    "Data bisnis lebih terstruktur",
-  ],
-  "Digital Workflow Solution": [
-    "Digitalisasi proses operasional harian",
-    "Transaksi dan pembayaran online",
-    "Alur kerja team lebih rapi",
-  ],
-  "Enterprise System": [
-    "Sistem terintegrasi antar divisi/cabang",
-    "Kebutuhan data dan user berskala besar",
-    "Integrasi dengan sistem lain",
-  ],
 };
 
 /**
@@ -145,14 +115,13 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: s
   const business = brief.business?.trim() || "bisnis Anda";
   const goal = brief.goal?.trim();
   const project = brief.project?.trim();
+  const focus = (goal || project || "memperkenalkan bisnis dan memudahkan calon customer terhubung")
+    .replace(/[.!?]+$/, "");
   const parts = [
-    `Berdasarkan kebutuhan ${business}, website difokuskan untuk ${
-      goal || project || "memperkenalkan bisnis dan memudahkan calon customer terhubung"
-    }.`,
+    `Berdasarkan kebutuhan ${business}, website difokuskan untuk ${focus}.`,
     `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
     // KERJAKU PACKAGE DECISION SOP: alasan berbasis kompleksitas bisnis.
     rationale,
-    "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
   ];
   return parts.join(" ");
 
@@ -170,21 +139,15 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   picks: ConsultantPick[],
-  allowEnterprise: boolean,
 ): { option: ConsultantOption; ids: string[] } | null {
   if (!picks.length) return null;
   // CORE / GROWTH SPLIT RULE: bahasa berbeda saat fitur menyelesaikan masalah.
   const hasCore = picks.some((item) => item.role === "core");
-  // PACKAGE LEVEL CONTROL RULE: opsi pengembangan maksimal satu tingkat, dan
-  // tidak pernah menyentuh Enterprise untuk bisnis satu lokasi/skala kecil.
-  const maxRank = allowEnterprise
-    ? PACKAGE_ORDER.length - 1
-    : PACKAGE_RANK["Digital Workflow Solution"];
-  const upgradeIndex = Math.min(PACKAGE_RANK[base] + 1, maxRank);
-  const upgradeKey = PACKAGE_ORDER[upgradeIndex]!;
-  // Tanpa core solution, section ini hanya berguna bila ada opsi pengembangan.
-  if (upgradeKey === base && !hasCore) return null;
-  const sameLevel = upgradeKey === base;
+  // PACKAGE INDEPENDENCE RULE: consultant ideas refine scope; they never
+  // increase the package. Package level is decided only by business scale and
+  // operational complexity.
+  const upgradeKey = base;
+  const sameLevel = true;
 
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
@@ -203,21 +166,16 @@ function buildConsultantOption(
               : `${PACKAGE_LABEL[base]} tetap menjadi acuan Order Brief; pengerjaan fitur di bawah ini dapat menyesuaikan ke ${PACKAGE_LABEL[upgradeKey]} apabila dibutuhkan.`,
           ]
         : [
-            `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
-            `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
-            `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
+            `Feature List ${name} sudah mencakup solusi utama untuk masalah bisnis yang disampaikan.`,
+            `Karena kebutuhan inti sudah ter-cover, Team KERJAKU tidak menambahkan Core Solution baru dan tidak mengulang fitur yang sama.`,
+            `Pengembangan berikut hanya berupa penyempurnaan alur ${business} di dalam ${PACKAGE_LABEL[base]} yang sama.`,
           ],
       items: picks.map((item) => ({
         title: item.name,
         benefit: item.benefit,
         solves: item.solves,
       })),
-      comparison: sameLevel
-        ? []
-        : [
-            { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
-            { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
-          ],
+      comparison: [],
       note: CONSULTANT_OPTION_NOTE,
     },
   };
@@ -232,11 +190,15 @@ function buildNextSteps(base: string, upgrade: string | null) {
     `1. ${base}`,
     "Sesuai dengan kebutuhan awal yang disampaikan customer.",
   ];
-  if (upgrade) {
+  if (upgrade && normalize(upgrade) !== normalize(base)) {
     lines.push(
       "",
       `2. ${upgrade}`,
       "Sebagai opsi pengembangan dengan fitur tambahan yang direkomendasikan Team KERJAKU.",
+    );
+  } else if (upgrade) {
+    lines.push(
+      "Fitur yang disepakati akan dirapikan sebagai penyesuaian scope pada solusi yang sama, tanpa membuat opsi package kedua.",
     );
   }
   lines.push(
@@ -281,7 +243,10 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
   // list, verbatim. Package defaults never enter the scope.
   const included = briefIncludedFeatures(brief.features);
-  const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
+  const coreIds = new Set<string>([
+    ...briefCoveredFeatureIds(brief.features),
+    ...consultantCoveredFeatureIds(brief.features.join(" | ")),
+  ]);
 
   // BUSINESS FEATURE CONSULTANT LIBRARY: analisa jenis bisnis, masalah, tujuan,
   // jumlah user, dan proses operasional — bukan generator fitur.
@@ -323,10 +288,8 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, consultantPicks, allowEnterprise);
+  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
   const consultant = built?.option ?? null;
-  const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
-
   let optional = (consultant ? leftover : picks.slice(0, 3)).map((f) => ({
     name: f.name,
     description: f.fn,
