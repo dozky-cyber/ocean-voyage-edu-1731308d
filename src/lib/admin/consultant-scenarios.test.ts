@@ -450,7 +450,7 @@ describe("Order Brief Tobiin — clean solution-gap output", () => {
     createdAt: "2026-08-13T20:59:00.000Z",
   };
 
-  it("tidak mengulang customer scope dan tidak menawarkan digital nota", () => {
+  it("tidak mengulang customer scope dan memberi 3-5 ide pengembangan", () => {
     const insight = buildBriefInsight(brief);
     const recommended = [
       ...(insight.consultant?.items.map((item) => item.title) ?? []),
@@ -460,8 +460,19 @@ describe("Order Brief Tobiin — clean solution-gap output", () => {
     expect(recommended).not.toContain("order management");
     expect(recommended).not.toContain("galeri portfolio");
     expect(recommended).not.toContain("faq");
-    expect(recommended).not.toContain("digital nota");
+    expect(recommended).not.toContain("multi user");
+    expect(recommended).not.toContain("enterprise");
+    // POTENTIAL QUOTA: Business System memberi 3-5 ide pengembangan relevan.
+    expect(insight.optional.length).toBeGreaterThanOrEqual(3);
+    expect(insight.optional.length).toBeLessThanOrEqual(5);
+    // Setiap ide wajib punya relevansi, dampak, dan kaitan alur bisnis.
+    insight.optional.forEach((item) => {
+      expect(item.reason.length).toBeGreaterThan(10);
+      expect(item.impact?.length ?? 0).toBeGreaterThan(10);
+      expect(item.relation ?? "").not.toBe("");
+    });
   });
+
 
   it("menulis satu Business System dan menghapus boilerplate Enterprise", () => {
     const pdfText = new TextDecoder("latin1").decode(buildOrderBriefPdf(brief));
