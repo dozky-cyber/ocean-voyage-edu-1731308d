@@ -9,6 +9,8 @@
 import { describe, expect, it } from "vitest";
 import { selectConsultantFeatures } from "./consultant-library";
 import { buildProblemSolutionPlan } from "./problem-solution-map";
+import { decidePackageLevel } from "./package-decision-sop";
+import type { OrderBriefData } from "../order-brief";
 
 type Scenario = {
   name: string;
@@ -334,7 +336,75 @@ describe("Consultant Engine V4 — core solution vs potential feature", () => {
   });
 });
 
+describe("Consultant Engine V5 — aturan khusus fitur", () => {
+  const base = {
+    businessText: "Toko kelontong",
+    context: "1 toko, owner dan 2 karyawan",
+    scaleText: "owner dan 2 karyawan",
+    allowEnterprise: false,
+    limit: 7,
+  };
+
+  const ids = (over: Partial<Parameters<typeof selectConsultantFeatures>[0]>) =>
+    selectConsultantFeatures({ ...base, ...over }).map((p) => p.id);
+  const coreIds = (over: Partial<Parameters<typeof selectConsultantFeatures>[0]>) =>
+    selectConsultantFeatures({ ...base, ...over })
+      .filter((p) => p.role === "core")
+      .map((p) => p.id);
+
+  it("inventory tidak muncul bila stok bukan masalah customer", () => {
+    expect(ids({ problemText: "Pencatatan order manual di buku" })).not.toContain("inventory");
+  });
+
+  it("inventory muncul bila stok memang masalah customer", () => {
+    expect(ids({ problemText: "Stok sering selisih dan kehabisan barang" })).toContain("inventory");
+  });
+
+  it("digital nota bukan core bila nota tidak disebut", () => {
+    expect(coreIds({ problemText: "Pencatatan order manual di buku" })).not.toContain("digital-nota");
+  });
+
+  it("automation tidak pernah muncul kecuali diminta", () => {
+    expect(ids({ problemText: "Order dicatat manual", context: "1 toko, 10 karyawan" })).not.toContain(
+      "automation",
+    );
+  });
+
+  it("crm tidak muncul untuk usaha kecil tanpa kebutuhan sales", () => {
+    expect(ids({ problemText: "Order dicatat manual" })).not.toContain("crm");
+  });
+
+  it("multi user hanya bila ada kebutuhan hak akses berbeda", () => {
+    expect(ids({ problemText: "Order dicatat manual", context: "10 karyawan" })).not.toContain(
+      "multi-user",
+    );
+    expect(
+      ids({
+        problemText: "Order dicatat manual, butuh hak akses berbeda untuk kasir dan owner",
+        context: "10 karyawan, hak akses berbeda",
+      }),
+    ).toContain("multi-user");
+  });
+
+  it("dashboard core hanya bila owner menyebut kebutuhan monitoring", () => {
+    expect(coreIds({ problemText: "Order dicatat manual" })).not.toContain("dashboard-admin");
+    expect(
+      coreIds({ problemText: "Order dicatat manual, owner sulit memantau pekerjaan harian" }),
+    ).toContain("dashboard-admin");
+  });
+
+  it("tidak merekomendasikan ulang fitur yang sudah ada pada brief", () => {
+    expect(
+      ids({
+        problemText: "Customer sulit memesan, ingin pesan online",
+        briefFeatureText: "Pemesanan online / booking",
+      }),
+    ).not.toContain("booking");
+  });
+});
+
 describe("Problem → solution map", () => {
+
   it("tidak menghasilkan core tanpa masalah yang disebut customer", () => {
     const plan = buildProblemSolutionPlan({
       businessText: "Toko bunga",
@@ -356,5 +426,43 @@ describe("Problem → solution map", () => {
       });
       for (const id of plan.core.keys()) expect(plan.growth.has(id)).toBe(false);
     }
+  });
+});
+
+describe("Enterprise hard filter", () => {
+  const brief = (over: Partial<OrderBriefData>): OrderBriefData => ({
+    version: 1,
+    customerName: "Test",
+    whatsapp: null,
+    email: null,
+    business: "Toko retail",
+    project: "Website sistem",
+    goal: "Merapikan operasional",
+    problems: ["Order dicatat manual"],
+    usersScale: "owner dan 10 karyawan",
+    adminNeeds: "Ya",
+    features: [],
+    timeline: null,
+    budget: null,
+    recommendation: null,
+    createdAt: new Date().toISOString(),
+    ...over,
+  });
+
+  it("dashboard/database/laporan/karyawan/automation saja tidak menghasilkan Enterprise", () => {
+    const decision = decidePackageLevel(
+      brief({
+        features: ["Dashboard admin", "Database customer", "Laporan penjualan", "Automation reminder"],
+      }),
+    );
+    expect(decision.level).not.toBe("enterprise");
+    expect(decision.allowEnterprise).toBe(false);
+  });
+
+  it("bisnis satu lokasi tidak pernah Enterprise", () => {
+    const decision = decidePackageLevel(
+      brief({ business: "Laundry kiloan 1 outlet", usersScale: "owner dan 4 karyawan" }),
+    );
+    expect(decision.level).not.toBe("enterprise");
   });
 });

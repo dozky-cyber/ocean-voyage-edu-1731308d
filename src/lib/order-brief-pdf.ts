@@ -334,8 +334,18 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
       d.y -= 4;
     });
     d.y -= 6;
-    d.text("MANFAAT OPSI PENGEMBANGAN", MARGIN, d.y, 7.5, false, MUTED);
+    // CORE / GROWTH SPLIT RULE: judul menyesuaikan isi section.
+    const hasCore = consultant.items.some((item) => item.solves);
+    d.text(
+      hasCore ? "CORE SOLUTION (MENYELESAIKAN MASALAH UTAMA)" : "MANFAAT OPSI PENGEMBANGAN",
+      MARGIN,
+      d.y,
+      7.5,
+      false,
+      MUTED,
+    );
     d.y -= 16;
+
     if (first) consultantItem(d, first, 0);
   });
 

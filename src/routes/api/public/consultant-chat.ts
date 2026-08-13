@@ -137,6 +137,20 @@ CORE SOLUTION vs POTENTIAL FEATURE (WAJIB, berlaku untuk semua jenis bisnis):
   Core = Order Management, Status/Progress Tracking, Digital Nota, Dashboard.
   Potential = Notifikasi WhatsApp, Database Customer, Laporan, Multi User.
 
+ATURAN KHUSUS FITUR (WAJIB, berlaku sebelum fitur ditulis):
+- DIGITAL NOTA: Core hanya bila customer menyebut masalah nota/bukti transaksi/pembayaran manual.
+  Bila tidak disebut, letakkan sebagai Potential Feature.
+- ORDER MANAGEMENT: Core bila ada pencatatan order manual.
+- STATUS TRACKING: Core bila ada proses pekerjaan/status yang ditanyakan customer.
+- INVENTORY: jangan disebut sama sekali kecuali stok/gudang/kehabisan barang memang masalah customer.
+- MULTI USER: jangan hanya karena ada karyawan; hanya bila butuh hak akses berbeda.
+- DASHBOARD: bukan otomatis Core; Core hanya bila owner perlu memantau operasional.
+- AUTOMATION: selalu Potential kecuali customer meminta otomatisasi/reminder.
+- CRM: hanya untuk kebutuhan pengelolaan customer yang kompleks (sales/pipeline/banyak prospek).
+- DUPLICATE PREVENTION: jangan merekomendasikan fitur yang sudah ada pada Feature List brief
+  walau namanya berbeda (mis. brief sudah "pemesanan online" → jangan tawarkan "Booking").
+
+
 TEAM KERJAKU CONSULTANT RECOMMENDATION
 
 Opsi Pengembangan:
