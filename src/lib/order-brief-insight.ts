@@ -324,31 +324,31 @@ function buildConsultantOption(
 
 function buildNextSteps(base: string, upgrade: string | null) {
   const lines = [
-    "Berdasarkan hasil konsultasi ini, Team KERJAKU akan menyiapkan penawaran berdasarkan opsi solusi berikut:",
+    `Solusi yang menjadi acuan penawaran: ${base}, sesuai kebutuhan yang customer sampaikan.`,
     "",
-    `1. ${base}`,
-    "Sesuai dengan kebutuhan awal yang disampaikan customer.",
+    "1. Konfirmasi Order Brief (customer)",
+    "Cek kembali daftar masalah dan fitur di atas, lalu informasikan bila ada yang perlu ditambah, dikurangi, atau disesuaikan.",
+    "",
+    "2. Pengecekan kebutuhan (Team KERJAKU)",
+    "Tim kami mengunci scope final, prioritas pengerjaan, dan estimasi waktu berdasarkan brief yang sudah dikonfirmasi.",
+    "",
+    "3. Penawaran harga (Team KERJAKU)",
+    "Penawaran disusun mengikuti scope final dan budget yang sudah disiapkan, terpisah antara kebutuhan utama dan fitur opsional.",
   ];
   if (upgrade && normalize(upgrade) !== normalize(base)) {
     lines.push(
       "",
-      `2. ${upgrade}`,
-      "Sebagai opsi pengembangan dengan fitur tambahan yang direkomendasikan Team KERJAKU.",
-    );
-  } else if (upgrade) {
-    lines.push(
-      "Fitur yang disepakati akan dirapikan sebagai penyesuaian scope pada solusi yang sama, tanpa membuat opsi package kedua.",
+      `Opsi pengembangan ${upgrade} dapat dipertimbangkan bila customer ingin cakupan yang lebih luas.`,
     );
   }
   lines.push(
     "",
-    "Customer dapat memilih solusi yang paling sesuai dengan kebutuhan dan kesiapan bisnis saat ini.",
-    "Penawaran harga akan disesuaikan dengan fitur yang dipilih, prioritas kebutuhan, serta budget yang telah disiapkan agar mendapatkan solusi digital yang paling optimal.",
-    "Apabila ada fitur yang ingin ditambahkan, dikurangi, atau disesuaikan, customer dapat memberikan feedback melalui WhatsApp atau email.",
+    "Konfirmasi dan pertanyaan dapat disampaikan melalui WhatsApp atau email.",
     "Terima kasih sudah mempercayakan pengembangan digital bisnis kepada Team KERJAKU.",
   );
   return lines;
 }
+
 
 export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const context = normalize(
