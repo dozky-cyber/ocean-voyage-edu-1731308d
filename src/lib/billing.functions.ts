@@ -10,6 +10,16 @@ const pricingItemSchema = z.object({
   amount: z.number().min(0).max(1_000_000_000_000),
 });
 
+const installmentSchema = z.object({
+  name: z.string().min(1).max(120),
+  note: z.string().max(300),
+  mode: z.enum(["percent", "amount"]),
+  percent: z.number().min(0).max(100),
+  amount: z.number().min(0).max(1_000_000_000_000),
+  status: z.enum(["Pending", "Paid"]),
+  paid_at: z.string().max(40).nullable().optional(),
+});
+
 /* ---------------------------------- Invoices ------------------------------ */
 
 export const getInvoices = createServerFn({ method: "GET" })
