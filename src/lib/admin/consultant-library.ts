@@ -203,6 +203,18 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: ["toko", "retail", "gudang", "distributor", "grosir", "bengkel", "apotek"],
     signals: ["stok", "persediaan", "gudang", "barang masuk"],
     aliases: ["inventory", "stok", "persediaan"],
+    // Tidak relevan bila bisnis tidak mengelola stok barang (contoh: laundry).
+    requires: [
+      "stok",
+      "persediaan",
+      "gudang",
+      "barang masuk",
+      "barang keluar",
+      "restock",
+      "inventaris",
+      "sparepart",
+      "jumlah barang",
+    ],
   },
   {
     id: "form-konsultasi",
