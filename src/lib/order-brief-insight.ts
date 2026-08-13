@@ -253,15 +253,11 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       .join(" | "),
   );
 
-  // Package: never above the complexity the brief actually justifies, and never
-  // Enterprise unless the business scale itself justifies it.
-  const allowEnterprise = enterpriseScaleJustified(brief, context);
+  // KERJAKU PACKAGE DECISION SOP: level ditentukan oleh kompleksitas bisnis.
+  const decision = decidePackageLevel(brief, context);
+  const allowEnterprise = decision.allowEnterprise;
   const requested = resolvePackage(brief.recommendation);
-  const rawCeiling = complexityCeiling(context);
-  const ceilingKey: PackageKey =
-    rawCeiling === "Enterprise System" && !allowEnterprise
-      ? "Digital Workflow Solution"
-      : rawCeiling;
+  const ceilingKey: PackageKey = LEVEL_TO_PACKAGE[decision.level];
   const pkg =
     PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
       ? resolvePackage(ceilingKey)
@@ -276,14 +272,8 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // BUSINESS FEATURE CONSULTANT LIBRARY: analisa jenis bisnis, masalah, tujuan,
   // jumlah user, dan proses operasional — bukan generator fitur.
   const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
-  const maxTier: ConsultantTier =
-    pkg.key === "Enterprise System" && allowEnterprise
-      ? "enterprise"
-      : pkg.key === "Digital Workflow Solution"
-        ? "business"
-        : pkg.key === "Professional System"
-          ? "business"
-          : "professional";
+  const maxTier: ConsultantTier = LEVEL_TO_TIER[decision.level];
+
 
 
   const picks = selectConsultantFeatures({
