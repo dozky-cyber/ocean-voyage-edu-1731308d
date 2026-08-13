@@ -17,10 +17,14 @@ import {
 } from "./admin/feature-library";
 import {
   consultantCoveredFeatureIds,
+  consultantFeature,
+  detectBusinessMaturity,
   selectConsultantFeatures,
+  type BusinessMaturity,
   type ConsultantPick,
   type ConsultantTier,
 } from "./admin/consultant-library";
+import { buildProblemSolutionPlan } from "./admin/problem-solution-map";
 import {
   decidePackageLevel,
   type PackageLevel,
@@ -30,6 +34,37 @@ import type { OrderBriefData } from "./order-brief";
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
+
+/** DATA INTEGRITY: kebutuhan admin/team kadang hanya tertulis di narasi brief. */
+export function resolveAdminNeeds(brief: OrderBriefData): string {
+  const direct = brief.adminNeeds?.trim();
+  if (direct && direct !== "-") return direct;
+  const source = [brief.project, brief.goal].filter(Boolean).join("\n");
+  const match = source.match(/kebutuhan\s+admin(?:\s*\/\s*team)?\s*:\s*([^\n]+)/i);
+  if (match?.[1]?.trim()) return match[1].trim();
+  return "Belum disampaikan saat konsultasi awal";
+}
+
+/** Rapikan kalimat tujuan agar ALASAN tidak menyalin ulang Project Summary. */
+function focusPhrase(brief: OrderBriefData): string {
+  const raw = (brief.goal?.trim() || brief.project?.trim() || "").replace(/\s+/g, " ");
+  if (!raw) return "merapikan kebutuhan digital bisnis";
+  let text = raw
+    .replace(/^tujuan\s*:\s*/i, "")
+    .replace(/kebutuhan\s+admin.*$/i, "")
+    .trim();
+  // Buang klausa pembuka "Kak X pemilik Y membutuhkan ..." agar langsung ke inti.
+  const after = text.match(/\b(?:membutuhkan|memerlukan|ingin|butuh)\s+(.+)$/i);
+  if (after?.[1]) text = after[1];
+  text = text.split(/\.\s+/)[0]!.replace(/[.!?]+$/, "").trim();
+  if (text.length > 150) {
+    const cut = text.slice(0, 150);
+    text = `${cut.slice(0, cut.lastIndexOf(" "))}`;
+  }
+  if (!text) return "merapikan kebutuhan digital bisnis";
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
 
 
 
@@ -46,22 +81,38 @@ export type ConsultantOption = {
 export const CONSULTANT_OPTION_NOTE =
   "Rekomendasi ini merupakan opsi pengembangan, bukan keharusan. Package pada Order Brief tetap mengikuti kebutuhan yang customer sampaikan. Opsi ini dapat dipertimbangkan apabila bisnis ingin berkembang atau jika membutuhkan pengelolaan yang lebih lanjut di kemudian hari.";
 
+export type ProblemMapRow = {
+  problem: string;
+  solution: string;
+  /** Dari mana solusi berasal: scope customer, core solution, atau opsional. */
+  source: "scope" | "core" | "optional" | "open";
+};
+
 export type BriefInsight = {
   packageName: string;
   reason: string;
   included: string[];
   consultant: ConsultantOption | null;
+  /** PROBLEM -> SOLUTION MAP: bukti setiap masalah customer ada jawabannya. */
+  problemMap: ProblemMapRow[];
+  /** Ringkasan kesiapan bisnis (maturity + catatan singkat). */
+  readiness: { level: string; lines: string[] };
   optional: {
     name: string;
     description: string;
     reason: string;
     impact?: string;
     relation?: string | null;
+    /** Urutan prioritas pengembangan (1 = paling berdampak). */
+    priority: number;
+    /** Fase 1 = dapat dikerjakan bersamaan, Fase 2 = pengembangan lanjutan. */
+    phase: 1 | 2;
   }[];
 
   disclaimer: string;
   nextSteps: string[];
 };
+
 
 export const OPTIONAL_DISCLAIMER =
   "Rekomendasi fitur tambahan merupakan hasil analisa kebutuhan bisnis Team KERJAKU dan dapat dikembangkan sesuai kebutuhan. Fitur ini bukan bagian dari scope utama sebelum dilakukan persetujuan lebih lanjut.";
@@ -122,12 +173,7 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: s
   const business = brief.business?.trim() || "bisnis Anda";
   // ALASAN PACKAGE: tiga kalimat saja — kebutuhan bisnis, karakter proses, dan
   // skala pengguna. Project Summary tidak disalin ulang di sini.
-  const goal = brief.goal?.trim();
-  const focus = (goal || "merapikan kebutuhan digital bisnis")
-    .replace(/^tujuan\s*:\s*/i, "")
-    .replace(/[.!?]+$/, "")
-    .split(/\.\s+/)[0]!
-    .trim();
+  const focus = focusPhrase(brief);
   const scale = brief.usersScale?.trim();
   const parts = [
     `Kebutuhan ${business} difokuskan untuk ${focus}.`,
@@ -136,6 +182,114 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: s
   ];
   return parts.join("\n\n");
 }
+
+const MATURITY_LABEL: Record<BusinessMaturity, string> = {
+  starter: "Tahap Awal (Starter)",
+  growing: "Tahap Berkembang (Growing)",
+  established: "Tahap Mapan (Established)",
+};
+
+/** BUSINESS READINESS: ringkas, 2-3 kalimat, tanpa menambah halaman baru. */
+function buildReadiness(
+  brief: OrderBriefData,
+  maturity: BusinessMaturity,
+  packageName: string,
+): { level: string; lines: string[] } {
+  const business = brief.business?.trim() || "Bisnis Anda";
+  const scale = brief.usersScale?.trim();
+  const lines = [
+    maturity === "starter"
+      ? `${business} berada pada tahap membangun fondasi digital, sehingga prioritasnya adalah kejelasan informasi dan kemudahan customer menghubungi bisnis.`
+      : maturity === "growing"
+        ? `${business} sudah memiliki alur kerja berjalan, sehingga prioritasnya adalah merapikan pencatatan dan komunikasi progress agar tidak lagi manual.`
+        : `${business} sudah berjalan dengan volume dan tim yang cukup besar, sehingga prioritasnya adalah kontrol data dan visibilitas owner.`,
+    `Dengan kondisi tersebut, ${packageName} sudah cukup untuk menopang kebutuhan saat ini tanpa membebani biaya di awal.`,
+  ];
+  if (scale) lines.push(`Skala pengguna yang disampaikan: ${scale}.`);
+  return { level: MATURITY_LABEL[maturity], lines };
+}
+
+/**
+ * PROBLEM -> SOLUTION MAP: setiap masalah pada brief dipasangkan dengan solusi
+ * yang sudah ada di scope customer, Core Solution, atau ide opsional.
+ */
+function buildProblemMap(input: {
+  brief: OrderBriefData;
+  scopeIds: Set<string>;
+  corePicks: ConsultantPick[];
+  growthPicks: ConsultantPick[];
+}): ProblemMapRow[] {
+  const { brief, scopeIds, corePicks, growthPicks } = input;
+  const coreById = new Map(corePicks.map((p) => [p.id, p.name] as const));
+  const growthById = new Map(growthPicks.map((p) => [p.id, p.name] as const));
+
+  return brief.problems
+    .map((problem) => {
+      const plan = buildProblemSolutionPlan({
+        businessText: [brief.business, brief.project].filter(Boolean).join(" "),
+        problemText: normalize(problem),
+        goalText: "",
+        context: normalize(problem),
+      });
+      const ids = [...plan.core.keys()];
+      const scoped = ids.filter((id) => scopeIds.has(id));
+      if (scoped.length) {
+        return {
+          problem,
+          solution: scoped
+            .map((id) => consultantFeature(id)?.name ?? id)
+            .slice(0, 2)
+            .join(" + "),
+          source: "scope" as const,
+        };
+      }
+      const core = ids.find((id) => coreById.has(id));
+      if (core) {
+        return { problem, solution: coreById.get(core)!, source: "core" as const };
+      }
+      const growth = ids.find((id) => growthById.has(id));
+      if (growth) {
+        return { problem, solution: growthById.get(growth)!, source: "optional" as const };
+      }
+      // Fallback kata kunci: masalah yang sudah dijawab langsung oleh fitur
+      // pilihan customer (mis. "belum punya website portfolio" -> Portfolio).
+      const words = new Set(
+        normalize(problem)
+          .split(/[^a-z0-9]+/)
+          .filter((w) => w.length > 4),
+      );
+      const matched = brief.features.find((feature) =>
+        normalize(feature)
+          .split(/[^a-z0-9]+/)
+          .some((w) => w.length > 4 && words.has(w)),
+      );
+      if (matched) return { problem, solution: matched, source: "scope" as const };
+      return {
+        problem,
+        solution: "Dibahas pada tahap pengecekan kebutuhan bersama Team KERJAKU",
+        source: "open" as const,
+      };
+    })
+    .slice(0, 8);
+}
+
+/** Kalimat relevansi ditulis ulang agar spesifik ke bisnis customer. */
+function humanizeRelevance(raw: string, business: string): string {
+  const text = raw.trim();
+  const flow = text.match(/^memperbaiki alur bisnis\s+(.+?)\.?$/i);
+  if (flow?.[1]) {
+    return `Sesuai karakter alur bisnis ${flow[1].toLowerCase()} yang dijalankan ${business}.`;
+  }
+  if (/kondisi bisnis pada brief/i.test(text)) {
+    return `Kebutuhan ini muncul dari cara kerja ${business} yang dijelaskan pada brief.`;
+  }
+  if (/proses operasional utama pada brief/i.test(text)) {
+    return `Menyentuh proses operasional harian ${business} yang disebut pada brief.`;
+  }
+  return text;
+}
+
+
 
 
 
@@ -200,31 +354,31 @@ function buildConsultantOption(
 
 function buildNextSteps(base: string, upgrade: string | null) {
   const lines = [
-    "Berdasarkan hasil konsultasi ini, Team KERJAKU akan menyiapkan penawaran berdasarkan opsi solusi berikut:",
+    `Solusi yang menjadi acuan penawaran: ${base}, sesuai kebutuhan yang customer sampaikan.`,
     "",
-    `1. ${base}`,
-    "Sesuai dengan kebutuhan awal yang disampaikan customer.",
+    "1. Konfirmasi Order Brief (customer)",
+    "Cek kembali daftar masalah dan fitur di atas, lalu informasikan bila ada yang perlu ditambah, dikurangi, atau disesuaikan.",
+    "",
+    "2. Pengecekan kebutuhan (Team KERJAKU)",
+    "Tim kami mengunci scope final, prioritas pengerjaan, dan estimasi waktu berdasarkan brief yang sudah dikonfirmasi.",
+    "",
+    "3. Penawaran harga (Team KERJAKU)",
+    "Penawaran disusun mengikuti scope final dan budget yang sudah disiapkan, terpisah antara kebutuhan utama dan fitur opsional.",
   ];
   if (upgrade && normalize(upgrade) !== normalize(base)) {
     lines.push(
       "",
-      `2. ${upgrade}`,
-      "Sebagai opsi pengembangan dengan fitur tambahan yang direkomendasikan Team KERJAKU.",
-    );
-  } else if (upgrade) {
-    lines.push(
-      "Fitur yang disepakati akan dirapikan sebagai penyesuaian scope pada solusi yang sama, tanpa membuat opsi package kedua.",
+      `Opsi pengembangan ${upgrade} dapat dipertimbangkan bila customer ingin cakupan yang lebih luas.`,
     );
   }
   lines.push(
     "",
-    "Customer dapat memilih solusi yang paling sesuai dengan kebutuhan dan kesiapan bisnis saat ini.",
-    "Penawaran harga akan disesuaikan dengan fitur yang dipilih, prioritas kebutuhan, serta budget yang telah disiapkan agar mendapatkan solusi digital yang paling optimal.",
-    "Apabila ada fitur yang ingin ditambahkan, dikurangi, atau disesuaikan, customer dapat memberikan feedback melalui WhatsApp atau email.",
+    "Konfirmasi dan pertanyaan dapat disampaikan melalui WhatsApp atau email.",
     "Terima kasih sudah mempercayakan pengembangan digital bisnis kepada Team KERJAKU.",
   );
   return lines;
 }
+
 
 export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const context = normalize(
@@ -267,6 +421,12 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // jumlah user, dan proses operasional — bukan generator fitur.
   const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
   const maxTier: ConsultantTier = LEVEL_TO_TIER[decision.level];
+  const maturity = detectBusinessMaturity({
+    context,
+    problemText: normalize(brief.problems.join(" | ")),
+    scaleText: [brief.usersScale, brief.adminNeeds].filter(Boolean).join(" | "),
+  });
+
 
 
 
@@ -307,29 +467,51 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // features are never repeated inside Potential Feature Recommendation.
   const built = buildConsultantOption(brief, pkg.key, corePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
-  const optional = growthPicks.slice(0, potentialLimit).map((f) => ({
-    name: f.name,
-    description: f.fn,
-    reason: f.reasons[0] ?? f.benefit,
-    impact: f.benefit,
-    relation: f.relatedTo
+  const businessLabel = brief.business?.trim() || "bisnis Anda";
+  const optional = growthPicks.slice(0, potentialLimit).map((f, index) => {
+    const relation = f.relatedTo
       ? f.relation === "enhancement"
         ? `Memperkuat ${f.relatedTo} pada scope customer.`
         : `Kelanjutan alur bisnis setelah ${f.relatedTo}.`
-      : null,
-  }));
+      : null;
+    // ANTI-DUPLIKASI KALIMAT: alasan relevansi tidak boleh mengulang Kaitan.
+    const raw =
+      f.reasons.find(
+        (line) => !/^memperkuat |^melanjutkan alur/i.test(line) && line !== relation,
+      ) ??
+      f.reasons[0] ??
+      f.benefit;
+    return {
+      name: f.name,
+      description: f.fn,
+      reason: humanizeRelevance(raw, businessLabel),
+      impact: f.benefit,
+      relation,
+      priority: index + 1,
+      phase: (index < 2 ? 1 : 2) as 1 | 2,
+    };
+  });
 
 
-
+  const readiness = buildReadiness(brief, maturity, PACKAGE_LABEL[pkg.key]);
+  const problemMap = buildProblemMap({
+    brief,
+    scopeIds: new Set(consultantCoveredFeatureIds(brief.features.join(" | "))),
+    corePicks,
+    growthPicks: growthPicks.slice(0, potentialLimit),
+  });
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
     reason: buildReason(brief, pkg, decision.rationale),
     included,
     consultant,
+    problemMap,
+    readiness,
     optional,
     disclaimer: OPTIONAL_DISCLAIMER,
     nextSteps: buildNextSteps(PACKAGE_LABEL[pkg.key], consultant?.packageName ?? null),
   };
 }
+
 

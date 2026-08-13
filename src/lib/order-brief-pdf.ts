@@ -2,7 +2,7 @@
 // Runs both in the browser (download) and in the Worker runtime (email attachment).
 
 import { briefFields, briefFileName, wibStamp, type OrderBriefData } from "./order-brief";
-import { buildBriefInsight, type BriefInsight } from "./order-brief-insight";
+import { buildBriefInsight, resolveAdminNeeds, type BriefInsight } from "./order-brief-insight";
 
 export const PAGE_W = 595.28; // A4
 export const PAGE_H = 841.89;
@@ -270,17 +270,20 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   doc.keep((d) => {
     sectionTitle(d, "Project Detail");
     keyValueGrid(d, [
-      { label: "User Sistem", value: brief.usersScale || "-" },
-      { label: "Kebutuhan Admin/Team", value: brief.adminNeeds || "-" },
-      { label: "Timeline", value: brief.timeline || "-" },
-      { label: "Budget", value: brief.budget || "-" },
+      { label: "User Sistem", value: brief.usersScale || "Belum disampaikan saat konsultasi awal" },
+      { label: "Kebutuhan Admin/Team", value: resolveAdminNeeds(brief) },
+      { label: "Timeline", value: brief.timeline || "Belum ditentukan" },
+      { label: "Budget", value: brief.budget || "Belum disampaikan" },
     ]);
   });
 
   packageRecommendation(doc, insight);
+  readinessBlock(doc, insight);
+  problemSolutionMap(doc, insight);
   consultantRecommendation(doc, insight);
   potentialFeatures(doc, insight);
   nextSteps(doc, insight);
+
 
   footer(doc);
   return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
@@ -315,6 +318,69 @@ function packageRecommendation(doc: Doc, insight: BriefInsight) {
     d.y -= 12;
   });
 }
+
+/** BUSINESS READINESS: konteks singkat sebelum masuk ke rekomendasi. */
+function readinessBlock(doc: Doc, insight: BriefInsight) {
+  doc.keep((d) => {
+    sectionTitle(d, "Business Readiness");
+    d.text(insight.readiness.level.toUpperCase(), MARGIN, d.y, 8, true, BRAND);
+    d.y -= 16;
+    insight.readiness.lines.forEach((line) => {
+      d.paragraph(line, MARGIN, 10, false, CONTENT_W);
+      d.y -= 4;
+    });
+    d.y -= 8;
+  });
+}
+
+const MAP_SOURCE_LABEL: Record<string, string> = {
+  scope: "Sudah ada di Feature List",
+  core: "Core Solution",
+  optional: "Opsional (pengembangan)",
+  open: "Perlu dibahas lanjut",
+};
+
+/** PROBLEM -> SOLUTION MAP: bukti setiap masalah customer punya jawabannya. */
+function problemSolutionMap(doc: Doc, insight: BriefInsight) {
+  if (!insight.problemMap.length) return;
+  doc.keep((d) => {
+    sectionTitle(d, "Peta Masalah & Solusi");
+    d.paragraph(
+      "Setiap masalah yang customer sampaikan dipasangkan dengan solusi yang menanganinya.",
+      MARGIN,
+      9.5,
+      false,
+      CONTENT_W,
+      MUTED,
+    );
+    d.y -= 10;
+  });
+
+  insight.problemMap.forEach((row) => {
+    doc.keep((d) => {
+      const colW = (CONTENT_W - 18) / 2;
+      const left = wrap(row.problem, 9.5, false, colW - 8);
+      const right = wrap(row.solution, 9.5, true, colW - 8);
+      const rows = Math.max(left.length, right.length);
+      const h = 26 + rows * 13;
+      const top = d.y - h;
+      d.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
+      d.rect(MARGIN, top, 3, h, BRAND);
+      d.text("MASALAH", MARGIN + 14, top + h - 14, 7, false, MUTED);
+      d.text("SOLUSI", MARGIN + 18 + colW, top + h - 14, 7, false, MUTED);
+      left.forEach((line, i) => d.text(line, MARGIN + 14, top + h - 28 - i * 13, 9.5, false));
+      right.forEach((line, i) =>
+        d.text(line, MARGIN + 18 + colW, top + h - 28 - i * 13, 9.5, true),
+      );
+      const tag = MAP_SOURCE_LABEL[row.source] ?? "";
+      d.text(tag, PAGE_W - MARGIN - textWidth(tag, 7, false) - 6, top + h - 14, 7, false, BRAND);
+      d.y = top - 10;
+    });
+  });
+
+  doc.y -= 8;
+}
+
 
 /** Consultant block: development option, reason, and benefit per feature. */
 function consultantRecommendation(doc: Doc, insight: BriefInsight) {
@@ -414,14 +480,24 @@ function potentialFeatures(doc: Doc, insight: BriefInsight) {
   doc.keep((d) => {
     sectionTitle(d, "Potential Feature Recommendation");
     d.paragraph(
-      "Contoh pengembangan tambahan yang relevan untuk bisnis Anda. Fitur ini bukan bagian dari penawaran utama dan tidak termasuk dalam harga.",
+      "Pengembangan tambahan yang relevan untuk bisnis Anda, bukan bagian dari penawaran utama dan tidak termasuk dalam harga.",
       MARGIN,
       9.5,
       false,
       CONTENT_W,
       MUTED,
     );
-    d.y -= 8;
+    d.y -= 2;
+    d.paragraph(
+      "Fase 1 dapat dikerjakan bersamaan dengan kebutuhan utama bila budget memungkinkan. Fase 2 disiapkan sebagai pengembangan lanjutan agar biaya awal tetap terkendali.",
+      MARGIN,
+      9.5,
+      false,
+      CONTENT_W,
+      MUTED,
+    );
+    d.y -= 10;
+
     optionalItem(d, items[0]!, items.length > 1);
   });
 
@@ -453,37 +529,43 @@ function optionalItem(
     reason: string;
     impact?: string;
     relation?: string | null;
+    priority?: number;
+    phase?: 1 | 2;
   },
   divider: boolean,
 ) {
   doc.text("*", MARGIN, doc.y, 11, true, BRAND);
   doc.text(item.name, MARGIN + 14, doc.y, 10.5, true, INK);
-  doc.y -= 15;
-  doc.text("DESKRIPSI", MARGIN + 14, doc.y, 7, false, MUTED);
-  doc.y -= 12;
-  doc.paragraph(item.description, MARGIN + 14, 10, false, CONTENT_W - 14);
-  doc.y -= 6;
-  doc.text("ALASAN RELEVANSI", MARGIN + 14, doc.y, 7, false, MUTED);
-  doc.y -= 12;
+  if (item.priority) {
+    // PRIORITAS & FASE: membantu customer memilih tanpa menaikkan package.
+    const tag = `PRIORITAS ${item.priority}  |  FASE ${item.phase ?? 2}`;
+    doc.text(tag, PAGE_W - MARGIN - textWidth(tag, 7.5, true), doc.y, 7.5, true, BRAND);
+  }
+  doc.y -= 14;
+  doc.paragraph(item.description, MARGIN + 14, 9.5, false, CONTENT_W - 14, MUTED);
+  doc.y -= 8;
+  doc.text("KENAPA RELEVAN", MARGIN + 14, doc.y, 7, false, MUTED);
+  doc.y -= 13;
   doc.paragraph(item.reason, MARGIN + 14, 10, false, CONTENT_W - 14);
-  doc.y -= 6;
+  doc.y -= 8;
   if (item.impact) {
     doc.text("DAMPAK BISNIS", MARGIN + 14, doc.y, 7, false, MUTED);
-    doc.y -= 12;
+    doc.y -= 13;
     doc.paragraph(item.impact, MARGIN + 14, 10, false, CONTENT_W - 14);
-    doc.y -= 6;
+    doc.y -= 8;
   }
   if (item.relation) {
     doc.text("KAITAN DENGAN ALUR BISNIS", MARGIN + 14, doc.y, 7, false, MUTED);
-    doc.y -= 12;
+    doc.y -= 13;
     doc.paragraph(item.relation, MARGIN + 14, 10, false, CONTENT_W - 14);
-    doc.y -= 6;
+    doc.y -= 8;
   }
   if (divider) {
     doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4);
-    doc.y -= 12;
+    doc.y -= 14;
   }
 }
+
 
 
 function nextSteps(doc: Doc, insight: BriefInsight) {
