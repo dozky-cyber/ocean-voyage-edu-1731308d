@@ -570,6 +570,13 @@ export async function restoreProposalVersion(
       recommended_package: snapshot.recommended_package,
       content: (snapshot.content ?? []) as { heading: string; body: string }[],
       pricing_items: (snapshot.pricing_items ?? []) as PricingItem[],
+      enhancements: (snapshot.enhancements ?? []) as {
+        name: string;
+        benefit: string;
+        amount: number;
+      }[],
+      brief_timeline: snapshot.brief_timeline ?? null,
+      estimated_timeline: snapshot.estimated_timeline ?? null,
       investment_note: snapshot.investment_note,
       timeline_note: snapshot.timeline_note,
       version_note: `Restore dari versi ${snapshot.version}`,

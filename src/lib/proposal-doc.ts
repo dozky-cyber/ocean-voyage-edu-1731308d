@@ -4,6 +4,8 @@
 export type ProposalPricingItem = { item: string; detail: string; amount: number };
 export type ProposalSectionData = { heading: string; body: string };
 
+export type ProposalEnhancementItem = { name: string; benefit: string; amount: number };
+
 export type ProposalDocData = {
   title: string;
   version: number;
@@ -18,6 +20,11 @@ export type ProposalDocData = {
   timelineNote: string | null;
   sections: ProposalSectionData[];
   pricing: ProposalPricingItem[];
+  /** Timeline from the Final Order Brief (client requirement). */
+  briefTimeline?: string | null;
+  /** Internal KERJAKU estimate; when filled it drives the production deadline. */
+  estimatedTimeline?: string | null;
+  enhancements?: ProposalEnhancementItem[];
   createdAt: string;
 };
 
