@@ -776,6 +776,11 @@ export function selectConsultantFeatures(input: {
     if (personal && !asked && (TEAM_ONLY_FEATURES.has(feature.id) || feature.tier === "enterprise"))
       continue;
 
+    // PACKAGE LEVEL CONTROL RULE: tanpa kompleksitas organisasi (multi cabang,
+    // struktur berjenjang, user besar), fitur enterprise tidak direkomendasikan.
+    if (input.allowEnterprise === false && !asked && feature.tier === "enterprise") continue;
+
+
     const fitsBusiness =
       includesAny(business, feature.fits) || includesAnyPositive(context, feature.fits);
     const hasSignal = includesAnyPositive(context, feature.signals);
