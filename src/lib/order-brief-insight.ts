@@ -9,16 +9,19 @@
 //   POTENTIAL FEATURE RECOMMENDATION, each with a clear business reason.
 
 import {
-  FEATURE_LIBRARY,
   briefCoveredFeatureIds,
   briefIncludedFeatures,
-  detectSelectedFeatures,
   resolvePackage,
-  type LibraryFeature,
   type PackageDefinition,
   type PackageKey,
 } from "./admin/feature-library";
+import {
+  selectConsultantFeatures,
+  type ConsultantPick,
+  type ConsultantTier,
+} from "./admin/consultant-library";
 import type { OrderBriefData } from "./order-brief";
+
 
 export type ConsultantOption = {
   packageName: string;
