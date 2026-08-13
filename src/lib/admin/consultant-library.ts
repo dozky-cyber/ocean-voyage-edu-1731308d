@@ -847,7 +847,12 @@ export function selectConsultantFeatures(input: {
     const reasons = isCore
       ? [`Menyelesaikan masalah customer: ${solvesStated}.`, ...validation.reasons]
       : onFlow
-        ? [`Memperbaiki alur bisnis ${pattern!.name}.`, ...validation.reasons]
+        ? [
+            pattern
+              ? `Memperbaiki alur bisnis ${pattern.name}.`
+              : "Memperbaiki proses operasional utama pada brief.",
+            ...validation.reasons,
+          ]
         : validation.reasons;
 
     const score =
