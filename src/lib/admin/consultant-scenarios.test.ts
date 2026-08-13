@@ -546,3 +546,100 @@ describe("Enterprise hard filter", () => {
     expect(decision.level).not.toBe("enterprise");
   });
 });
+
+/**
+ * INDUSTRY VOICE — kalimat Potential Feature harus memakai kosakata industri
+ * customer, bukan nama pola bisnis generik.
+ */
+describe("Industry voice pada Potential Feature", () => {
+  const GENERIC = [
+    "jasa / service / appointment business",
+    "laundry / bisnis dengan status proses",
+    "retail / toko / warung / konter / toko online",
+    "distributor / agen / grosir / produksi",
+    "kuliner / restoran / catering",
+    "memperbaiki alur bisnis",
+    "proses operasional utama pada brief",
+    "kondisi bisnis pada brief",
+  ];
+
+  const cases: { label: string; brief: OrderBriefData; expect: string }[] = [
+    {
+      label: "Furniture & interior custom",
+      expect: "interior custom",
+      brief: {
+        version: 1,
+        customerName: "Tobiin",
+        whatsapp: "0882",
+        email: null,
+        business: "Furniture & Interior Custom Workshop (Fadly Furniture Interior)",
+        project: "Website Portfolio & Project Tracking System",
+        goal: "Merapikan pencatatan dan update progress project",
+        problems: ["Pencatatan project masih manual", "Customer sering bertanya progress"],
+        usersScale: "Personal (dikelola sendiri)",
+        adminNeeds: "Dashboard pengelolaan mandiri",
+        features: ["Galeri / Portfolio", "Pencatatan Project / Order", "Status Tracking Progress"],
+        timeline: "1 bulan",
+        budget: "Rp 5.000.000",
+        recommendation: "Business System",
+        createdAt: "2026-08-13T20:59:00.000Z",
+      },
+    },
+    {
+      label: "Laundry kiloan",
+      expect: "laundry",
+      brief: {
+        version: 1,
+        customerName: "Andi",
+        whatsapp: "0882",
+        email: null,
+        business: "Laundry kiloan Bersih Wangi",
+        project: "Sistem order dan status cucian",
+        goal: "Operasional lebih rapi",
+        problems: ["Order dicatat manual", "Customer sering tanya status cucian"],
+        usersScale: "owner dan 4 karyawan",
+        adminNeeds: "Dashboard admin",
+        features: ["Pencatatan Order", "Status Tracking Cucian"],
+        timeline: "1 bulan",
+        budget: "Rp 6.000.000",
+        recommendation: "Business System",
+        createdAt: "2026-08-13T20:59:00.000Z",
+      },
+    },
+    {
+      label: "Catering / kuliner",
+      expect: "kuliner",
+      brief: {
+        version: 1,
+        customerName: "Rina",
+        whatsapp: "0882",
+        email: null,
+        business: "Catering rumahan Dapur Rina",
+        project: "Website menu dan pemesanan",
+        goal: "Pesanan tidak tercecer di chat",
+        problems: ["Order masuk bercampur di chat", "Menu tidak tersusun", "Nota manual"],
+        usersScale: "owner dan 3 karyawan",
+        adminNeeds: "Kelola menu sendiri",
+        features: ["Katalog Menu", "Pencatatan Pesanan"],
+        timeline: "1 bulan",
+        budget: "Rp 5.000.000",
+        recommendation: "Business System",
+        createdAt: "2026-08-13T20:59:00.000Z",
+      },
+    },
+  ];
+
+  cases.forEach((testCase) => {
+    it(`${testCase.label} memakai bahasa industri, bukan template pola bisnis`, () => {
+      const insight = buildBriefInsight(testCase.brief);
+      expect(insight.optional.length).toBeGreaterThan(0);
+      insight.optional.forEach((item) => {
+        const text = item.reason.toLowerCase();
+        GENERIC.forEach((phrase) => expect(text).not.toContain(phrase));
+        expect(text).toContain(testCase.expect);
+        expect(item.reason.length).toBeGreaterThan(60);
+        expect(item.impact?.length ?? 0).toBeGreaterThan(30);
+      });
+    });
+  });
+});
