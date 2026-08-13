@@ -736,7 +736,13 @@ export function selectConsultantFeatures(input: {
   problemText?: string;
   /** Skala pengguna + kebutuhan admin/team pada brief. */
   scaleText?: string;
+  /**
+   * PACKAGE LEVEL CONTROL RULE: false berarti skala organisasi belum kompleks,
+   * sehingga fitur bertier enterprise tidak boleh direkomendasikan.
+   */
+  allowEnterprise?: boolean;
   limit?: number;
+
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
   const context = normalize(`${input.businessText} ${input.context}`);
