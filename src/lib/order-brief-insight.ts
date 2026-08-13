@@ -251,8 +251,11 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const allowEnterprise = decision.allowEnterprise;
   const requested = resolvePackage(brief.recommendation);
   const ceilingKey: PackageKey = LEVEL_TO_PACKAGE[decision.level];
-  const pkg =
-    PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
+  // Tanpa rekomendasi eksplisit pada brief, level SOP yang dipakai. Bila ada,
+  // package tidak boleh melebihi level SOP.
+  const pkg = !brief.recommendation?.trim()
+    ? resolvePackage(ceilingKey)
+    : PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
       ? resolvePackage(ceilingKey)
       : requested;
 
