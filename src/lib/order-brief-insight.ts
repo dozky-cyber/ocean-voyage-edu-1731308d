@@ -16,6 +16,7 @@ import {
   type PackageKey,
 } from "./admin/feature-library";
 import {
+  CONSULTANT_LIBRARY,
   consultantCoveredFeatureIds,
   consultantFeature,
   detectBusinessMaturity,
