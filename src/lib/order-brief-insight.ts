@@ -431,29 +431,49 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // features are never repeated inside Potential Feature Recommendation.
   const built = buildConsultantOption(brief, pkg.key, corePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
-  const optional = growthPicks.slice(0, potentialLimit).map((f) => ({
-    name: f.name,
-    description: f.fn,
-    reason: f.reasons[0] ?? f.benefit,
-    impact: f.benefit,
-    relation: f.relatedTo
+  const optional = growthPicks.slice(0, potentialLimit).map((f, index) => {
+    const relation = f.relatedTo
       ? f.relation === "enhancement"
         ? `Memperkuat ${f.relatedTo} pada scope customer.`
         : `Kelanjutan alur bisnis setelah ${f.relatedTo}.`
-      : null,
-  }));
+      : null;
+    // ANTI-DUPLIKASI KALIMAT: alasan relevansi tidak boleh mengulang Kaitan.
+    const reason =
+      f.reasons.find(
+        (line) => !/^memperkuat |^melanjutkan alur/i.test(line) && line !== relation,
+      ) ??
+      f.reasons[0] ??
+      f.benefit;
+    return {
+      name: f.name,
+      description: f.fn,
+      reason,
+      impact: f.benefit,
+      relation,
+      priority: index + 1,
+      phase: (index < 2 ? 1 : 2) as 1 | 2,
+    };
+  });
 
-
-
+  const readiness = buildReadiness(brief, maturity, PACKAGE_LABEL[pkg.key]);
+  const problemMap = buildProblemMap({
+    brief,
+    scopeIds: new Set(consultantCoveredFeatureIds(brief.features.join(" | "))),
+    corePicks,
+    growthPicks: growthPicks.slice(0, potentialLimit),
+  });
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
     reason: buildReason(brief, pkg, decision.rationale),
     included,
     consultant,
+    problemMap,
+    readiness,
     optional,
     disclaimer: OPTIONAL_DISCLAIMER,
     nextSteps: buildNextSteps(PACKAGE_LABEL[pkg.key], consultant?.packageName ?? null),
   };
 }
+
 
