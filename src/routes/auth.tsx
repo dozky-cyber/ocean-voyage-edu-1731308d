@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminAccess, provisionWorkspaceAccess } from "@/lib/admin.functions";
 import {
-  disableBiometricUnlock,
   enrollBiometricUnlock,
   getEnrolledEmail,
   isBiometricSupported,
+  syncStoredSession,
   unlockWithBiometric,
   type StoredSession,
 } from "@/lib/auth/biometric-unlock";
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
