@@ -25,7 +25,13 @@ export type ConsultantOption = {
   intro: string[];
   items: { title: string; benefit: string; optional?: boolean }[];
   comparison: { name: string; points: string[] }[];
+  /** PACKAGE UPGRADE PROTECTION: this option never replaces the brief package. */
+  note: string;
 };
+
+/** Non-binding wording for every consultant development option. */
+export const CONSULTANT_OPTION_NOTE =
+  "Rekomendasi ini merupakan opsi pengembangan, bukan keharusan. Package pada Order Brief tetap mengikuti kebutuhan yang customer sampaikan. Opsi ini dapat dipertimbangkan apabila bisnis ingin berkembang atau jika membutuhkan pengelolaan yang lebih lanjut di kemudian hari.";
 
 export type BriefInsight = {
   packageName: string;
