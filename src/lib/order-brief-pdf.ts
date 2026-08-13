@@ -254,6 +254,14 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
   return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
 }
 
+/** Package recommendation derived from the customer's own brief (never inflated). */
+function packageRecommendation(doc: Doc, brief: OrderBriefData) {
+  sectionTitle(doc, "Package Recommendation");
+  doc.text(buildBriefInsight(brief).packageName, MARGIN, doc.y, 12, true, BRAND);
+  doc.y -= 22;
+}
+
+
 /** Consultant block: package reason, brief scope, development option, optional ideas. */
 function aiRecommendation(doc: Doc, brief: OrderBriefData) {
   const insight = buildBriefInsight(brief);
