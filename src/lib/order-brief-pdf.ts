@@ -246,10 +246,91 @@ export function buildOrderBriefPdf(brief: OrderBriefData): Uint8Array {
 
   sectionTitle(doc, "Recommendation");
   doc.paragraph(brief.recommendation || "-", MARGIN, 11, true, CONTENT_W, BRAND);
+  doc.y -= 10;
+
+  aiRecommendation(doc, brief);
 
   footer(doc);
   return serializePdf([...doc.pages, doc.ops].filter((ops) => ops.length));
 }
+
+/** Extra explanatory block: package reason, package scope, optional feature ideas. */
+function aiRecommendation(doc: Doc, brief: OrderBriefData) {
+  const insight = buildBriefInsight(brief);
+
+  sectionTitle(doc, "AI Business Recommendation");
+
+  doc.text("AI RECOMMENDATION", MARGIN, doc.y, 7.5, false, MUTED);
+  doc.y -= 14;
+  doc.text(insight.packageName, MARGIN, doc.y, 12, true, INK);
+  doc.y -= 20;
+  doc.text("ALASAN", MARGIN, doc.y, 7.5, false, MUTED);
+  doc.y -= 13;
+  doc.paragraph(insight.reason, MARGIN, 10, false, CONTENT_W);
+  doc.y -= 12;
+
+  if (insight.included.length) {
+    doc.ensure(30);
+    doc.text(`Package ${insight.packageName}`, MARGIN, doc.y, 10, true, INK);
+    doc.y -= 15;
+    doc.text("INCLUDED", MARGIN, doc.y, 7.5, false, MUTED);
+    doc.y -= 14;
+    for (const item of insight.included) {
+      const lines = wrap(item, 10, false, CONTENT_W - 26);
+      lines.forEach((row, index) => {
+        doc.ensure(15);
+        if (index === 0) doc.text("v", MARGIN + 4, doc.y, 10, true, BRAND);
+        doc.text(row, MARGIN + 18, doc.y, 10, false);
+        doc.y -= 15;
+      });
+    }
+    doc.y -= 10;
+  }
+
+  if (insight.optional.length) {
+    sectionTitle(doc, "Potential Feature Recommendation");
+    doc.paragraph(
+      "Contoh pengembangan tambahan yang relevan untuk bisnis Anda. Fitur ini bukan bagian dari penawaran utama dan tidak termasuk dalam harga.",
+      MARGIN,
+      9.5,
+      false,
+      CONTENT_W,
+      MUTED,
+    );
+    doc.y -= 8;
+
+    insight.optional.forEach((item, index) => {
+      doc.ensure(56);
+      doc.text("*", MARGIN, doc.y, 11, true, BRAND);
+      doc.text(item.name, MARGIN + 14, doc.y, 10.5, true, INK);
+      doc.y -= 15;
+      doc.text("DESKRIPSI", MARGIN + 14, doc.y, 7, false, MUTED);
+      doc.y -= 12;
+      doc.paragraph(item.description, MARGIN + 14, 10, false, CONTENT_W - 14);
+      doc.y -= 6;
+      if (index < insight.optional.length - 1) {
+        doc.ensure(14);
+        doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4);
+        doc.y -= 12;
+      }
+    });
+
+    doc.y -= 6;
+    const lines = wrap(insight.disclaimer, 9, false, CONTENT_W - 32);
+    const h = 22 + lines.length * 12;
+    doc.ensure(h + 10);
+    const top = doc.y - h;
+    doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
+    doc.rect(MARGIN, top, 3, h, BRAND);
+    let y = top + h - 16;
+    lines.forEach((row) => {
+      doc.text(row, MARGIN + 16, y, 9, false, MUTED);
+      y -= 12;
+    });
+    doc.y = top - 18;
+  }
+}
+
 
 /** Serialize page content streams into a minimal, valid PDF byte array. */
 export function serializePdf(pages: Ops[]): Uint8Array {
