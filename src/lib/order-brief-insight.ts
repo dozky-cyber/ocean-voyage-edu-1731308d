@@ -16,6 +16,7 @@ import {
   type PackageKey,
 } from "./admin/feature-library";
 import {
+  CONSULTANT_LIBRARY,
   consultantCoveredFeatureIds,
   consultantFeature,
   detectBusinessMaturity,
@@ -25,6 +26,11 @@ import {
   type ConsultantTier,
 } from "./admin/consultant-library";
 import { buildProblemSolutionPlan } from "./admin/problem-solution-map";
+import {
+  describeFeatureForIndustry,
+  detectIndustryContext,
+  featureNameForIndustry,
+} from "./admin/industry-context";
 import {
   decidePackageLevel,
   type PackageLevel,
@@ -453,44 +459,92 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   });
 
 
+  // INDUSTRY CONTEXT: kosakata industri dipakai untuk menulis penjelasan fitur
+  // agar tidak terasa template lintas jenis usaha.
+  const industry = detectIndustryContext(businessText, context);
+
   // CORE / GROWTH SPLIT RULE:
   // - Consultant Recommendation = fitur yang menyelesaikan masalah customer.
   // - Potential Feature = pengembangan setelah masalah utama selesai.
-  const corePicks = picks.filter((p) => p.role === "core").slice(0, 4);
-  const growthPicks = picks.filter((p) => p.role === "growth");
+  const renameForIndustry = <T extends { id: string; name: string }>(pick: T): T => ({
+    ...pick,
+    name: featureNameForIndustry(pick.id, pick.name, industry),
+  });
+  const corePicks = picks
+    .filter((p) => p.role === "core")
+    .slice(0, 4)
+    .map(renameForIndustry);
+  const growthPicks = picks.filter((p) => p.role === "growth").map(renameForIndustry);
 
   // POTENTIAL FEATURE QUOTA: maksimal 5 untuk Business System ke atas,
   // maksimal 3 untuk level di bawahnya. Tidak ada pengisian paksa.
   const potentialLimit = PACKAGE_RANK[pkg.key] >= 2 ? 5 : 3;
 
+  const businessLabel = brief.business?.trim() || "bisnis Anda";
+
+  // Core Solution memakai suara industri yang sama dengan Potential Feature.
+  const voicedCorePicks = corePicks.map((f) => {
+    const voice = describeFeatureForIndustry({
+      featureId: f.id,
+      featureName: f.name,
+      featureFn: f.fn,
+      benefit: f.benefit,
+      business: businessLabel,
+      ctx: industry,
+      stage: maturity,
+    });
+    return voice ? { ...f, benefit: voice.reason } : f;
+  });
+
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, corePicks, growthPicks.length > 0);
+  const built = buildConsultantOption(brief, pkg.key, voicedCorePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
-  const businessLabel = brief.business?.trim() || "bisnis Anda";
   const optional = growthPicks.slice(0, potentialLimit).map((f, index) => {
-    const relation = f.relatedTo
+    // Nama fitur yang diperkuat juga ikut kosakata industri.
+    const relatedId = f.relatedTo
+      ? (CONSULTANT_LIBRARY.find((item) => item.name === f.relatedTo)?.id ?? f.relatedTo)
+      : null;
+    const relatedName = f.relatedTo
+      ? featureNameForIndustry(relatedId!, f.relatedTo, industry)
+      : null;
+    const fallbackRelation = relatedName
       ? f.relation === "enhancement"
-        ? `Memperkuat ${f.relatedTo} pada scope customer.`
-        : `Kelanjutan alur bisnis setelah ${f.relatedTo}.`
+        ? `Memperkuat ${relatedName} pada scope customer.`
+        : `Kelanjutan alur bisnis setelah ${relatedName}.`
       : null;
     // ANTI-DUPLIKASI KALIMAT: alasan relevansi tidak boleh mengulang Kaitan.
     const raw =
       f.reasons.find(
-        (line) => !/^memperkuat |^melanjutkan alur/i.test(line) && line !== relation,
+        (line) => !/^memperkuat |^melanjutkan alur/i.test(line) && line !== fallbackRelation,
       ) ??
       f.reasons[0] ??
       f.benefit;
+    const voice = describeFeatureForIndustry({
+      featureId: f.id,
+      featureName: f.name,
+      featureFn: f.fn,
+      benefit: f.benefit,
+      business: businessLabel,
+      ctx: industry,
+      stage: maturity,
+      relation: f.relation,
+      relatedTo: relatedName,
+      // Catatan tahap bisnis cukup satu kali agar tidak terasa berulang.
+      withStageNote: index === 0,
+    });
+
     return {
       name: f.name,
       description: f.fn,
-      reason: humanizeRelevance(raw, businessLabel),
-      impact: f.benefit,
-      relation,
+      reason: voice?.reason ?? humanizeRelevance(raw, businessLabel),
+      impact: voice?.impact ?? f.benefit,
+      relation: voice?.relation ?? fallbackRelation,
       priority: index + 1,
       phase: (index < 2 ? 1 : 2) as 1 | 2,
     };
   });
+
 
 
   const readiness = buildReadiness(brief, maturity, PACKAGE_LABEL[pkg.key]);
