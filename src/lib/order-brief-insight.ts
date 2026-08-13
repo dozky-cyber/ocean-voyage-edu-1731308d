@@ -11,7 +11,8 @@
 
 import {
   FEATURE_LIBRARY,
-  coreSolutionFeatures,
+  briefCoveredFeatureIds,
+  briefIncludedFeatures,
   detectSelectedFeatures,
   resolvePackage,
   type LibraryFeature,
@@ -216,15 +217,10 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   const selected = detectSelectedFeatures([context]);
 
-  // Included scope = package core + client selections, minus advanced features
-  // the client never asked for.
-  const core = coreSolutionFeatures(pkg.key, selected).filter(
-    (feature) =>
-      !RESTRICTED_FEATURE_IDS.has(feature.id) ||
-      selected.some((s) => s.id === feature.id) ||
-      hasAny(context, [feature.name, ...feature.keywords]),
-  );
-  const coreIds = new Set(core.map((f) => f.id));
+  // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
+  // list, verbatim. Package defaults never enter the scope.
+  const included = briefIncludedFeatures(brief.features);
+  const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
 
   // Optional recommendations: relevant, non-duplicate, never package-inflating.
   const optional = FEATURE_LIBRARY.filter((feature) => {
@@ -245,7 +241,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   return {
     packageName: pkg.key,
     reason: buildReason(brief, pkg),
-    included: core.map((f) => f.name),
+    included,
     optional: optional.map((f) => ({
       name: f.name,
       description: describeFeature(f, brief),

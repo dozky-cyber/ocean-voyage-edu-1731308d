@@ -6,7 +6,7 @@
  */
 
 import {
-  coreSolutionFeatures,
+  briefIncludedFeatures,
   detectSelectedFeatures,
   resolvePackage,
 } from "./feature-library";
@@ -266,12 +266,7 @@ export type PricingItem = { item: string; detail: string; amount: number };
  */
 export function buildPricingItems(lead: SalesLead): PricingItem[] {
   const definition = resolvePackage(recommendPackage(lead));
-  const included = coreSolutionFeatures(
-    definition.key,
-    detectSelectedFeatures([lead.features, lead.requirement, lead.project_type]),
-  )
-    .map((f) => f.name)
-    .join(", ");
+  const included = briefIncludedFeatures(buildSalesBrief(lead).features).join(", ");
   return [
     {
       item: `Core Solution — ${definition.key}`,
@@ -329,8 +324,7 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
   const brief = buildSalesBrief(lead);
   const client = clientLabel(lead);
   const definition = resolvePackage(brief.recommendedPackage);
-  const selected = detectSelectedFeatures([lead.features, lead.requirement, lead.project_type]);
-  const core = coreSolutionFeatures(definition.key, selected);
+  const core = briefIncludedFeatures(brief.features);
   const bullets = (items: string[]) => items.map((i) => `\u2022 ${i}`).join("\n");
   const numbered = (items: string[]) => items.map((i, index) => `${index + 1}. ${i}`).join("\n");
   const today = new Date().toLocaleDateString("id-ID", {
@@ -402,7 +396,7 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
         definition.key,
         "",
         "Included Feature:",
-        bullets(core.map((f) => f.name)),
+        bullets(core),
         "",
         "Cakupan pengerjaan:",
         bullets(brief.scope),

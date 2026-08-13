@@ -339,16 +339,52 @@ export function resolvePackage(name: string | null | undefined): PackageDefiniti
   return PACKAGES.find((p) => p.key === key) ?? PACKAGES[1];
 }
 
-/** Included features of a Core Solution = package defaults + client selection. */
+/**
+ * ORDER BRIEF FEATURE PROTECTION RULE.
+ * Included scope = the client's own feature list, verbatim. Package defaults
+ * are NEVER injected; the package only defines the solution level and price.
+ */
+export function briefIncludedFeatures(briefFeatures: (string | null | undefined)[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of briefFeatures) {
+    const value = (raw ?? "").trim();
+    if (!value) continue;
+    const key = normalize(value);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out;
+}
+
+/** Library ids already covered by the client's brief (anti duplicate rule). */
+export function briefCoveredFeatureIds(briefFeatures: (string | null | undefined)[]): string[] {
+  return detectSelectedFeatures(briefFeatures).map((f) => f.id);
+}
+
+/** Closest library match for a single brief line (used for descriptions only). */
+export function matchLibraryFeature(text: string): LibraryFeature | null {
+  const value = normalize(text);
+  if (!value) return null;
+  return (
+    FEATURE_LIBRARY.find(
+      (feature) =>
+        feature.id !== "custom" &&
+        [feature.name, ...feature.keywords].some((token) => value.includes(normalize(token))),
+    ) ?? null
+  );
+}
+
+/** @deprecated Package defaults must not enter scope. Kept for legacy reads. */
 export function coreSolutionFeatures(
   pkg: string | null | undefined,
   selected: LibraryFeature[],
 ): LibraryFeature[] {
-  const definition = resolvePackage(pkg);
-  const ids = new Set<string>(definition.coreFeatureIds);
-  for (const feature of selected) ids.add(feature.id);
+  const ids = new Set<string>(selected.map((f) => f.id));
   return FEATURE_LIBRARY.filter((f) => ids.has(f.id));
 }
+
 
 /**
  * FEATURE RECOMMENDATION LOGIC.
