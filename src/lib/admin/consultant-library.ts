@@ -310,6 +310,23 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: [],
     signals: ["karyawan", "team", "multi user", "role", "akses", "kasir", "staff"],
     aliases: ["multi user", "user management", "role akses"],
+    // Tidak relevan untuk bisnis personal tanpa team (contoh: florist personal).
+    requires: [
+      "karyawan",
+      "pegawai",
+      "staff",
+      "staf",
+      "team",
+      "tim",
+      "kasir",
+      "divisi",
+      "cabang",
+      "admin",
+      "role",
+      "multi user",
+      "beberapa user",
+    ],
+    simplerAlternativeId: "dashboard-admin",
   },
   {
     id: "notification",
