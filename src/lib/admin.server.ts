@@ -348,7 +348,7 @@ import {
 } from "@/lib/admin/sales-ai";
 
 export const PROPOSAL_COLUMNS =
-  "id, lead_id, title, status, recommended_package, content, pricing_items, currency, valid_until, version, client_name, investment_note, timeline_note, sent_at, viewed_at, approved_at, rejected_at, created_at, updated_at";
+  "id, lead_id, title, status, recommended_package, content, pricing_items, currency, valid_until, version, client_name, investment_note, payment_type, payment_dp_percent, payment_terms_text, sent_at, viewed_at, approved_at, rejected_at, created_at, updated_at";
 
 export async function fetchProposals(supabase: Client, leadId?: string) {
   let query = supabase
@@ -376,7 +376,7 @@ export async function fetchProposalVersions(supabase: Client, proposalId: string
   const { data, error } = await supabase
     .from("proposal_versions")
     .select(
-      "id, proposal_id, version, title, recommended_package, content, pricing_items, investment_note, timeline_note, note, created_by, created_at",
+      "id, proposal_id, version, title, recommended_package, content, pricing_items, enhancements, core_features, brief_timeline, estimated_timeline, investment_note, payment_type, payment_dp_percent, payment_terms_text, note, created_by, created_at",
     )
     .eq("proposal_id", proposalId)
     .order("version", { ascending: false })
@@ -413,18 +413,26 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       }
     : baseLead;
   const brief = buildSalesBrief(lead);
-  const { buildEnhancements } = await import("./admin/proposal-logic");
+  const { buildEnhancements, buildCoreFeatures } = await import("./admin/proposal-logic");
+  const packageName = recommendPackage(lead);
+  const context = [
+    lead.requirement,
+    lead.project_type,
+    lead.features,
+    lead.ai_business_category,
+    brief.features.join(" "),
+  ]
+    .filter(Boolean)
+    .join(" ");
   const enhancements = buildEnhancements({
     features: brief.features,
-    context: [
-      lead.requirement,
-      lead.project_type,
-      lead.features,
-      lead.ai_business_category,
-      brief.features.join(" "),
-    ]
-      .filter(Boolean)
-      .join(" "),
+    context,
+    packageName,
+  });
+  const coreFeatures = buildCoreFeatures({
+    packageName,
+    briefFeatures: brief.features,
+    context,
   });
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + 30);
@@ -434,10 +442,14 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       lead_id: leadId,
       title: `KERJAKU Digital Solution Proposal — ${lead.business_name || lead.company || lead.name}`,
       status: "Draft",
-      recommended_package: recommendPackage(lead),
+      recommended_package: packageName,
       content: buildProposalSections(lead),
       pricing_items: buildPricingItems(lead),
       enhancements,
+      core_features: coreFeatures,
+      payment_type: "full",
+      payment_dp_percent: null,
+      payment_terms_text: null,
       brief_timeline: finalBrief?.brief.timeline ?? lead.timeline ?? null,
       estimated_timeline: null,
       currency: "IDR",
@@ -445,7 +457,6 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       version: 1,
       client_name: lead.business_name || lead.company || lead.name,
       investment_note: brief.investment,
-      timeline_note: brief.timeline,
       created_by: userId,
     })
     .select("id")
@@ -468,6 +479,10 @@ export async function duplicateProposal(supabase: Client, id: string, userId: st
       content: source.content,
       pricing_items: source.pricing_items,
       enhancements: source.enhancements ?? [],
+      core_features: source.core_features ?? [],
+      payment_type: source.payment_type ?? "full",
+      payment_dp_percent: source.payment_dp_percent ?? null,
+      payment_terms_text: source.payment_terms_text ?? null,
       brief_timeline: source.brief_timeline ?? null,
       estimated_timeline: source.estimated_timeline ?? null,
       currency: source.currency,
@@ -475,7 +490,6 @@ export async function duplicateProposal(supabase: Client, id: string, userId: st
       version: 1,
       client_name: source.client_name,
       investment_note: source.investment_note,
-      timeline_note: source.timeline_note,
       created_by: userId,
     })
     .select("id")
@@ -491,13 +505,16 @@ export type SaveProposalInput = {
   recommended_package: string | null;
   content: { heading: string; body: string }[];
   pricing_items?: PricingItem[];
-  enhancements?: { name: string; benefit: string; amount: number }[];
+  enhancements?: { name: string; benefit: string; amount: number; recommended?: boolean }[];
+  core_features?: { name: string; description: string }[];
+  payment_type?: "full" | "termin" | null;
+  payment_dp_percent?: number | null;
+  payment_terms_text?: string | null;
   brief_timeline?: string | null;
   estimated_timeline?: string | null;
   currency?: string | null;
   valid_until?: string | null;
   investment_note?: string | null;
-  timeline_note?: string | null;
   version_note?: string | null;
 };
 
@@ -516,10 +533,13 @@ export async function saveProposal(supabase: Client, input: SaveProposalInput, u
     content: current.content,
     pricing_items: current.pricing_items ?? [],
     enhancements: current.enhancements ?? [],
+    core_features: current.core_features ?? [],
+    payment_type: current.payment_type ?? "full",
+    payment_dp_percent: current.payment_dp_percent ?? null,
+    payment_terms_text: current.payment_terms_text ?? null,
     brief_timeline: current.brief_timeline ?? null,
     estimated_timeline: current.estimated_timeline ?? null,
     investment_note: current.investment_note,
-    timeline_note: current.timeline_note,
     note: input.version_note ?? null,
     created_by: userId,
   });
@@ -534,12 +554,15 @@ export async function saveProposal(supabase: Client, input: SaveProposalInput, u
       content: input.content,
       pricing_items: input.pricing_items ?? current.pricing_items,
       enhancements: input.enhancements ?? current.enhancements ?? [],
+      core_features: input.core_features ?? current.core_features ?? [],
+      payment_type: input.payment_type ?? current.payment_type ?? "full",
+      payment_dp_percent: input.payment_dp_percent ?? null,
+      payment_terms_text: input.payment_terms_text ?? null,
       brief_timeline: input.brief_timeline ?? current.brief_timeline ?? null,
       estimated_timeline: input.estimated_timeline ?? null,
       currency: input.currency ?? current.currency,
       valid_until: input.valid_until ?? null,
       investment_note: input.investment_note ?? current.investment_note,
-      timeline_note: input.timeline_note ?? current.timeline_note,
       version: nextVersion,
     })
     .eq("id", input.id);
@@ -575,10 +598,13 @@ export async function restoreProposalVersion(
         benefit: string;
         amount: number;
       }[],
+      core_features: (snapshot.core_features ?? []) as { name: string; description: string }[],
+      payment_type: (snapshot.payment_type ?? "full") as "full" | "termin",
+      payment_dp_percent: snapshot.payment_dp_percent ?? null,
+      payment_terms_text: snapshot.payment_terms_text ?? null,
       brief_timeline: snapshot.brief_timeline ?? null,
       estimated_timeline: snapshot.estimated_timeline ?? null,
       investment_note: snapshot.investment_note,
-      timeline_note: snapshot.timeline_note,
       version_note: `Restore dari versi ${snapshot.version}`,
     },
     userId,

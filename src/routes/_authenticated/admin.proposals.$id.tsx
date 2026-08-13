@@ -21,11 +21,16 @@ import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
 import { buildProposalWhatsappMessage, type ProposalDocData } from "@/lib/proposal-doc";
 import { proposalPdfBlobUrl } from "@/lib/proposal-pdf";
 import {
+  buildPaymentTermsLines,
   buildTimelineBlock,
   enhancementsTotal,
+  parseCoreFeatures,
   parseEnhancements,
+  type CoreFeatureItem,
   type EnhancementItem,
+  type PaymentType,
 } from "@/lib/admin/proposal-logic";
+import { FEATURE_LIBRARY, PACKAGES } from "@/lib/admin/feature-library";
 import { formatDate } from "@/lib/admin/pipeline";
 
 import {
@@ -87,7 +92,10 @@ function ProposalDetailPage() {
   const [currency, setCurrency] = useState("IDR");
   const [validUntil, setValidUntil] = useState("");
   const [investmentNote, setInvestmentNote] = useState("");
-  const [timelineNote, setTimelineNote] = useState("");
+  const [paymentType, setPaymentType] = useState<PaymentType>("full");
+  const [dpPercent, setDpPercent] = useState("50");
+  const [paymentText, setPaymentText] = useState("");
+  const [coreFeatures, setCoreFeatures] = useState<CoreFeatureItem[]>([]);
   const [versionNote, setVersionNote] = useState("");
   const [sections, setSections] = useState<ProposalSection[]>([]);
   const [pricing, setPricing] = useState<PricingItem[]>([]);
@@ -104,7 +112,10 @@ function ProposalDetailPage() {
     setCurrency(data.currency ?? "IDR");
     setValidUntil(data.valid_until ?? "");
     setInvestmentNote(data.investment_note ?? "");
-    setTimelineNote(data.timeline_note ?? "");
+    setPaymentType((data.payment_type as PaymentType) ?? "full");
+    setDpPercent(data.payment_dp_percent ? String(data.payment_dp_percent) : "50");
+    setPaymentText(data.payment_terms_text ?? "");
+    setCoreFeatures(parseCoreFeatures(data.core_features));
     setSections(parseSections(data.content));
     setPricing(parsePricingItems(data.pricing_items));
     setBriefTimeline(data.brief_timeline ?? "");
@@ -115,6 +126,15 @@ function ProposalDetailPage() {
   const coreTotal = useMemo(() => pricingTotal(pricing), [pricing]);
   const optionalTotal = useMemo(() => enhancementsTotal(enhancements), [enhancements]);
   const total = coreTotal + optionalTotal;
+  const paymentLines = useMemo(
+    () =>
+      buildPaymentTermsLines({
+        type: paymentType,
+        dpPercent: Number(dpPercent) || null,
+        customText: paymentText || null,
+      }),
+    [paymentType, dpPercent, paymentText],
+  );
   const timelineBlock = useMemo(
     () =>
       buildTimelineBlock({
@@ -139,13 +159,17 @@ function ProposalDetailPage() {
             name: e.name,
             benefit: e.benefit,
             amount: Number(e.amount) || 0,
+            recommended: Boolean(e.recommended),
           })),
+          core_features: coreFeatures,
+          payment_type: paymentType,
+          payment_dp_percent: paymentType === "termin" ? Number(dpPercent) || null : null,
+          payment_terms_text: paymentText || null,
           brief_timeline: briefTimeline || null,
           estimated_timeline: estimatedTimeline || null,
           currency,
           valid_until: validUntil || null,
           investment_note: investmentNote || null,
-          timeline_note: timelineNote || null,
           version_note: versionNote || null,
         },
       }),
@@ -270,10 +294,13 @@ function ProposalDetailPage() {
     content: unknown;
     pricing_items: unknown;
     investment_note: string | null;
-    timeline_note: string | null;
     brief_timeline?: string | null;
     estimated_timeline?: string | null;
     enhancements?: unknown;
+    core_features?: unknown;
+    payment_type?: string | null;
+    payment_dp_percent?: number | null;
+    payment_terms_text?: string | null;
     created_at: string;
   };
 
@@ -289,12 +316,15 @@ function ProposalDetailPage() {
       currency: data?.currency ?? "IDR",
       validUntil: data?.valid_until ?? null,
       investmentNote: v.investment_note,
-      timelineNote: v.timeline_note,
+      paymentType: (v.payment_type as "full" | "termin") ?? "full",
+      paymentDpPercent: v.payment_dp_percent ?? null,
+      paymentTermsText: v.payment_terms_text ?? null,
       sections: parseSections(v.content),
       pricing: parsePricingItems(v.pricing_items),
       briefTimeline: v.brief_timeline ?? null,
       estimatedTimeline: v.estimated_timeline ?? null,
       enhancements: parseEnhancements(v.enhancements),
+      coreFeatures: parseCoreFeatures(v.core_features),
       createdAt: v.created_at,
     };
     if (previewVersion) URL.revokeObjectURL(previewVersion.url);
@@ -433,7 +463,25 @@ function ProposalDetailPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Field label="Judul" value={title} onChange={setTitle} />
               <Field label="Nama klien" value={clientName} onChange={setClientName} />
-              <Field label="Paket rekomendasi" value={pkg} onChange={setPkg} />
+              <label className="block text-xs text-muted-foreground">
+                Recommended Solution / Core Solution
+                <select
+                  value={pkg}
+                  onChange={(e) => setPkg(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
+                >
+                  {(PACKAGES.some((p) => p.key === pkg) ? [] : [pkg]).map((value) => (
+                    <option key={value} value={value}>
+                      {value || "-"}
+                    </option>
+                  ))}
+                  {PACKAGES.map((p) => (
+                    <option key={p.key} value={p.key}>
+                      {p.key}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <Field label="Mata uang" value={currency} onChange={setCurrency} />
               <Field label="Berlaku sampai" value={validUntil} onChange={setValidUntil} type="date" />
               <Field
@@ -516,7 +564,6 @@ function ProposalDetailPage() {
             </p>
             <div className="mt-4 grid gap-3">
               <Area label="Catatan investasi" value={investmentNote} onChange={setInvestmentNote} />
-              <Area label="Catatan timeline" value={timelineNote} onChange={setTimelineNote} />
             </div>
           </GlassCard>
 
@@ -549,7 +596,7 @@ function ProposalDetailPage() {
 
           <GlassCard>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-medium">Recommended Enhancement</p>
+              <p className="text-sm font-medium">Feature Recommendation</p>
               <button
                 type="button"
                 onClick={() =>
@@ -557,7 +604,7 @@ function ProposalDetailPage() {
                 }
                 className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
               >
-                + Tambah enhancement
+                + Tambah fitur
               </button>
             </div>
             <div className="mt-4 space-y-3">
@@ -614,9 +661,160 @@ function ProposalDetailPage() {
                 <p className="text-xs text-muted-foreground">Belum ada enhancement.</p>
               ) : null}
             </div>
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground">
+                Tambah dari Master Feature Library (fitur yang sudah dipakai otomatis
+                disembunyikan):
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {FEATURE_LIBRARY.filter(
+                  (f) =>
+                    f.id !== "custom" &&
+                    !enhancements.some((e) => e.name === f.name) &&
+                    !coreFeatures.some((c) => c.name === f.name),
+                ).map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() =>
+                      setEnhancements((prev) => [
+                        ...prev,
+                        { name: f.name, benefit: f.description, amount: f.price },
+                      ])
+                    }
+                    className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground transition hover:text-foreground"
+                  >
+                    + {f.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             <p className="mt-3 text-sm font-semibold text-primary">
-              Optional Enhancement: {formatIDR(optionalTotal, currency)}
+              Optional Feature: {formatIDR(optionalTotal, currency)}
             </p>
+          </GlassCard>
+
+          <GlassCard>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-medium">Core Solution — Included Feature</p>
+              <button
+                type="button"
+                onClick={() => setCoreFeatures((prev) => [...prev, { name: "", description: "" }])}
+                className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
+              >
+                + Tambah fitur
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {coreFeatures.map((row, index) => (
+                <div
+                  key={index}
+                  className="grid gap-2 rounded-2xl border border-border/40 bg-background/30 p-3 sm:grid-cols-[1.2fr_1.8fr_auto]"
+                >
+                  <input
+                    value={row.name}
+                    placeholder="Nama fitur"
+                    onChange={(e) =>
+                      setCoreFeatures((prev) =>
+                        prev.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)),
+                      )
+                    }
+                    className="rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-primary/60"
+                  />
+                  <input
+                    value={row.description}
+                    placeholder="Deskripsi"
+                    onChange={(e) =>
+                      setCoreFeatures((prev) =>
+                        prev.map((p, i) =>
+                          i === index ? { ...p, description: e.target.value } : p,
+                        ),
+                      )
+                    }
+                    className="rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-primary/60"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCoreFeatures((prev) => prev.filter((_, i) => i !== index))}
+                    className="rounded-xl border border-destructive/40 px-3 py-2 text-xs text-destructive transition hover:bg-destructive/10"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ))}
+              {!coreFeatures.length ? (
+                <p className="text-xs text-muted-foreground">
+                  Belum ada fitur Core Solution. Fitur di sini menjadi scope utama package.
+                </p>
+              ) : null}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {FEATURE_LIBRARY.filter(
+                (f) => f.id !== "custom" && !coreFeatures.some((c) => c.name === f.name),
+              ).map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() =>
+                    setCoreFeatures((prev) => [
+                      ...prev,
+                      { name: f.name, description: f.description },
+                    ])
+                  }
+                  className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground transition hover:text-foreground"
+                >
+                  + {f.name}
+                </button>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Harga Core Solution berasal dari package pada tabel Investasi, bukan dari jumlah
+              fitur.
+            </p>
+          </GlassCard>
+
+          <GlassCard>
+            <p className="text-sm font-medium">Payment Terms</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Hanya informasi kesepakatan pembayaran pada proposal. Perhitungan nominal, sisa
+              pembayaran, dan status dikelola oleh sistem Invoice.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(
+                [
+                  ["full", "Full Payment"],
+                  ["termin", "DP / Termin"],
+                ] as [PaymentType, string][]
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setPaymentType(value)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                    paymentType === value
+                      ? "border-primary/50 bg-primary/15 text-primary"
+                      : "border-border/50 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {paymentType === "termin" ? (
+              <div className="mt-3 max-w-[200px]">
+                <Field label="DP Percentage (%)" value={dpPercent} onChange={setDpPercent} />
+              </div>
+            ) : null}
+            <div className="mt-3">
+              <Area
+                label="Custom payment text (opsional — menimpa teks otomatis)"
+                value={paymentText}
+                onChange={setPaymentText}
+              />
+            </div>
+            <div className="mt-3 rounded-2xl border border-border/40 bg-background/30 p-3 text-xs text-muted-foreground">
+              <p className="whitespace-pre-wrap">{paymentLines.join("\n")}</p>
+            </div>
           </GlassCard>
 
           <GlassCard>
@@ -761,13 +959,16 @@ function ProposalDetailPage() {
           {enhancements.length ? (
             <section className="proposal-section">
               <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
-                Recommended Enhancement
+                Feature Recommendation
               </h2>
               <ul className="mt-3 space-y-2 text-sm">
                 {enhancements.map((row, index) => (
                   <li key={index} className="flex flex-wrap justify-between gap-2">
                     <span>
-                      <span className="font-medium">{row.name}</span>
+                      <span className="font-medium">
+                        {row.recommended ? "\u2b50 " : ""}
+                        {row.name}
+                      </span>
                       {row.benefit ? (
                         <span className="block text-xs text-muted-foreground">{row.benefit}</span>
                       ) : null}
@@ -775,6 +976,23 @@ function ProposalDetailPage() {
                     <span className="whitespace-nowrap text-primary">
                       {formatIDR(row.amount, currency)}
                     </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {coreFeatures.length ? (
+            <section className="proposal-section">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                Core Solution
+              </h2>
+              <p className="mt-2 text-sm font-medium">{pkg || "-"}</p>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                {coreFeatures.map((row, index) => (
+                  <li key={index}>
+                    <span className="text-foreground">{row.name}</span>
+                    {row.description ? ` — ${row.description}` : ""}
                   </li>
                 ))}
               </ul>
@@ -836,7 +1054,7 @@ function ProposalDetailPage() {
                     {enhancements.length ? (
                       <tr>
                         <td className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wide" colSpan={3}>
-                          Optional Enhancement
+                          Optional Feature
                         </td>
                       </tr>
                     ) : null}
@@ -852,7 +1070,7 @@ function ProposalDetailPage() {
                     {enhancements.length ? (
                       <tr>
                         <td className="py-2 pr-3 text-xs text-muted-foreground" colSpan={2}>
-                          Subtotal Optional Enhancement
+                          Subtotal Optional Feature
                         </td>
                         <td className="py-2 text-right font-medium whitespace-nowrap">
                           {formatIDR(optionalTotal, currency)}
@@ -877,6 +1095,14 @@ function ProposalDetailPage() {
               ) : null}
             </section>
           ) : null}
+          <section className="proposal-section">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+              Payment Terms
+            </h2>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              {paymentLines.join("\n")}
+            </p>
+          </section>
         </div>
 
         <div className="border-t border-border/40 px-6 py-6 text-xs text-muted-foreground sm:px-10">

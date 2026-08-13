@@ -4,7 +4,14 @@
 export type ProposalPricingItem = { item: string; detail: string; amount: number };
 export type ProposalSectionData = { heading: string; body: string };
 
-export type ProposalEnhancementItem = { name: string; benefit: string; amount: number };
+export type ProposalEnhancementItem = {
+  name: string;
+  benefit: string;
+  amount: number;
+  recommended?: boolean;
+};
+
+export type ProposalCoreFeature = { name: string; description: string };
 
 export type ProposalDocData = {
   title: string;
@@ -17,7 +24,10 @@ export type ProposalDocData = {
   currency: string;
   validUntil: string | null;
   investmentNote: string | null;
-  timelineNote: string | null;
+  /** Payment agreement only — the Invoice system does the actual math. */
+  paymentType: "full" | "termin";
+  paymentDpPercent?: number | null;
+  paymentTermsText?: string | null;
   sections: ProposalSectionData[];
   pricing: ProposalPricingItem[];
   /** Timeline from the Final Order Brief (client requirement). */
@@ -25,6 +35,7 @@ export type ProposalDocData = {
   /** Internal KERJAKU estimate; when filled it drives the production deadline. */
   estimatedTimeline?: string | null;
   enhancements?: ProposalEnhancementItem[];
+  coreFeatures?: ProposalCoreFeature[];
   createdAt: string;
 };
 

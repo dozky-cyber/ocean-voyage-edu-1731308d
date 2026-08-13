@@ -1316,6 +1316,7 @@ export type Database = {
         Row: {
           brief_timeline: string | null
           content: Json
+          core_features: Json
           created_at: string
           created_by: string | null
           enhancements: Json
@@ -1323,6 +1324,9 @@ export type Database = {
           id: string
           investment_note: string | null
           note: string | null
+          payment_dp_percent: number | null
+          payment_terms_text: string | null
+          payment_type: string
           pricing_items: Json
           proposal_id: string
           recommended_package: string | null
@@ -1333,6 +1337,7 @@ export type Database = {
         Insert: {
           brief_timeline?: string | null
           content?: Json
+          core_features?: Json
           created_at?: string
           created_by?: string | null
           enhancements?: Json
@@ -1340,6 +1345,9 @@ export type Database = {
           id?: string
           investment_note?: string | null
           note?: string | null
+          payment_dp_percent?: number | null
+          payment_terms_text?: string | null
+          payment_type?: string
           pricing_items?: Json
           proposal_id: string
           recommended_package?: string | null
@@ -1350,6 +1358,7 @@ export type Database = {
         Update: {
           brief_timeline?: string | null
           content?: Json
+          core_features?: Json
           created_at?: string
           created_by?: string | null
           enhancements?: Json
@@ -1357,6 +1366,9 @@ export type Database = {
           id?: string
           investment_note?: string | null
           note?: string | null
+          payment_dp_percent?: number | null
+          payment_terms_text?: string | null
+          payment_type?: string
           pricing_items?: Json
           proposal_id?: string
           recommended_package?: string | null
@@ -1380,6 +1392,7 @@ export type Database = {
           brief_timeline: string | null
           client_name: string | null
           content: Json
+          core_features: Json
           created_at: string
           created_by: string | null
           currency: string
@@ -1388,6 +1401,9 @@ export type Database = {
           id: string
           investment_note: string | null
           lead_id: string
+          payment_dp_percent: number | null
+          payment_terms_text: string | null
+          payment_type: string
           pricing_items: Json
           recommended_package: string | null
           rejected_at: string | null
@@ -1405,6 +1421,7 @@ export type Database = {
           brief_timeline?: string | null
           client_name?: string | null
           content?: Json
+          core_features?: Json
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -1413,6 +1430,9 @@ export type Database = {
           id?: string
           investment_note?: string | null
           lead_id: string
+          payment_dp_percent?: number | null
+          payment_terms_text?: string | null
+          payment_type?: string
           pricing_items?: Json
           recommended_package?: string | null
           rejected_at?: string | null
@@ -1430,6 +1450,7 @@ export type Database = {
           brief_timeline?: string | null
           client_name?: string | null
           content?: Json
+          core_features?: Json
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -1438,6 +1459,9 @@ export type Database = {
           id?: string
           investment_note?: string | null
           lead_id?: string
+          payment_dp_percent?: number | null
+          payment_terms_text?: string | null
+          payment_type?: string
           pricing_items?: Json
           recommended_package?: string | null
           rejected_at?: string | null

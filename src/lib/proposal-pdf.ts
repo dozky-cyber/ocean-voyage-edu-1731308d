@@ -17,7 +17,7 @@ import {
   textWidth,
   wrap,
 } from "./order-brief-pdf";
-import { buildTimelineBlock } from "./admin/proposal-logic";
+import { buildPaymentTermsLines, buildTimelineBlock } from "./admin/proposal-logic";
 import { proposalFileName, type ProposalDocData } from "./proposal-doc";
 
 function money(amount: number, currency: string) {
@@ -174,9 +174,9 @@ function subtotalLine(doc: Doc, label: string, value: number, currency: string) 
 function enhancementSection(doc: Doc, data: ProposalDocData) {
   const items = data.enhancements ?? [];
   if (!items.length) return;
-  sectionTitle(doc, "Recommended Enhancement");
+  sectionTitle(doc, "Feature Recommendation");
   doc.paragraph(
-    "Rekomendasi pengembangan tambahan berdasarkan analisa kebutuhan bisnis. Bersifat opsional dan dapat dikerjakan bertahap.",
+    "Rekomendasi fitur tambahan hasil analisa kebutuhan bisnis KERJAKU. Fitur yang sudah dipilih client tidak ditampilkan kembali. Bersifat opsional dan dapat dikerjakan bertahap.",
     MARGIN,
     9.5,
     false,
@@ -189,7 +189,7 @@ function enhancementSection(doc: Doc, data: ProposalDocData) {
     const benefitLines = item.benefit ? wrap(item.benefit, 9, false, CONTENT_W - 140) : [];
     doc.ensure(34 + benefitLines.length * 12);
     const amount = money(item.amount, data.currency);
-    doc.text(item.name || "-", MARGIN, doc.y, 10, true);
+    doc.text(`${item.recommended ? "* " : ""}${item.name || "-"}`, MARGIN, doc.y, 10, true);
     doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false, BRAND);
     doc.y -= 14;
     benefitLines.forEach((line) => {
@@ -198,6 +198,29 @@ function enhancementSection(doc: Doc, data: ProposalDocData) {
     });
     doc.y -= 10;
   }
+}
+
+function coreSolutionSection(doc: Doc, data: ProposalDocData) {
+  const features = data.coreFeatures ?? [];
+  if (!features.length) return;
+  sectionTitle(doc, "Core Solution");
+  doc.text(data.recommendedPackage || "Core Solution", MARGIN, doc.y, 11, true, INK);
+  doc.y -= 20;
+  doc.text("INCLUDED FEATURE", MARGIN, doc.y, 8, true, MUTED);
+  doc.y -= 16;
+  for (const feature of features) {
+    const lines = feature.description ? wrap(feature.description, 9, false, CONTENT_W - 26) : [];
+    doc.ensure(20 + lines.length * 12);
+    doc.text("-", MARGIN + 4, doc.y, 10, true, BRAND);
+    doc.text(feature.name || "-", MARGIN + 18, doc.y, 10, true);
+    doc.y -= 14;
+    lines.forEach((line) => {
+      doc.text(line, MARGIN + 18, doc.y, 9, false, MUTED);
+      doc.y -= 12;
+    });
+    doc.y -= 4;
+  }
+  doc.y -= 6;
 }
 
 function timelineSection(doc: Doc, data: ProposalDocData) {
@@ -231,9 +254,9 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
 
   let optionalTotal = 0;
   if (optional.length) {
-    groupHeader(doc, "Optional Enhancement");
+    groupHeader(doc, "Optional Feature");
     optionalTotal = priceRows(doc, optional, data.currency);
-    subtotalLine(doc, "Subtotal Optional Enhancement", optionalTotal, data.currency);
+    subtotalLine(doc, "Subtotal Optional Feature", optionalTotal, data.currency);
   }
 
   doc.ensure(34);
@@ -251,14 +274,17 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
   }
 }
 
-function paymentTerms(doc: Doc) {
+function paymentTerms(doc: Doc, data: ProposalDocData) {
+  const lines = buildPaymentTermsLines({
+    type: data.paymentType,
+    dpPercent: data.paymentDpPercent ?? null,
+    customText: data.paymentTermsText ?? null,
+  });
   sectionTitle(doc, "Payment Terms");
   bodyBlock(
     doc,
     [
-      "- 40% saat kick-off project",
-      "- 40% saat masuk tahap UAT",
-      "- 20% saat go-live dan serah terima",
+      ...lines.map((line) => (line.trim() ? `- ${line.replace(/^[-\u2022]\s*/, "")}` : "")),
       "Pembayaran melalui transfer bank atau payment link resmi KERJAKU.",
     ].join("\n"),
   );
@@ -285,22 +311,30 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
   clientCard(doc, data);
   summaryBox(doc, data);
 
-  for (const section of data.sections) {
+  const hasCoreFeatures = Boolean(data.coreFeatures?.length);
+  const isCoreHeading = (heading: string) => heading.trim().toLowerCase() === "core solution";
+  const isNextSteps = (heading: string) => heading.trim().toLowerCase() === "next steps";
+  const mainSections = data.sections.filter(
+    (s) => !(hasCoreFeatures && isCoreHeading(s.heading)) && !isNextSteps(s.heading),
+  );
+  const closing = data.sections.filter((s) => isNextSteps(s.heading));
+
+  for (const section of mainSections) {
     if (!section.heading && !section.body) continue;
     sectionTitle(doc, section.heading || "Bagian");
     bodyBlock(doc, section.body || "-");
   }
 
   enhancementSection(doc, data);
+  coreSolutionSection(doc, data);
   timelineSection(doc, data);
   pricingTable(doc, data);
+  paymentTerms(doc, data);
 
-  if (data.timelineNote) {
-    sectionTitle(doc, "Timeline Note");
-    bodyBlock(doc, data.timelineNote);
+  for (const section of closing) {
+    sectionTitle(doc, section.heading || "Next Steps");
+    bodyBlock(doc, section.body || "-");
   }
-
-  paymentTerms(doc);
 
   return serializePdf(footer(doc, data.clientName));
 }
