@@ -347,6 +347,20 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     fits: ["distributor", "grosir", "toko", "retail", "apotek", "sparepart"],
     signals: ["banyak produk", "pencarian", "search", "katalog besar"],
     aliases: ["search", "pencarian", "cari produk"],
+    // Tidak relevan bila jumlah produk masih sedikit (katalog kecil).
+    requires: [
+      "banyak produk",
+      "banyak item",
+      "banyak varian",
+      "banyak layanan",
+      "ratusan",
+      "ribuan",
+      "katalog besar",
+      "pencarian",
+      "search",
+      "sku",
+    ],
+    simplerAlternativeId: "katalog",
   },
   {
     id: "faq",
