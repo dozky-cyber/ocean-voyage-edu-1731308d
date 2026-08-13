@@ -182,123 +182,33 @@ export function buildTimelineBlock(input: {
 }
 
 /* -------------------------------------------------------------------------
- * Recommended enhancement (AI business analysis, rule based)
+ * Feature Recommendation (AI business analysis, master library only)
  * ---------------------------------------------------------------------- */
 
-type EnhancementRule = {
-  match: RegExp;
-  items: EnhancementItem[];
-};
-
-const RULES: EnhancementRule[] = [
-  {
-    match: /landing|website|company profile|sales|jual|toko|produk/,
-    items: [
-      {
-        name: "Form Konsultasi Customer",
-        benefit: "Memudahkan calon customer melakukan konsultasi sebelum pembelian.",
-        amount: 1_500_000,
-      },
-      {
-        name: "Google Maps Integration",
-        benefit: "Membantu customer menemukan lokasi kantor atau showroom Anda.",
-        amount: 750_000,
-      },
-      {
-        name: "Lead Analytics Dashboard",
-        benefit: "Monitoring performa lead masuk dan sumber traffic terbaik.",
-        amount: 2_500_000,
-      },
-    ],
-  },
-  {
-    match: /stok|inventory|gudang|barang|material/,
-    items: [
-      {
-        name: "Notifikasi Stok Minimum",
-        benefit: "Mencegah kehabisan stok karena sistem mengingatkan otomatis.",
-        amount: 2_000_000,
-      },
-      {
-        name: "Barcode / QR Scanner",
-        benefit: "Mempercepat proses input dan pengecekan barang di lapangan.",
-        amount: 3_500_000,
-      },
-    ],
-  },
-  {
-    match: /keuangan|invoice|pembayaran|payment|kasir|pos/,
-    items: [
-      {
-        name: "Payment Gateway Integration",
-        benefit: "Customer bisa membayar online dan pembayaran tercatat otomatis.",
-        amount: 3_500_000,
-      },
-      {
-        name: "Laporan Keuangan Otomatis",
-        benefit: "Rekap pemasukan dan pengeluaran tanpa input manual.",
-        amount: 2_500_000,
-      },
-    ],
-  },
-  {
-    match: /pelanggan|customer|crm|reservasi|booking|order/,
-    items: [
-      {
-        name: "WhatsApp Notification Otomatis",
-        benefit: "Customer menerima konfirmasi dan pengingat tanpa dibalas manual.",
-        amount: 2_500_000,
-      },
-      {
-        name: "Customer Database & Riwayat Transaksi",
-        benefit: "Memudahkan follow up dan program loyalitas pelanggan.",
-        amount: 3_000_000,
-      },
-    ],
-  },
-];
-
-const DEFAULT_ENHANCEMENTS: EnhancementItem[] = [
-  {
-    name: "Dashboard Analitik Operasional",
-    benefit: "Memantau performa bisnis harian dalam satu layar.",
-    amount: 2_500_000,
-  },
-  {
-    name: "Multi User & Hak Akses",
-    benefit: "Tim bisa bekerja bersama dengan pembatasan akses yang aman.",
-    amount: 2_000_000,
-  },
-  {
-    name: "Backup & Maintenance 6 Bulan",
-    benefit: "Sistem tetap aman, terpantau, dan siap dikembangkan lanjutan.",
-    amount: 1_800_000,
-  },
-];
-
 /**
- * AI business analysis: suggests add-on features that are NOT already part of
- * the client's Order Brief feature list. Admin can edit/add manually later.
+ * AI business analysis: recommends add-on features from the MASTER FEATURE
+ * LIBRARY only. Features already chosen by the client (Order Brief / Client
+ * Discovery) or already inside the Core Solution are removed first
+ * (anti duplicate rule). Admin can edit, delete, add, or reprice afterwards.
  */
 export function buildEnhancements(input: {
   features: string[];
   context: string;
+  packageName?: string | null;
+  limit?: number;
 }): EnhancementItem[] {
-  const context = input.context.toLowerCase();
-  const existing = input.features.map((f) => f.toLowerCase());
-  const pool: EnhancementItem[] = [];
-  for (const rule of RULES) {
-    if (rule.match.test(context)) pool.push(...rule.items);
-  }
-  const candidates = pool.length ? pool : DEFAULT_ENHANCEMENTS;
-  const picked: EnhancementItem[] = [];
-  for (const item of candidates) {
-    const key = item.name.toLowerCase();
-    const duplicate =
-      picked.some((p) => p.name === item.name) ||
-      existing.some((f) => f.includes(key) || key.includes(f));
-    if (!duplicate) picked.push(item);
-    if (picked.length >= 3) break;
-  }
-  return picked.length ? picked : DEFAULT_ENHANCEMENTS.slice(0, 3);
+  const selected = detectSelectedFeatures([...input.features, input.context]);
+  const core = resolvePackage(input.packageName).coreFeatureIds;
+  const picked = recommendFeatures({
+    selected,
+    excludeIds: core,
+    context: `${input.features.join(" ")} ${input.context}`,
+    limit: input.limit ?? 4,
+  });
+  return picked.map((feature, index) => ({
+    name: feature.name,
+    benefit: feature.description,
+    amount: feature.price,
+    recommended: index < 2,
+  }));
 }
