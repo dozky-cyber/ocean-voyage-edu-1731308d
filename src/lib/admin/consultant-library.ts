@@ -578,13 +578,17 @@ export function selectConsultantFeatures(input: {
   excludeTitles?: string[];
   /** Business Problem pada brief (dipakai pengecekan validasi poin 3). */
   problemText?: string;
+  /** Skala pengguna + kebutuhan admin/team pada brief. */
+  scaleText?: string;
   limit?: number;
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
   const context = normalize(`${input.businessText} ${input.context}`);
+  const problem = normalize(input.problemText ?? "");
   const maxRank = TIER_RANK[input.maxTier ?? "business"];
   const excluded = new Set(input.excludeIds ?? []);
   const excludedTitles = (input.excludeTitles ?? []).map(normalize);
+  const personal = isPersonalScale(input.scaleText ?? "", context);
 
   // BUSINESS FLOW PATTERN LIBRARY: pahami alur bisnis dulu, baru pilih fitur.
   const pattern = detectBusinessFlowPattern(input.businessText, input.context);
@@ -600,11 +604,20 @@ export function selectConsultantFeatures(input: {
     const key = normalize(feature.name);
     if (excludedTitles.some((title) => title.includes(key) || key.includes(title))) continue;
 
-    const asked = includesAny(context, [feature.name, ...feature.aliases]);
+    const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
 
-    const fitsBusiness = includesAny(business, feature.fits) || includesAny(context, feature.fits);
-    const hasSignal = includesAny(context, feature.signals);
+    // SCALE RULE (hard block, tidak bisa dilewati oleh business flow priority):
+    // bisnis personal tanpa team tidak boleh mendapat fitur bertim/enterprise.
+    if (personal && !asked && (TEAM_ONLY_FEATURES.has(feature.id) || feature.tier === "enterprise"))
+      continue;
+
+    const fitsBusiness =
+      includesAny(business, feature.fits) || includesAnyPositive(context, feature.fits);
+    const hasSignal = includesAnyPositive(context, feature.signals);
+    const solvesProblem =
+      !!problem &&
+      includesAnyPositive(problem, [feature.name, ...feature.aliases, ...feature.signals]);
 
     // Bukan prioritas pada alur bisnis ini -> hanya boleh jika customer minta.
     if (notPriority.has(feature.id) && !asked) continue;
@@ -620,6 +633,7 @@ export function selectConsultantFeatures(input: {
       business: input.businessText,
       context: input.context,
       problemText: input.problemText,
+      scaleText: input.scaleText,
     });
     const onFlow = priority.has(feature.id);
     if (!validation.valid && !onFlow) continue;
@@ -632,10 +646,12 @@ export function selectConsultantFeatures(input: {
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
+      (solvesProblem ? 2 : 0) +
       validation.reasons.length -
       TIER_RANK[feature.tier] * 0.25;
     picks.push({ ...feature, score, reasons });
   }
+
 
   picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
   return picks.slice(0, input.limit ?? 6);
