@@ -30,6 +30,18 @@ export type ConsultantFeature = {
    * secara langsung pada brief.
    */
   onRequestOnly?: boolean;
+  /**
+   * BUSINESS FEATURE VALIDATION RULE — kondisi bisnis yang wajib ada pada brief.
+   * Tanpa salah satu kondisi ini, fitur dianggap tidak relevan dan dibuang
+   * (contoh: Inventory tanpa pengelolaan stok, Multi User tanpa team,
+   * Search tanpa jumlah produk yang besar).
+   */
+  requires?: string[];
+  /**
+   * Fitur lain yang lebih sederhana namun lebih berdampak untuk kebutuhan
+   * serupa. Dipakai pada pengecekan poin 4.
+   */
+  simplerAlternativeId?: string;
 };
 
 export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
