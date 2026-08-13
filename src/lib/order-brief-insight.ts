@@ -282,53 +282,17 @@ function optionalReason(feature: LibraryFeature, brief: OrderBriefData) {
 function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
-  coveredIds: Set<string>,
+  picks: ConsultantPick[],
 ): { option: ConsultantOption; ids: string[] } | null {
+  if (!picks.length) return null;
   const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
   if (upgradeKey === base) return null;
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
   const business = brief.business?.trim() || "bisnis Anda";
 
-  const pool: { id: string; title: string; benefit: string; optional?: boolean }[] = [
-    {
-      id: "dashboard-admin",
-      title: "Dashboard Admin / Content Management",
-      benefit: `Dapat memperbarui konten, foto, dan portfolio terbaru ${business} secara mandiri tanpa perlu meminta perubahan setiap kali ada update.`,
-    },
-    {
-      id: "booking",
-      title: "Booking / Reservasi",
-      benefit:
-        "Membantu customer mengirim kebutuhan berdasarkan tanggal atau jadwal acara secara lebih terstruktur.",
-    },
-    {
-      id: "social-media",
-      title: "Social Media Integration",
-      benefit:
-        "Membantu calon customer melihat aktivitas terbaru dan meningkatkan kepercayaan sebelum melakukan pemesanan.",
-    },
-    {
-      id: "database-customer",
-      title: "Database Customer / Riwayat Pesanan",
-      benefit:
-        "Membantu menyimpan data customer dan riwayat pemesanan untuk kebutuhan follow up dan pelayanan pelanggan.",
-      optional: true,
-    },
-    {
-      id: "reporting",
-      title: "Laporan Penjualan Sederhana",
-      benefit:
-        "Membantu owner mengetahui jumlah transaksi dan pemasukan harian tanpa membuat sistem laporan yang kompleks.",
-      optional: true,
-    },
-  ];
-
-  const picked = pool.filter((item) => !coveredIds.has(item.id)).slice(0, 5);
-  if (!picked.length) return null;
-
   return {
-    ids: picked.map((item) => item.id),
+    ids: picks.map((item) => item.id),
     option: {
       packageName: PACKAGE_LABEL[upgradeKey],
       intro: [
@@ -336,7 +300,7 @@ function buildConsultantOption(
         `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
         `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
       ],
-      items: picked.map(({ id: _id, ...rest }) => rest),
+      items: picks.map((item) => ({ title: item.name, benefit: item.benefit })),
       comparison: [
         { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
         { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
@@ -345,6 +309,7 @@ function buildConsultantOption(
     },
   };
 }
+
 
 
 function buildNextSteps(base: string, upgrade: string | null) {
