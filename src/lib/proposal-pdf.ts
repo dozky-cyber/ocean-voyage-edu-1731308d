@@ -17,6 +17,7 @@ import {
   textWidth,
   wrap,
 } from "./order-brief-pdf";
+import { buildTimelineBlock } from "./admin/proposal-logic";
 import { proposalFileName, type ProposalDocData } from "./proposal-doc";
 
 function money(amount: number, currency: string) {
