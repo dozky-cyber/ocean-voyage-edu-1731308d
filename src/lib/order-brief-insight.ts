@@ -277,7 +277,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     briefFeatureText: brief.features.join(" | "),
     excludeIds: [...coreIds],
     excludeTitles: included,
-    limit: 7,
+    limit: 12,
 
   });
 
@@ -287,29 +287,28 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // - Potential Feature = pengembangan setelah masalah utama selesai.
   const corePicks = picks.filter((p) => p.role === "core").slice(0, 4);
   const growthPicks = picks.filter((p) => p.role === "growth");
-  const consultantPicks = corePicks.length ? corePicks : growthPicks.slice(0, 2);
-  const leftover = corePicks.length ? growthPicks.slice(0, 3) : growthPicks.slice(2, 5);
+
+  // POTENTIAL FEATURE QUOTA: maksimal 5 untuk Business System ke atas,
+  // maksimal 3 untuk level di bawahnya. Tidak ada pengisian paksa.
+  const potentialLimit = PACKAGE_RANK[pkg.key] >= 2 ? 5 : 3;
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
+  const built = buildConsultantOption(brief, pkg.key, corePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
-  let optional = (consultant ? leftover : picks.slice(0, 3)).map((f) => ({
+  const optional = growthPicks.slice(0, potentialLimit).map((f) => ({
     name: f.name,
     description: f.fn,
-    reason: f.benefit,
+    reason: f.reasons[0] ?? f.benefit,
+    impact: f.benefit,
+    relation: f.relatedTo
+      ? f.relation === "enhancement"
+        ? `Memperkuat ${f.relatedTo} pada scope customer.`
+        : `Kelanjutan alur bisnis setelah ${f.relatedTo}.`
+      : null,
   }));
 
-  // POTENTIAL FEATURE LIMIT RULE: a single leftover idea is folded into the
-  // consultant option instead of creating a nearly empty section.
-  if (optional.length === 1 && consultant) {
-    consultant.items.push({
-      title: optional[0]!.name,
-      benefit: optional[0]!.reason,
-      optional: true,
-    });
-    optional = [];
-  }
+
 
 
   return {
