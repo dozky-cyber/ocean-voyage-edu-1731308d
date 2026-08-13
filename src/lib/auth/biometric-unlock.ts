@@ -196,3 +196,27 @@ export async function unlockWithBiometric(): Promise<StoredSession> {
     throw new Error("Data buka cepat rusak. Silakan masuk dengan password.");
   }
 }
+
+/**
+ * Refreshes the encrypted session snapshot on this device WITHOUT asking for
+ * biometrics again. Called after every token refresh so the stored refresh
+ * token never goes stale (Supabase rotates refresh tokens on each refresh).
+ */
+export async function syncStoredSession(session: StoredSession): Promise<void> {
+  if (!isBrowser()) return;
+  const record = await readRecord();
+  if (!record) return;
+  try {
+    const iv = randomBytes(12);
+    const plaintext = new TextEncoder().encode(JSON.stringify(session));
+    const payload = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, record.key, plaintext);
+    await writeRecord({ ...record, iv: iv.buffer, payload });
+  } catch {
+    /* keep the previous snapshot on failure */
+  }
+}
+
+/** True when quick unlock is armed on this device. */
+export async function hasBiometricEnrollment(): Promise<boolean> {
+  return (await readRecord()) !== null;
+}

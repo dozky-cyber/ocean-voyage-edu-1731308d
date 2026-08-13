@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getAdminAccess, provisionWorkspaceAccess } from "@/lib/admin.functions";
 import {
-  disableBiometricUnlock,
   enrollBiometricUnlock,
   getEnrolledEmail,
   isBiometricSupported,
+  syncStoredSession,
   unlockWithBiometric,
   type StoredSession,
 } from "@/lib/auth/biometric-unlock";
+
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -41,6 +42,8 @@ function AuthPage() {
   const [supported, setSupported] = useState(false);
   const [enrolledEmail, setEnrolledEmail] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
   const [enrollOffer, setEnrollOffer] = useState<{ email: string; session: StoredSession } | null>(
     null,
   );
@@ -75,20 +78,23 @@ function AuthPage() {
       await provision().catch(() => undefined);
 
       const session = data.session;
-      if (supported && !enrolledEmail && session?.refresh_token) {
-        const role = await access()
-          .then((r) => r.role)
-          .catch(() => null);
-        if (role === "owner") {
-          setEnrollOffer({
-            email: data.user?.email ?? email,
-            session: {
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            },
-          });
-          setLoading(false);
-          return;
+      if (session?.refresh_token) {
+        const stored: StoredSession = {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        };
+        if (enrolledEmail) {
+          // Quick unlock already armed: silently re-arm with the fresh session.
+          await syncStoredSession(stored);
+        } else if (supported) {
+          const role = await access()
+            .then((r) => r.role)
+            .catch(() => null);
+          if (role === "owner") {
+            setEnrollOffer({ email: data.user?.email ?? email, session: stored });
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -102,22 +108,33 @@ function AuthPage() {
 
   async function onBiometricUnlock() {
     setUnlocking(true);
+    setSessionExpired(false);
     try {
       const stored = await unlockWithBiometric();
-      const { error } = await supabase.auth.setSession(stored);
-      if (error) {
-        await disableBiometricUnlock();
-        setEnrolledEmail(null);
-        throw new Error("Sesi tersimpan sudah kedaluwarsa. Silakan masuk dengan password.");
+      const { data, error } = await supabase.auth.setSession(stored);
+      if (error || !data.session) {
+        // Soft fallback: keep the fingerprint armed, just ask for the password once.
+        setSessionExpired(true);
+        if (enrolledEmail) setEmail(enrolledEmail);
+        return;
+      }
+      if (data.session.refresh_token) {
+        await syncStoredSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
       }
       await provision().catch(() => undefined);
       navigate({ to: "/admin", replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Verifikasi sidik jari gagal.");
+      const message = error instanceof Error ? error.message : "";
+      // Cancelled or failed biometric prompt: stay quiet, form is right below.
+      if (message) toast.error(message);
     } finally {
       setUnlocking(false);
     }
   }
+
 
   async function acceptEnroll() {
     if (!enrollOffer) return;
@@ -181,6 +198,13 @@ function AuthPage() {
 
         {supported && enrolledEmail ? (
           <div className="mt-6 space-y-3">
+            {sessionExpired ? (
+              <p className="rounded-xl border border-border/50 bg-background/40 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                Sesi di perangkat ini sudah habis masa berlakunya. Masuk sekali dengan password —
+                sidik jari akan aktif lagi otomatis setelahnya.
+              </p>
+            ) : null}
+
             <button
               type="button"
               onClick={onBiometricUnlock}
