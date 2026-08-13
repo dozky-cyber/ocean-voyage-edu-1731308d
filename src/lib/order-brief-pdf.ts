@@ -335,18 +335,20 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
       d.y -= 4;
     });
     d.y -= 6;
-    // CORE / GROWTH SPLIT RULE: judul menyesuaikan isi section.
-    d.text(
-      hasCore ? "CORE SOLUTION (MENYELESAIKAN MASALAH UTAMA)" : "MANFAAT OPSI PENGEMBANGAN",
-      MARGIN,
-      d.y,
-      7.5,
-      false,
-      MUTED,
-    );
-    d.y -= 16;
+    // Tanpa Core Solution, blok ini hanya validasi scope — tanpa daftar fitur.
+    if (first) {
+      d.text(
+        hasCore ? "CORE SOLUTION (MENYELESAIKAN MASALAH UTAMA)" : "MANFAAT OPSI PENGEMBANGAN",
+        MARGIN,
+        d.y,
+        7.5,
+        false,
+        MUTED,
+      );
+      d.y -= 16;
+      consultantItem(d, first, 0);
+    }
 
-    if (first) consultantItem(d, first, 0);
   });
 
   consultant.items.slice(1).forEach((item, index) => {
