@@ -1007,6 +1007,18 @@ export function selectConsultantFeatures(input: {
     context: input.context,
   });
 
+  // RELATIONSHIP-BASED RECOMMENDATION (V7): scope yang sudah dimiliki customer
+  // = Feature List + core solution yang memang dibutuhkan brief.
+  const scopeIds = new Set<string>([
+    ...consultantCoveredFeatureIds(input.briefFeatureText ?? ""),
+    ...plan.core.keys(),
+  ]);
+  const maturity = detectBusinessMaturity({
+    context: input.context,
+    problemText: input.problemText,
+    scaleText: input.scaleText,
+  });
+
   const picks: ConsultantPick[] = [];
   for (const feature of CONSULTANT_LIBRARY) {
     if (excluded.has(feature.id)) continue;
@@ -1028,16 +1040,22 @@ export function selectConsultantFeatures(input: {
     const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
 
-    // ATURAN KHUSUS — hard block, berlaku juga untuk core.
-    // INVENTORY: hanya bila stok memang masalah/tujuan customer.
+    // RELATION: enhancement / complementary terhadap scope customer.
+    const rel = isCore ? null : relationToScope(feature.id, scopeIds);
+
+    // ATURAN KHUSUS — hard block untuk Core.
+    // INVENTORY: hanya bila stok memang masalah/tujuan customer (Core maupun
+    // Potential — tidak dilonggarkan).
     if (feature.id === "inventory" && !stockProblem && !asked) continue;
-    // DIGITAL NOTA: transaksi/order saja bukan alasan. Harus ada masalah bukti
-    // transaksi, nota, tagihan, atau pembayaran manual yang disebut customer.
-    if (feature.id === "digital-nota" && !receiptProblem && !asked) continue;
+    // DIGITAL NOTA: sebagai Core butuh masalah nota/pembayaran. Sebagai
+    // Potential boleh muncul bila melanjutkan pencatatan order/project.
+    if (feature.id === "digital-nota" && !receiptProblem && !asked && (isCore || !rel)) continue;
     // MULTI USER: bukan karena ada karyawan, tapi karena butuh hak akses beda.
     if (feature.id === "multi-user" && !accessProblem) continue;
-    // AUTOMATION: selalu potential kecuali customer memintanya.
-    if (feature.id === "automation" && !automationAsked) continue;
+    // AUTOMATION: Core butuh permintaan eksplisit; Potential hanya sebagai
+    // enhancement dari notification/status tracking yang sudah ada.
+    if (feature.id === "automation" && !automationAsked && (isCore || rel?.relation !== "enhancement"))
+      continue;
     // CRM: hanya untuk kebutuhan pengelolaan customer yang kompleks.
     if (feature.id === "crm" && !crmComplex) continue;
 
@@ -1065,12 +1083,18 @@ export function selectConsultantFeatures(input: {
       // Fitur kondisional (mis. Inventory/Search) butuh sinyal kebutuhan nyata.
       if (conditional.has(feature.id) && !asked && !hasSignal) continue;
 
+      // RELATIONSHIP RULE: tanpa relasi terhadap scope customer, kandidat
+      // dianggap UNRELATED dan dibuang — library tidak boleh tumpah.
+      if (!rel && !asked && !plan.growth.has(feature.id)) continue;
+
       // Tanpa kecocokan bisnis maupun sinyal kebutuhan: bukan konsultasi, skip.
-      if (!fitsBusiness && !hasSignal && !priority.has(feature.id) && !plan.growth.has(feature.id))
-        continue;
-      // Bila masalah customer sudah punya core solution, potential feature
-      // dibatasi pada pengembangan lanjutan yang relevan dengan alur bisnis.
-      if (plan.core.size && !plan.growth.has(feature.id) && !priority.has(feature.id) && !asked)
+      if (
+        !fitsBusiness &&
+        !hasSignal &&
+        !priority.has(feature.id) &&
+        !plan.growth.has(feature.id) &&
+        !rel
+      )
         continue;
       if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
     }
@@ -1085,21 +1109,50 @@ export function selectConsultantFeatures(input: {
     const onFlow = priority.has(feature.id);
     // A business-flow pattern only affects ranking. It must never bypass the
     // four-question validation or turn the library into a feature generator.
-    if (!validation.valid && !isCore) continue;
+    if (!validation.valid && !isCore && !rel) continue;
+
+    const relatedName = rel ? (consultantFeature(rel.relatedTo)?.name ?? null) : null;
+    const relationReason = rel
+      ? rel.relation === "enhancement"
+        ? `Memperkuat ${relatedName} yang sudah menjadi kebutuhan customer.`
+        : `Melanjutkan alur bisnis setelah ${relatedName}.`
+      : null;
 
     const reasons = isCore
       ? [`Menyelesaikan masalah customer: ${solvesStated}.`, ...validation.reasons]
-      : onFlow
-        ? [
-            pattern
-              ? `Memperbaiki alur bisnis ${pattern.name}.`
-              : "Memperbaiki proses operasional utama pada brief.",
-            ...validation.reasons,
-          ]
-        : validation.reasons;
+      : [
+          ...(relationReason ? [relationReason] : []),
+          ...(onFlow
+            ? [
+                pattern
+                  ? `Memperbaiki alur bisnis ${pattern.name}.`
+                  : "Memperbaiki proses operasional utama pada brief.",
+              ]
+            : []),
+          ...validation.reasons,
+        ];
+
+    // RELATIONSHIP SCORING: enhancement lebih dekat dengan scope customer
+    // dibanding complementary, sehingga selalu diprioritaskan.
+    const relationScore = rel ? (rel.relation === "enhancement" ? 5 : 4) : 0;
+    // BUSINESS MATURITY CONTEXT: bobot tier menyesuaikan kedewasaan bisnis.
+    const maturityScore =
+      maturity === "starter"
+        ? TIER_RANK[feature.tier] <= 1
+          ? 2
+          : -1
+        : maturity === "growing"
+          ? TIER_RANK[feature.tier] >= 1 && TIER_RANK[feature.tier] <= 2
+            ? 2
+            : 0
+          : TIER_RANK[feature.tier] >= 2
+            ? 2
+            : 0;
 
     const score =
       (isCore ? 12 : 0) +
+      relationScore +
+      maturityScore +
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
@@ -1114,11 +1167,19 @@ export function selectConsultantFeatures(input: {
       role: isCore ? "core" : "growth",
       solves: solvesStated ?? null,
       requiresCoreId: isCore ? null : (plan.growth.get(feature.id) ?? null),
+      relation: rel?.relation ?? null,
+      relatedTo: relatedName,
+      growthCategory: growthCategoryOf(feature.id),
     });
   }
 
 
-  picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
+  picks.sort(
+    (a, b) =>
+      b.score - a.score ||
+      growthCategoryRank(a.id) - growthCategoryRank(b.id) ||
+      TIER_RANK[a.tier] - TIER_RANK[b.tier],
+  );
 
   // Growth yang merupakan lanjutan dari core yang tidak terpilih ikut gugur.
   const coreIds = new Set([
@@ -1128,9 +1189,10 @@ export function selectConsultantFeatures(input: {
     ...consultantCoveredFeatureIds(input.briefFeatureText ?? ""),
   ]);
   const filtered = picks.filter(
-    (p) => p.role === "core" || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
+    (p) => p.role === "core" || p.relation || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
   );
 
   return filtered.slice(0, input.limit ?? 6);
 }
+
 
