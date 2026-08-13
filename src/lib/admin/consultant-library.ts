@@ -736,7 +736,13 @@ export function selectConsultantFeatures(input: {
   problemText?: string;
   /** Skala pengguna + kebutuhan admin/team pada brief. */
   scaleText?: string;
+  /**
+   * PACKAGE LEVEL CONTROL RULE: false berarti skala organisasi belum kompleks,
+   * sehingga fitur bertier enterprise tidak boleh direkomendasikan.
+   */
+  allowEnterprise?: boolean;
   limit?: number;
+
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
   const context = normalize(`${input.businessText} ${input.context}`);
@@ -769,6 +775,11 @@ export function selectConsultantFeatures(input: {
     // bisnis personal tanpa team tidak boleh mendapat fitur bertim/enterprise.
     if (personal && !asked && (TEAM_ONLY_FEATURES.has(feature.id) || feature.tier === "enterprise"))
       continue;
+
+    // PACKAGE LEVEL CONTROL RULE: tanpa kompleksitas organisasi (multi cabang,
+    // struktur berjenjang, user besar), fitur enterprise tidak direkomendasikan.
+    if (input.allowEnterprise === false && !asked && feature.tier === "enterprise") continue;
+
 
     const fitsBusiness =
       includesAny(business, feature.fits) || includesAnyPositive(context, feature.fits);

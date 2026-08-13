@@ -107,31 +107,87 @@ function hasAny(context: string, tokens: string[]) {
 }
 
 /**
- * PACKAGE LEVEL CONTROL RULE: Enterprise hanya dipertimbangkan jika skala bisnis
- * benar-benar besar (multi cabang, banyak divisi, banyak user, integrasi sistem).
+ * PACKAGE LEVEL CONTROL RULE (Business System vs Enterprise System).
+ *
+ * Enterprise hanya untuk organisasi yang benar-benar kompleks. Dibutuhkan
+ * minimal DUA sinyal kuat dari:
+ *   1. Multi lokasi / banyak cabang.
+ *   2. Struktur organisasi berjenjang (manager, supervisor, admin cabang,
+ *      approval, antar divisi) dengan banyak role berbeda.
+ *   3. Skala user besar (>= 50 user).
+ *   4. Integrasi sistem eksternal nyata (ERP, API eksternal, sinkronisasi
+ *      sistem lain).
+ * Bisnis satu outlet dengan owner + beberapa karyawan TIDAK pernah Enterprise.
  */
 function enterpriseScaleJustified(brief: OrderBriefData, context: string): boolean {
-  const scaleSignal = hasAny(context, [
+  const users = normalize(brief.usersScale ?? "");
+  const all = `${context} | ${users}`;
+
+  // Hard block: skala kecil / satu lokasi.
+  const singleLocation = hasAny(all, [
+    "1 outlet",
+    "satu outlet",
+    "1 cabang",
+    "satu cabang",
+    "1 lokasi",
+    "satu lokasi",
+    "tanpa cabang",
+    "belum ada cabang",
+  ]);
+
+  const userNumbers = (all.match(/\b\d{1,4}\b/g) ?? []).map(Number);
+  const maxUsers = userNumbers.length ? Math.max(...userNumbers) : 0;
+  const bigUsers =
+    maxUsers >= 50 || hasAny(all, ["lebih dari 100", "ratusan", "ribuan", "puluhan user"]);
+  const smallUsers = !bigUsers && maxUsers > 0 && maxUsers <= 25;
+
+  const multiBranch = hasAny(all, [
     "multi cabang",
     "multi-cabang",
     "banyak cabang",
     "beberapa cabang",
     "multi lokasi",
+    "multi-lokasi",
     "banyak lokasi",
+    "beberapa lokasi",
+    "antar cabang",
+    "per cabang",
+    "franchise",
+    "holding",
+  ]);
+
+  const complexOrg = hasAny(all, [
     "banyak divisi",
     "antar divisi",
-    "franchise",
-    "erp",
-    "integrasi sistem",
-    "api",
-    "holding",
-    "perusahaan besar",
+    "supervisor",
+    "manager pusat",
+    "manajer pusat",
+    "admin cabang",
+    "approval",
+    "persetujuan berjenjang",
+    "hak akses berbeda",
+    "banyak role",
+    "multi role",
+    "struktur organisasi",
   ]);
-  const users = normalize(brief.usersScale ?? "");
-  const bigUsers =
-    /\b(50|100|200|500|1000)\b/.test(users) ||
-    hasAny(users, ["lebih dari 100", "ratusan", "ribuan", "enterprise"]);
-  return scaleSignal || bigUsers;
+
+  const realIntegration = hasAny(all, [
+    "integrasi api",
+    "api eksternal",
+    "integrasi sistem",
+    "integrasi dengan sistem",
+    "sinkron dengan sistem",
+    "sinkronisasi data",
+    "erp",
+    "sap",
+    "middleware",
+  ]);
+
+  if (singleLocation && !multiBranch) return false;
+  if (smallUsers && !multiBranch && !complexOrg) return false;
+
+  const signals = [multiBranch, complexOrg, bigUsers, realIntegration].filter(Boolean).length;
+  return signals >= 2;
 }
 
 /**
@@ -140,13 +196,16 @@ function enterpriseScaleJustified(brief: OrderBriefData, context: string): boole
  */
 function complexityCeiling(context: string): PackageKey {
   const enterprise = hasAny(context, [
-    "api",
+    "integrasi api",
+    "api eksternal",
     "integrasi sistem",
-    "integration",
+    "integrasi dengan sistem",
+    "sinkronisasi data",
     "multi cabang",
     "multi-cabang",
+    "banyak cabang",
+    "antar cabang",
     "erp",
-    "enterprise",
   ]);
   if (enterprise) return "Enterprise System";
 
@@ -189,6 +248,7 @@ function complexityCeiling(context: string): PackageKey {
   return "Landing Page";
 }
 
+
 function complexityLabel(pkg: PackageDefinition) {
   switch (pkg.key) {
     case "Landing Page":
@@ -202,7 +262,7 @@ function complexityLabel(pkg: PackageDefinition) {
   }
 }
 
-function buildReason(brief: OrderBriefData, pkg: PackageDefinition) {
+function buildReason(brief: OrderBriefData, pkg: PackageDefinition, allowEnterprise: boolean) {
   const business = brief.business?.trim() || "bisnis Anda";
   const goal = brief.goal?.trim();
   const project = brief.project?.trim();
@@ -213,10 +273,19 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition) {
     `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}${
       brief.usersScale?.trim() ? ` dengan cakupan pengguna ${brief.usersScale.trim()}` : ""
     }.`,
-    "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
   ];
+  // PACKAGE LEVEL CONTROL RULE: jelaskan kenapa belum masuk level Enterprise.
+  if (!allowEnterprise && pkg.key !== "Enterprise System") {
+    parts.push(
+      "Skala operasional pada brief masih satu lokasi dengan struktur team sederhana, sehingga sistem berskala Enterprise (multi cabang, banyak divisi/role, atau integrasi antar sistem) belum diperlukan.",
+    );
+  }
+  parts.push(
+    "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
+  );
   return parts.join(" ");
 }
+
 
 
 
@@ -329,13 +398,14 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // jumlah user, dan proses operasional — bukan generator fitur.
   const businessText = [brief.business, brief.project].filter(Boolean).join(" ");
   const maxTier: ConsultantTier =
-    pkg.key === "Enterprise System"
+    pkg.key === "Enterprise System" && allowEnterprise
       ? "enterprise"
       : pkg.key === "Digital Workflow Solution"
         ? "business"
         : pkg.key === "Professional System"
           ? "business"
           : "professional";
+
 
   const picks = selectConsultantFeatures({
     businessText,
@@ -345,6 +415,10 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     // SCALE RULE: skala pengguna + kebutuhan admin/team menentukan fitur bertim.
     scaleText: [brief.usersScale, brief.adminNeeds].filter(Boolean).join(" | "),
     maxTier,
+    // PACKAGE LEVEL CONTROL RULE: fitur enterprise hanya bila skala organisasi
+    // benar-benar kompleks (multi cabang, struktur berjenjang, user besar).
+    allowEnterprise,
+
     excludeIds: [...coreIds],
     excludeTitles: included,
     limit: 7,
@@ -382,7 +456,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
-    reason: buildReason(brief, pkg),
+    reason: buildReason(brief, pkg, allowEnterprise),
     included,
     consultant,
     optional,
