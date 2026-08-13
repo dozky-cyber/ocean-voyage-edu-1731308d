@@ -98,155 +98,25 @@ const PACKAGE_FIT: Record<PackageKey, string[]> = {
   ],
 };
 
-function normalize(value: string) {
-  return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function hasAny(context: string, tokens: string[]) {
-  return tokens.some((token) => context.includes(normalize(token)));
-}
-
 /**
- * PACKAGE LEVEL CONTROL RULE (Business System vs Enterprise System).
- *
- * Enterprise hanya untuk organisasi yang benar-benar kompleks. Dibutuhkan
- * minimal DUA sinyal kuat dari:
- *   1. Multi lokasi / banyak cabang.
- *   2. Struktur organisasi berjenjang (manager, supervisor, admin cabang,
- *      approval, antar divisi) dengan banyak role berbeda.
- *   3. Skala user besar (>= 50 user).
- *   4. Integrasi sistem eksternal nyata (ERP, API eksternal, sinkronisasi
- *      sistem lain).
- * Bisnis satu outlet dengan owner + beberapa karyawan TIDAK pernah Enterprise.
+ * KERJAKU PACKAGE DECISION SOP.
+ * Level package berasal dari `decidePackageLevel` (satu sumber aturan), bukan
+ * dari jumlah fitur pada brief.
  */
-function enterpriseScaleJustified(brief: OrderBriefData, context: string): boolean {
-  const users = normalize(brief.usersScale ?? "");
-  const all = `${context} | ${users}`;
+const LEVEL_TO_PACKAGE: Record<PackageLevel, PackageKey> = {
+  basic: "Landing Page",
+  professional: "Professional System",
+  business: "Digital Workflow Solution",
+  enterprise: "Enterprise System",
+};
 
-  // Hard block: skala kecil / satu lokasi.
-  const singleLocation = hasAny(all, [
-    "1 outlet",
-    "satu outlet",
-    "1 cabang",
-    "satu cabang",
-    "1 lokasi",
-    "satu lokasi",
-    "tanpa cabang",
-    "belum ada cabang",
-  ]);
+const LEVEL_TO_TIER: Record<PackageLevel, ConsultantTier> = {
+  basic: "basic",
+  professional: "professional",
+  business: "business",
+  enterprise: "enterprise",
+};
 
-  const userNumbers = (all.match(/\b\d{1,4}\b/g) ?? []).map(Number);
-  const maxUsers = userNumbers.length ? Math.max(...userNumbers) : 0;
-  const bigUsers =
-    maxUsers >= 50 || hasAny(all, ["lebih dari 100", "ratusan", "ribuan", "puluhan user"]);
-  const smallUsers = !bigUsers && maxUsers > 0 && maxUsers <= 25;
-
-  const multiBranch = hasAny(all, [
-    "multi cabang",
-    "multi-cabang",
-    "banyak cabang",
-    "beberapa cabang",
-    "multi lokasi",
-    "multi-lokasi",
-    "banyak lokasi",
-    "beberapa lokasi",
-    "antar cabang",
-    "per cabang",
-    "franchise",
-    "holding",
-  ]);
-
-  const complexOrg = hasAny(all, [
-    "banyak divisi",
-    "antar divisi",
-    "supervisor",
-    "manager pusat",
-    "manajer pusat",
-    "admin cabang",
-    "approval",
-    "persetujuan berjenjang",
-    "hak akses berbeda",
-    "banyak role",
-    "multi role",
-    "struktur organisasi",
-  ]);
-
-  const realIntegration = hasAny(all, [
-    "integrasi api",
-    "api eksternal",
-    "integrasi sistem",
-    "integrasi dengan sistem",
-    "sinkron dengan sistem",
-    "sinkronisasi data",
-    "erp",
-    "sap",
-    "middleware",
-  ]);
-
-  if (singleLocation && !multiBranch) return false;
-  if (smallUsers && !multiBranch && !complexOrg) return false;
-
-  const signals = [multiBranch, complexOrg, bigUsers, realIntegration].filter(Boolean).length;
-  return signals >= 2;
-}
-
-/**
- * Complexity ceiling derived only from the client's own brief.
- * Admin/dashboard needs alone never raise the ceiling.
- */
-function complexityCeiling(context: string): PackageKey {
-  const enterprise = hasAny(context, [
-    "integrasi api",
-    "api eksternal",
-    "integrasi sistem",
-    "integrasi dengan sistem",
-    "sinkronisasi data",
-    "multi cabang",
-    "multi-cabang",
-    "banyak cabang",
-    "antar cabang",
-    "erp",
-  ]);
-  if (enterprise) return "Enterprise System";
-
-
-  const workflow = hasAny(context, [
-    "payment gateway",
-    "pembayaran online",
-    "midtrans",
-    "xendit",
-    "order online",
-    "checkout",
-    "keranjang",
-    "invoice",
-    "tagihan",
-    "billing",
-    "kasir",
-    "pos",
-    "automation",
-    "otomatis",
-    "workflow",
-    "login user",
-    "akun user",
-    "role",
-  ]);
-  if (workflow) return "Digital Workflow Solution";
-
-  const professional = hasAny(context, [
-    "crm",
-    "lead",
-    "follow up",
-    "database customer",
-    "data pelanggan",
-    "booking",
-    "reservasi",
-    "member",
-    "transaksi",
-  ]);
-  if (professional) return "Professional System";
-
-  return "Landing Page";
-}
 
 
 function complexityLabel(pkg: PackageDefinition) {
