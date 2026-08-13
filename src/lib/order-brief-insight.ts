@@ -143,10 +143,14 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   picks: ConsultantPick[],
+  hasPotential = false,
 ): { option: ConsultantOption; ids: string[] } | null {
-  if (!picks.length) return null;
+  // Tanpa Core Solution, blok ini hanya berisi validasi scope — dan hanya
+  // ditampilkan bila ada Potential Feature yang menyusul.
+  if (!picks.length && !hasPotential) return null;
   // CORE / GROWTH SPLIT RULE: bahasa berbeda saat fitur menyelesaikan masalah.
   const hasCore = picks.some((item) => item.role === "core");
+
   // PACKAGE INDEPENDENCE RULE: consultant ideas refine scope; they never
   // increase the package. Package level is decided only by business scale and
   // operational complexity.
