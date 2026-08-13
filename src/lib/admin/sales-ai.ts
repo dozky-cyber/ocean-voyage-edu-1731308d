@@ -315,14 +315,15 @@ export function parsePricingItems(value: unknown): PricingItem[] {
 }
 
 /**
- * KERJAKU proposal template V2.
+ * KERJAKU proposal template V5.
  *
  * Structure: Client Requirement → Business Problem → Feature List (Order Brief)
- * → Recommended Solution → (Recommended Enhancement, Timeline, Investment are
- * rendered dynamically from the proposal record) → Benefits → Next Steps.
+ * → Recommended Solution → Core Solution → (Feature Recommendation, Optional
+ * Feature, Project Timeline, Investment, Payment Terms are rendered dynamically
+ * from the proposal record) → Next Steps.
  *
  * The feature list is copied 1:1 from the Final Order Brief — never summarized,
- * merged, renamed, or reduced.
+ * merged, renamed, or reduced. Recommended Solution always equals Core Solution.
  */
 export function buildProposalSections(lead: SalesLead): ProposalSection[] {
   const brief = buildSalesBrief(lead);
