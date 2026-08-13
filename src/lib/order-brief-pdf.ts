@@ -334,7 +334,7 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
       d.y -= 4;
     });
     d.y -= 6;
-    d.text(`KENAPA ${consultant.packageName.toUpperCase()}?`, MARGIN, d.y, 7.5, false, MUTED);
+    d.text("MANFAAT OPSI PENGEMBANGAN", MARGIN, d.y, 7.5, false, MUTED);
     d.y -= 16;
     if (first) consultantItem(d, first, 0);
   });
@@ -359,6 +359,8 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
       });
       d.y -= 8;
     });
+    d.paragraph(consultant.note, MARGIN, 9, false, CONTENT_W, MUTED);
+    d.y -= 6;
   });
 }
 
