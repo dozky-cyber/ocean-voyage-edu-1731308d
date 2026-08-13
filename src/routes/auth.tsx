@@ -42,6 +42,8 @@ function AuthPage() {
   const [supported, setSupported] = useState(false);
   const [enrolledEmail, setEnrolledEmail] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
   const [enrollOffer, setEnrollOffer] = useState<{ email: string; session: StoredSession } | null>(
     null,
   );
