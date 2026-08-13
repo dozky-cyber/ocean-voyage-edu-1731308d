@@ -508,32 +508,43 @@ export type ConsultantPick = ConsultantFeature & { score: number; reasons: strin
  */
 export function validateConsultantFeature(
   feature: ConsultantFeature,
-  input: { business: string; context: string; problemText?: string },
+  input: { business: string; context: string; problemText?: string; scaleText?: string },
 ): { valid: boolean; reasons: string[] } {
   const business = normalize(input.business);
   const context = normalize(`${input.business} ${input.context}`);
   const problem = normalize(input.problemText ?? "");
   const tokens = [feature.name, ...feature.aliases, ...feature.signals];
 
-  // Hard condition: kondisi bisnis wajib.
-  if (feature.requires?.length && !includesAny(context, feature.requires)) {
+  // SCALE RULE: bisnis personal tanpa team tidak mendapat fitur bertim.
+  const personal = isPersonalScale(input.scaleText ?? "", context);
+  if (personal && (TEAM_ONLY_FEATURES.has(feature.id) || feature.tier === "enterprise")) {
+    const askedDirectly = includesAnyPositive(context, [feature.name, ...feature.aliases]);
+    if (!askedDirectly) return { valid: false, reasons: [] };
+  }
+
+  // Hard condition: kondisi bisnis wajib (negasi pada brief tidak dihitung).
+  if (feature.requires?.length && !includesAnyPositive(context, feature.requires)) {
     return { valid: false, reasons: [] };
   }
 
   const reasons: string[] = [];
 
   // 1. Proses bisnis utama.
-  if (includesAny(business, feature.fits) || includesAny(context, feature.fits)) {
+  if (includesAny(business, feature.fits) || includesAnyPositive(context, feature.fits)) {
     reasons.push("Digunakan pada proses bisnis utama customer.");
   }
   // 2. Kondisi bisnis membutuhkan fitur ini.
-  if (includesAny(context, feature.signals) || includesAny(context, feature.requires ?? [])) {
+  if (
+    includesAnyPositive(context, feature.signals) ||
+    includesAnyPositive(context, feature.requires ?? [])
+  ) {
     reasons.push("Kondisi bisnis pada brief membutuhkan fitur ini.");
   }
   // 3. Mengurangi masalah pada Business Problem.
-  if (problem && includesAny(problem, tokens)) {
+  if (problem && includesAnyPositive(problem, tokens)) {
     reasons.push("Mengurangi masalah yang disebutkan customer.");
   }
+
   // 4. Tidak ada fitur lain yang lebih sederhana namun lebih berdampak.
   const simpler = feature.simplerAlternativeId
     ? consultantFeature(feature.simplerAlternativeId)
