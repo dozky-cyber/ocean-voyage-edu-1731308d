@@ -131,10 +131,16 @@ TEAM KERJAKU CONSULTANT RECOMMENDATION
 Opsi Pengembangan:
 [nama package satu tingkat di atas, atau "Tetap di [package awal]" jika memang sudah paling sesuai]
 
+Fitur yang dapat membantu:
+- [Fitur dari Business Feature Consultant Library yang benar-benar relevan dengan jenis bisnis,
+masalah, dan proses operasional customer] — [manfaat bisnisnya]
+(2-4 fitur saja, tanpa mengulang fitur yang sudah diminta customer)
+
 Alasan:
 [2-3 kalimat konsultasi bisnis: package awal sudah memenuhi kebutuhan saat ini, namun bila bisnis
 berkembang website dapat dikembangkan untuk membantu operasional, pengelolaan data, kebutuhan team,
 transaksi, atau efisiensi bisnis sehari-hari]
+
 
 POTENTIAL FEATURE RECOMMENDATION
 - [Fitur] — [manfaat bisnisnya]
