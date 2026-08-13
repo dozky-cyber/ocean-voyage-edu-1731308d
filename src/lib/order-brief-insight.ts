@@ -107,6 +107,34 @@ function hasAny(context: string, tokens: string[]) {
 }
 
 /**
+ * PACKAGE LEVEL CONTROL RULE: Enterprise hanya dipertimbangkan jika skala bisnis
+ * benar-benar besar (multi cabang, banyak divisi, banyak user, integrasi sistem).
+ */
+function enterpriseScaleJustified(brief: OrderBriefData, context: string): boolean {
+  const scaleSignal = hasAny(context, [
+    "multi cabang",
+    "multi-cabang",
+    "banyak cabang",
+    "beberapa cabang",
+    "multi lokasi",
+    "banyak lokasi",
+    "banyak divisi",
+    "antar divisi",
+    "franchise",
+    "erp",
+    "integrasi sistem",
+    "api",
+    "holding",
+    "perusahaan besar",
+  ]);
+  const users = normalize(brief.usersScale ?? "");
+  const bigUsers =
+    /\b(50|100|200|500|1000)\b/.test(users) ||
+    hasAny(users, ["lebih dari 100", "ratusan", "ribuan", "enterprise"]);
+  return scaleSignal || bigUsers;
+}
+
+/**
  * Complexity ceiling derived only from the client's own brief.
  * Admin/dashboard needs alone never raise the ceiling.
  */
@@ -121,6 +149,7 @@ function complexityCeiling(context: string): PackageKey {
     "enterprise",
   ]);
   if (enterprise) return "Enterprise System";
+
 
   const workflow = hasAny(context, [
     "payment gateway",
@@ -200,10 +229,18 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   picks: ConsultantPick[],
+  allowEnterprise: boolean,
 ): { option: ConsultantOption; ids: string[] } | null {
   if (!picks.length) return null;
-  const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
+  // PACKAGE LEVEL CONTROL RULE: opsi pengembangan maksimal satu tingkat, dan
+  // tidak pernah menyentuh Enterprise untuk bisnis satu lokasi/skala kecil.
+  const maxRank = allowEnterprise
+    ? PACKAGE_ORDER.length - 1
+    : PACKAGE_RANK["Digital Workflow Solution"];
+  const upgradeIndex = Math.min(PACKAGE_RANK[base] + 1, maxRank);
+  const upgradeKey = PACKAGE_ORDER[upgradeIndex]!;
   if (upgradeKey === base) return null;
+
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
   const business = brief.business?.trim() || "bisnis Anda";
@@ -268,13 +305,20 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
       .join(" | "),
   );
 
-  // Package: never above the complexity the brief actually justifies.
+  // Package: never above the complexity the brief actually justifies, and never
+  // Enterprise unless the business scale itself justifies it.
+  const allowEnterprise = enterpriseScaleJustified(brief, context);
   const requested = resolvePackage(brief.recommendation);
-  const ceilingKey = complexityCeiling(context);
+  const rawCeiling = complexityCeiling(context);
+  const ceilingKey: PackageKey =
+    rawCeiling === "Enterprise System" && !allowEnterprise
+      ? "Digital Workflow Solution"
+      : rawCeiling;
   const pkg =
     PACKAGE_RANK[requested.key] > PACKAGE_RANK[ceilingKey]
       ? resolvePackage(ceilingKey)
       : requested;
+
 
   // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
   // list, verbatim. Package defaults never enter the scope.
@@ -309,7 +353,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
+  const built = buildConsultantOption(brief, pkg.key, consultantPicks, allowEnterprise);
   const consultant = built?.option ?? null;
   const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
 
