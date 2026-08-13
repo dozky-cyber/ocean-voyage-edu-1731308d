@@ -483,6 +483,8 @@ export function selectConsultantFeatures(input: {
   excludeIds?: string[];
   /** Judul yang sudah tampil (duplicate protection lintas section). */
   excludeTitles?: string[];
+  /** Business Problem pada brief (dipakai pengecekan validasi poin 3). */
+  problemText?: string;
   limit?: number;
 }): ConsultantPick[] {
   const business = normalize(input.businessText);
