@@ -362,35 +362,74 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const included = briefIncludedFeatures(brief.features);
   const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
 
+  // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
+  // features are never repeated inside Potential Feature Recommendation.
+  const built = buildConsultantOption(brief, pkg.key, coreIds);
+  const consultant = built?.option ?? null;
+  const consultantIds = new Set(built?.ids ?? []);
+  const consultantTitles = (consultant?.items ?? []).map((item) => normalize(item.title));
+
+  // DUPLICATE PROTECTION: skip anything already covered by the brief, by the
+  // detected features, or by the consultant development option.
+  const isDuplicate = (feature: LibraryFeature) => {
+    if (coreIds.has(feature.id) || consultantIds.has(feature.id)) return true;
+    if (selected.some((s) => s.id === feature.id)) return true;
+    const key = normalize(feature.name);
+    return consultantTitles.some((title) => title.includes(key) || key.includes(title));
+  };
+
   // Optional recommendations: relevant, non-duplicate, never package-inflating.
-  const optional = FEATURE_LIBRARY.filter((feature) => {
-    if (coreIds.has(feature.id)) return false;
-    if (selected.some((s) => s.id === feature.id)) return false;
-    if (feature.id === "custom") return false;
-    const explicitlyAsked = hasAny(context, [feature.name, ...feature.keywords]);
-    if (RESTRICTED_FEATURE_IDS.has(feature.id)) return explicitlyAsked;
-    return explicitlyAsked || SAFE_OPTIONAL_IDS.includes(feature.id);
-  })
+  let optional: { name: string; description: string; reason: string }[] = FEATURE_LIBRARY.filter(
+    (feature) => {
+      if (feature.id === "custom") return false;
+      if (isDuplicate(feature)) return false;
+      const explicitlyAsked = hasAny(context, [feature.name, ...feature.keywords]);
+      if (RESTRICTED_FEATURE_IDS.has(feature.id)) return explicitlyAsked;
+      return explicitlyAsked || SAFE_OPTIONAL_IDS.includes(feature.id);
+    },
+  )
     .sort((a, b) => {
       const aSafe = SAFE_OPTIONAL_IDS.indexOf(a.id);
       const bSafe = SAFE_OPTIONAL_IDS.indexOf(b.id);
       return a.priority - b.priority || aSafe - bSafe || a.no - b.no;
     })
-    .slice(0, 3);
+    .slice(0, 3)
+    .map((f) => ({
+      name: f.name,
+      description: describeFeature(f, brief),
+      reason: optionalReason(f, brief),
+    }));
 
-  const consultant = buildConsultantOption(brief, pkg.key, coreIds);
+  // FLEXIBLE RECOMMENDATION RULE: light, business-safe ideas (no enterprise
+  // features) to complete the section when the library has little to offer.
+  for (const idea of GENERIC_IDEAS) {
+    if (optional.length >= 3) break;
+    const key = normalize(idea.name);
+    if (context.includes(key) || hasAny(context, idea.keywords)) continue;
+    if (consultantTitles.some((title) => title.includes(key) || key.includes(title))) continue;
+    if (optional.some((item) => normalize(item.name).includes(key))) continue;
+    optional.push({ name: idea.name, description: idea.description, reason: idea.reason });
+  }
+
+  // POTENTIAL FEATURE LIMIT RULE: a single leftover idea is folded into the
+  // consultant option instead of creating a nearly empty section.
+  if (optional.length === 1 && consultant) {
+    consultant.items.push({
+      title: optional[0]!.name,
+      benefit: optional[0]!.reason,
+      optional: true,
+    });
+    optional = [];
+  }
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
     reason: buildReason(brief, pkg),
     included,
     consultant,
-    optional: optional.map((f) => ({
-      name: f.name,
-      description: describeFeature(f, brief),
-      reason: optionalReason(f, brief),
-    })),
+    optional,
     disclaimer: OPTIONAL_DISCLAIMER,
     nextSteps: buildNextSteps(PACKAGE_LABEL[pkg.key], consultant?.packageName ?? null),
   };
 }
+
