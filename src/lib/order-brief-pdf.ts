@@ -79,6 +79,30 @@ export class Doc {
     if (this.y - space < MARGIN + 40) this.newPage();
   }
 
+  /** Usable vertical space on a single page. */
+  static get usable() {
+    return PAGE_H - MARGIN - (MARGIN + 40);
+  }
+
+  /** Dry-run a block on a throwaway document to know how tall it is. */
+  measure(render: (doc: Doc) => void) {
+    const probe = new Doc();
+    const start = probe.y;
+    render(probe);
+    return start - probe.y + probe.pages.length * Doc.usable;
+  }
+
+  /**
+   * PDF QUALITY CONTROL: render a block without splitting it across pages.
+   * Blocks taller than one page flow normally instead of leaving a blank page.
+   */
+  keep(render: (doc: Doc) => void) {
+    const height = this.measure(render);
+    if (height > 0 && height <= Doc.usable) this.ensure(height);
+    render(this);
+  }
+
+
   rect(x: number, y: number, w: number, h: number, fill: string) {
     this.ops.push(`${fill} rg ${x} ${y} ${w} ${h} re f`);
   }
