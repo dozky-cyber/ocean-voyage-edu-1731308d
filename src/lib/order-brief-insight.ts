@@ -17,10 +17,14 @@ import {
 } from "./admin/feature-library";
 import {
   consultantCoveredFeatureIds,
+  consultantFeature,
+  detectBusinessMaturity,
   selectConsultantFeatures,
+  type BusinessMaturity,
   type ConsultantPick,
   type ConsultantTier,
 } from "./admin/consultant-library";
+import { buildProblemSolutionPlan } from "./admin/problem-solution-map";
 import {
   decidePackageLevel,
   type PackageLevel,
@@ -30,6 +34,37 @@ import type { OrderBriefData } from "./order-brief";
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
+
+/** DATA INTEGRITY: kebutuhan admin/team kadang hanya tertulis di narasi brief. */
+export function resolveAdminNeeds(brief: OrderBriefData): string {
+  const direct = brief.adminNeeds?.trim();
+  if (direct && direct !== "-") return direct;
+  const source = [brief.project, brief.goal].filter(Boolean).join("\n");
+  const match = source.match(/kebutuhan\s+admin(?:\s*\/\s*team)?\s*:\s*([^\n]+)/i);
+  if (match?.[1]?.trim()) return match[1].trim();
+  return "Belum disampaikan saat konsultasi awal";
+}
+
+/** Rapikan kalimat tujuan agar ALASAN tidak menyalin ulang Project Summary. */
+function focusPhrase(brief: OrderBriefData): string {
+  const raw = (brief.goal?.trim() || brief.project?.trim() || "").replace(/\s+/g, " ");
+  if (!raw) return "merapikan kebutuhan digital bisnis";
+  let text = raw
+    .replace(/^tujuan\s*:\s*/i, "")
+    .replace(/kebutuhan\s+admin.*$/i, "")
+    .trim();
+  // Buang klausa pembuka "Kak X pemilik Y membutuhkan ..." agar langsung ke inti.
+  const after = text.match(/\b(?:membutuhkan|memerlukan|ingin|butuh)\s+(.+)$/i);
+  if (after?.[1]) text = after[1];
+  text = text.split(/\.\s+/)[0]!.replace(/[.!?]+$/, "").trim();
+  if (text.length > 150) {
+    const cut = text.slice(0, 150);
+    text = `${cut.slice(0, cut.lastIndexOf(" "))}`;
+  }
+  if (!text) return "merapikan kebutuhan digital bisnis";
+  return text.charAt(0).toLowerCase() + text.slice(1);
+}
+
 
 
 
