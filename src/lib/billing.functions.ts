@@ -58,16 +58,20 @@ export const saveInvoiceFn = createServerFn({ method: "POST" })
       .object({
         id: z.string().uuid(),
         title: z.string().min(1).max(200),
+        project_name: z.string().max(200).nullable(),
         client_name: z.string().max(200).nullable(),
         client_email: z.string().max(200).nullable(),
         client_whatsapp: z.string().max(60).nullable(),
         client_company: z.string().max(200).nullable(),
         package: z.string().max(120).nullable(),
         items: z.array(pricingItemSchema).max(30),
+        optional_items: z.array(pricingItemSchema).max(30),
         currency: z.string().max(8),
         due_date: z.string().max(20).nullable(),
         notes: z.string().max(4000).nullable(),
         provider: z.enum(PAYMENT_PROVIDER_IDS),
+        payment_type: z.enum(["full", "custom"]),
+        schedule: z.array(installmentSchema).max(12),
       })
       .parse(data),
   )
@@ -76,6 +80,24 @@ export const saveInvoiceFn = createServerFn({ method: "POST" })
     const { saveInvoice } = await import("./billing.server");
     await assertLeadWork(context.supabase, context.userId);
     return saveInvoice(context.supabase, data);
+  });
+
+export const setInstallmentStatusFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        index: z.number().int().min(0).max(11),
+        status: z.enum(["Pending", "Paid"]),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { assertLeadWork } = await import("./admin.server");
+    const { setInstallmentStatus } = await import("./billing.server");
+    await assertLeadWork(context.supabase, context.userId);
+    return setInstallmentStatus(context.supabase, data);
   });
 
 export const setInvoiceStatusFn = createServerFn({ method: "POST" })

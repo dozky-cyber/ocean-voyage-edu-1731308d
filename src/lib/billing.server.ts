@@ -19,6 +19,16 @@ import {
   type PaymentStatus,
   type TimelineStep,
 } from "@/lib/admin/payments";
+import {
+  derivePaymentState,
+  fullPaymentSchedule,
+  paidAmount,
+  parseSchedule,
+  recalcSchedule,
+  validateSchedule,
+  type Installment,
+  type PaymentType,
+} from "@/lib/admin/invoice-schedule";
 import { parsePricingItems, type PricingItem } from "@/lib/admin/sales-ai";
 
 type Client = SupabaseClient<Database>;
