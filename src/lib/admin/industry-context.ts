@@ -441,6 +441,15 @@ export const INDUSTRY_CONTEXTS: IndustryContext[] = [
   },
 ];
 
+/** Buang keterangan dalam kurung dan potong nama bisnis yang terlalu panjang. */
+export function shortBusinessName(value: string): string {
+  const cleaned = value.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+  const base = cleaned || value.trim();
+  if (base.length <= 42) return base;
+  const cut = base.slice(0, 42);
+  return cut.slice(0, cut.lastIndexOf(" ") > 12 ? cut.lastIndexOf(" ") : 42).trim();
+}
+
 function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -665,7 +674,9 @@ export function describeFeatureForIndustry(input: {
 }): IndustryVoice | null {
   const { ctx } = input;
   if (!ctx) return null;
-  const business = input.business?.trim() || `bisnis ${ctx.aka}`;
+  const rawBusiness = input.business?.trim() || `bisnis ${ctx.aka}`;
+  // Nama bisnis dipendekkan agar kalimat tidak berulang panjang di tiap item.
+  const business = shortBusinessName(rawBusiness);
   const narrative = NARRATIVES[input.featureId];
   const situation = narrative
     ? narrative.situation(ctx)
