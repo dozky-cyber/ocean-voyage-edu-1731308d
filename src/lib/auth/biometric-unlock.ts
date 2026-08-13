@@ -100,8 +100,8 @@ export async function getEnrolledEmail(): Promise<string | null> {
   return record?.email ?? null;
 }
 
-function randomBytes(length: number): Uint8Array {
-  const bytes = new Uint8Array(length);
+function randomBytes(length: number): Uint8Array<ArrayBuffer> {
+  const bytes = new Uint8Array(new ArrayBuffer(length));
   crypto.getRandomValues(bytes);
   return bytes;
 }
@@ -157,7 +157,7 @@ export async function enrollBiometricUnlock(params: {
   await writeRecord({
     credentialId: credential.rawId,
     email: params.email,
-    iv: iv.buffer as ArrayBuffer,
+    iv: iv.buffer,
     payload,
     key,
     createdAt: Date.now(),
