@@ -758,7 +758,41 @@ function ProposalDetailPage() {
             </section>
           ))}
 
-          {pricing.length ? (
+          {enhancements.length ? (
+            <section className="proposal-section">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                Recommended Enhancement
+              </h2>
+              <ul className="mt-3 space-y-2 text-sm">
+                {enhancements.map((row, index) => (
+                  <li key={index} className="flex flex-wrap justify-between gap-2">
+                    <span>
+                      <span className="font-medium">{row.name}</span>
+                      {row.benefit ? (
+                        <span className="block text-xs text-muted-foreground">{row.benefit}</span>
+                      ) : null}
+                    </span>
+                    <span className="whitespace-nowrap text-primary">
+                      {formatIDR(row.amount, currency)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {timelineBlock ? (
+            <section className="proposal-section">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
+                {timelineBlock.heading}
+              </h2>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                {timelineBlock.lines.join("\n")}
+              </p>
+            </section>
+          ) : null}
+
+          {pricing.length || enhancements.length ? (
             <section className="proposal-section">
               <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">
                 Rincian Investasi
@@ -773,8 +807,15 @@ function ProposalDetailPage() {
                     </tr>
                   </thead>
                   <tbody>
+                    {pricing.length ? (
+                      <tr>
+                        <td className="pt-3 pb-1 text-xs font-semibold uppercase tracking-wide" colSpan={3}>
+                          Core Solution
+                        </td>
+                      </tr>
+                    ) : null}
                     {pricing.map((row, index) => (
-                      <tr key={index} className="border-b border-border/20">
+                      <tr key={`core-${index}`} className="border-b border-border/20">
                         <td className="py-2 pr-3 font-medium">{row.item}</td>
                         <td className="py-2 pr-3 text-muted-foreground">{row.detail}</td>
                         <td className="py-2 text-right whitespace-nowrap">
@@ -782,9 +823,45 @@ function ProposalDetailPage() {
                         </td>
                       </tr>
                     ))}
+                    {pricing.length ? (
+                      <tr>
+                        <td className="py-2 pr-3 text-xs text-muted-foreground" colSpan={2}>
+                          Subtotal Core Solution
+                        </td>
+                        <td className="py-2 text-right font-medium whitespace-nowrap">
+                          {formatIDR(coreTotal, currency)}
+                        </td>
+                      </tr>
+                    ) : null}
+                    {enhancements.length ? (
+                      <tr>
+                        <td className="pt-4 pb-1 text-xs font-semibold uppercase tracking-wide" colSpan={3}>
+                          Optional Enhancement
+                        </td>
+                      </tr>
+                    ) : null}
+                    {enhancements.map((row, index) => (
+                      <tr key={`opt-${index}`} className="border-b border-border/20">
+                        <td className="py-2 pr-3 font-medium">{row.name}</td>
+                        <td className="py-2 pr-3 text-muted-foreground">{row.benefit}</td>
+                        <td className="py-2 text-right whitespace-nowrap">
+                          {formatIDR(row.amount, currency)}
+                        </td>
+                      </tr>
+                    ))}
+                    {enhancements.length ? (
+                      <tr>
+                        <td className="py-2 pr-3 text-xs text-muted-foreground" colSpan={2}>
+                          Subtotal Optional Enhancement
+                        </td>
+                        <td className="py-2 text-right font-medium whitespace-nowrap">
+                          {formatIDR(optionalTotal, currency)}
+                        </td>
+                      </tr>
+                    ) : null}
                     <tr>
                       <td className="py-2 pr-3 font-semibold" colSpan={2}>
-                        Total
+                        Total Investment
                       </td>
                       <td className="py-2 text-right font-semibold text-primary whitespace-nowrap">
                         {formatIDR(total, currency)}
