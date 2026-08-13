@@ -20,7 +20,16 @@ import {
   type ConsultantPick,
   type ConsultantTier,
 } from "./admin/consultant-library";
+import {
+  decidePackageLevel,
+  type PackageLevel,
+} from "./admin/package-decision-sop";
 import type { OrderBriefData } from "./order-brief";
+
+function normalize(value: string) {
+  return value.toLowerCase().replace(/\s+/g, " ").trim();
+}
+
 
 
 export type ConsultantOption = {
