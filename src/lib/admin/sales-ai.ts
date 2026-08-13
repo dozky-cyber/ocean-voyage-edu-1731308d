@@ -149,7 +149,7 @@ function investmentNote(lead: SalesLead, pkg: string): string {
   const base =
     pkg === "Enterprise System"
       ? "Skala enterprise: investasi disusun bertahap per modul agar risiko terkendali."
-      : pkg === "Business System"
+      : pkg === "Digital Workflow Solution"
         ? "Investasi menengah dengan fokus otomatisasi yang langsung menekan biaya operasional."
         : pkg === "Professional System"
           ? "Investasi efisien untuk sistem operasional inti, bisa dikembangkan bertahap."
@@ -327,7 +327,10 @@ export function parsePricingItems(value: unknown): PricingItem[] {
 export function buildProposalSections(lead: SalesLead): ProposalSection[] {
   const brief = buildSalesBrief(lead);
   const client = clientLabel(lead);
-  const bullets = (items: string[]) => items.map((i) => `• ${i}`).join("\n");
+  const definition = resolvePackage(brief.recommendedPackage);
+  const selected = detectSelectedFeatures([lead.features, lead.requirement, lead.project_type]);
+  const core = coreSolutionFeatures(definition.key, selected);
+  const bullets = (items: string[]) => items.map((i) => `\u2022 ${i}`).join("\n");
   const numbered = (items: string[]) => items.map((i, index) => `${index + 1}. ${i}`).join("\n");
   const today = new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -342,7 +345,7 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
         `Proposal Solusi Digital untuk ${client}`,
         `Disiapkan untuk: ${lead.name}`,
         lead.project_type ? `Kebutuhan: ${lead.project_type}` : null,
-        `Rekomendasi paket: ${brief.recommendedPackage}`,
+        `Rekomendasi solusi: ${definition.key}`,
         `Tanggal: ${today}`,
         "Disiapkan oleh: KERJAKU — Business System Consultant",
       ]
@@ -354,7 +357,6 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
       body: [
         "KERJAKU membangun produk digital yang benar-benar dipakai setiap hari: website, aplikasi bisnis, otomatisasi alur kerja, dan integrasi AI.",
         "Pendekatan kami sederhana — pahami proses bisnisnya dulu, baru bangun sistemnya. Setiap project dikerjakan bertahap agar hasilnya terukur dan risikonya terkendali.",
-        "Beberapa sistem yang kami bangun: RO Memory (sistem operasional enterprise), Dompet Gue (manajemen keuangan), Material Estimator, dan QResto.",
       ].join("\n\n"),
     },
     {
@@ -362,7 +364,9 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
       body: [
         `${client} menyampaikan kebutuhan berikut pada sesi konsultasi bersama KERJAKU:`,
         "",
-        lead.requirement?.trim() || lead.project_type?.trim() || "Sistem digital untuk mendukung operasional bisnis.",
+        lead.requirement?.trim() ||
+          lead.project_type?.trim() ||
+          "Sistem digital untuk mendukung operasional bisnis.",
         lead.ai_summary?.trim() ? `\n${lead.ai_summary.trim()}` : null,
         lead.budget?.trim() ? `\nRange budget klien: ${lead.budget.trim()}` : null,
       ]
@@ -376,7 +380,7 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
     {
       heading: "Feature List (Order Brief)",
       body: [
-        "Daftar fitur berikut diambil langsung dari Final Order Brief dan menjadi acuan scope pengerjaan:",
+        "Daftar fitur berikut diambil langsung dari Final Order Brief dan Client Discovery, menjadi acuan scope pengerjaan:",
         "",
         numbered(brief.features),
       ].join("\n"),
@@ -384,36 +388,36 @@ export function buildProposalSections(lead: SalesLead): ProposalSection[] {
     {
       heading: "Recommended Solution",
       body: [
-        `KERJAKU merekomendasikan ${brief.recommendedPackage} sebagai solusi utama.`,
-        `Solusi ini menyelesaikan ${brief.painPoints[0].toLowerCase()} melalui alur kerja terpusat, data yang rapi, dan laporan yang terbentuk otomatis.`,
+        `KERJAKU merekomendasikan ${definition.key} sebagai solusi utama (Core Solution).`,
+        `Solusi ini menyelesaikan ${brief.painPoints[0].toLowerCase()} melalui alur kerja terpusat, data yang rapi, dan proses yang terukur.`,
+        "",
+        "Manfaat untuk bisnis:",
+        bullets(definition.benefits),
+      ].join("\n"),
+    },
+    {
+      heading: "Core Solution",
+      body: [
+        definition.key,
+        "",
+        "Included Feature:",
+        bullets(core.map((f) => f.name)),
         "",
         "Cakupan pengerjaan:",
         bullets(brief.scope),
       ].join("\n"),
     },
     {
-      heading: "Benefits",
-      body: bullets([
-        "Proses manual berkurang drastis — tim fokus ke pekerjaan bernilai tinggi",
-        "Data terpusat dan konsisten, siap dipakai untuk pengambilan keputusan",
-        "Laporan otomatis tanpa rekap manual",
-        "Sistem dapat dikembangkan bertahap mengikuti pertumbuhan bisnis",
-        "Pendampingan setelah go-live agar tim benar-benar memakai sistemnya",
-      ]),
-    },
-    {
       heading: "Next Steps",
       body: bullets([
-        "Konfirmasi scope fase pertama bersama tim KERJAKU",
+        "Konfirmasi scope Core Solution bersama tim KERJAKU",
         "Penjadwalan sesi discovery (60 menit)",
-        "Penandatanganan kesepakatan kerja & pembayaran kick-off",
+        "Penandatanganan kesepakatan kerja",
         "Kick-off pengembangan",
       ]),
     },
   ];
 }
-
-
 
 export function parseSections(value: unknown): ProposalSection[] {
   if (!Array.isArray(value)) return [];
@@ -626,11 +630,11 @@ export function handleObjection(lead: SalesLead, objection: string): ObjectionPl
 
   const lighter =
     pkg === "Enterprise System"
-      ? "Business System"
-      : pkg === "Business System"
+      ? "Digital Workflow Solution"
+      : pkg === "Digital Workflow Solution"
         ? "Professional System"
         : pkg === "Professional System"
-          ? "Basic Digital Presence"
+          ? "Landing Page"
           : "paket dasar dengan scope fase pertama yang lebih kecil";
 
   const plans: Record<ObjectionKind, Omit<ObjectionPlan, "objection">> = {
