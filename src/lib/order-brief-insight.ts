@@ -406,6 +406,10 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     // SCALE RULE: skala pengguna + kebutuhan admin/team menentukan fitur bertim.
     scaleText: [brief.usersScale, brief.adminNeeds].filter(Boolean).join(" | "),
     maxTier,
+    // PACKAGE LEVEL CONTROL RULE: fitur enterprise hanya bila skala organisasi
+    // benar-benar kompleks (multi cabang, struktur berjenjang, user besar).
+    allowEnterprise,
+
     excludeIds: [...coreIds],
     excludeTitles: included,
     limit: 7,
