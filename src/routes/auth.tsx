@@ -198,6 +198,13 @@ function AuthPage() {
 
         {supported && enrolledEmail ? (
           <div className="mt-6 space-y-3">
+            {sessionExpired ? (
+              <p className="rounded-xl border border-border/50 bg-background/40 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+                Sesi di perangkat ini sudah habis masa berlakunya. Masuk sekali dengan password —
+                sidik jari akan aktif lagi otomatis setelahnya.
+              </p>
+            ) : null}
+
             <button
               type="button"
               onClick={onBiometricUnlock}
