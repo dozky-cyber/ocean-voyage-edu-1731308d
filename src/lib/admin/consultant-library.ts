@@ -749,6 +749,47 @@ function operationPriorityIds(problem: string, context: string): Set<string> {
   return ids;
 }
 
+/**
+ * BUSINESS MATURITY CONTEXT: dipakai sebagai bobot pemilihan Potential Feature,
+ * bukan sebagai penentu package.
+ */
+export function detectBusinessMaturity(input: {
+  context: string;
+  problemText?: string;
+  scaleText?: string;
+}): BusinessMaturity {
+  const full = normalize(`${input.context} ${input.problemText ?? ""} ${input.scaleText ?? ""}`);
+  const established = includesAnyPositive(full, [
+    "cabang",
+    "outlet",
+    "karyawan",
+    "pegawai",
+    "staff",
+    "staf",
+    "divisi",
+    "tim operasional",
+    "banyak user",
+    "multi user",
+    "puluhan",
+    "ratusan order",
+  ]);
+  if (established) return "established";
+  const growing = includesAnyPositive(full, [
+    "order",
+    "pesanan",
+    "transaksi",
+    "produksi",
+    "pengerjaan",
+    "project",
+    "proyek",
+    "pencatatan",
+    "pelanggan",
+    "customer",
+  ]);
+  return growing ? "growing" : "starter";
+}
+
+
 /** Fitur yang hanya masuk akal jika bisnis dikelola lebih dari satu orang. */
 const TEAM_ONLY_FEATURES = new Set(["multi-user", "dashboard-admin", "automation", "crm", "api"]);
 
