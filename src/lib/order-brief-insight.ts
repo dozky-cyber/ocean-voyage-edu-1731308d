@@ -245,7 +245,7 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   coveredIds: Set<string>,
-): ConsultantOption | null {
+): { option: ConsultantOption; ids: string[] } | null {
   const upgradeKey = PACKAGE_ORDER[Math.min(PACKAGE_RANK[base] + 1, PACKAGE_ORDER.length - 1)]!;
   if (upgradeKey === base) return null;
 
@@ -286,26 +286,27 @@ function buildConsultantOption(
     },
   ];
 
-  const items = pool
-    .filter((item) => !coveredIds.has(item.id))
-    .slice(0, 5)
-    .map(({ id: _id, ...rest }) => rest);
-  if (!items.length) return null;
+  const picked = pool.filter((item) => !coveredIds.has(item.id)).slice(0, 5);
+  if (!picked.length) return null;
 
   return {
-    packageName: PACKAGE_LABEL[upgradeKey],
-    intro: [
-      `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
-      `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
-      `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
-    ],
-    items,
-    comparison: [
-      { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
-      { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
-    ],
+    ids: picked.map((item) => item.id),
+    option: {
+      packageName: PACKAGE_LABEL[upgradeKey],
+      intro: [
+        `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
+        `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
+        `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
+      ],
+      items: picked.map(({ id: _id, ...rest }) => rest),
+      comparison: [
+        { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
+        { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
+      ],
+    },
   };
 }
+
 
 function buildNextSteps(base: string, upgrade: string | null) {
   const lines = [
