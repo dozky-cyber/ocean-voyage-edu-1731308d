@@ -166,6 +166,7 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
     ],
     signals: ["jadwal", "booking", "reservasi", "appointment", "antrian"],
     aliases: ["booking", "reservasi", "jadwal", "appointment"],
+    requires: ["jadwal", "booking", "reservasi", "appointment", "antrian", "slot waktu"],
   },
   {
     id: "database-customer",

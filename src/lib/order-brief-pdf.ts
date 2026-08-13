@@ -325,7 +325,8 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
   const first = consultant.items[0];
   doc.keep((d) => {
     sectionTitle(d, "Team KERJAKU Consultant Recommendation");
-    d.text("OPSI PENGEMBANGAN", MARGIN, d.y, 7.5, false, MUTED);
+    const hasCore = consultant.items.some((item) => item.solves);
+    d.text(hasCore ? "CORE SOLUTION" : "PENYEMPURNAAN SCOPE", MARGIN, d.y, 7.5, false, MUTED);
     d.y -= 14;
     d.text(consultant.packageName, MARGIN, d.y, 12, true, INK);
     d.y -= 20;
@@ -335,7 +336,6 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
     });
     d.y -= 6;
     // CORE / GROWTH SPLIT RULE: judul menyesuaikan isi section.
-    const hasCore = consultant.items.some((item) => item.solves);
     d.text(
       hasCore ? "CORE SOLUTION (MENYELESAIKAN MASALAH UTAMA)" : "MANFAAT OPSI PENGEMBANGAN",
       MARGIN,
