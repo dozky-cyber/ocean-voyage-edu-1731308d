@@ -519,37 +519,43 @@ function optionalItem(
     reason: string;
     impact?: string;
     relation?: string | null;
+    priority?: number;
+    phase?: 1 | 2;
   },
   divider: boolean,
 ) {
   doc.text("*", MARGIN, doc.y, 11, true, BRAND);
   doc.text(item.name, MARGIN + 14, doc.y, 10.5, true, INK);
-  doc.y -= 15;
-  doc.text("DESKRIPSI", MARGIN + 14, doc.y, 7, false, MUTED);
-  doc.y -= 12;
-  doc.paragraph(item.description, MARGIN + 14, 10, false, CONTENT_W - 14);
-  doc.y -= 6;
-  doc.text("ALASAN RELEVANSI", MARGIN + 14, doc.y, 7, false, MUTED);
-  doc.y -= 12;
+  if (item.priority) {
+    // PRIORITAS & FASE: membantu customer memilih tanpa menaikkan package.
+    const tag = `PRIORITAS ${item.priority}  |  FASE ${item.phase ?? 2}`;
+    doc.text(tag, PAGE_W - MARGIN - textWidth(tag, 7.5, true), doc.y, 7.5, true, BRAND);
+  }
+  doc.y -= 14;
+  doc.paragraph(item.description, MARGIN + 14, 9.5, false, CONTENT_W - 14, MUTED);
+  doc.y -= 8;
+  doc.text("KENAPA RELEVAN", MARGIN + 14, doc.y, 7, false, MUTED);
+  doc.y -= 13;
   doc.paragraph(item.reason, MARGIN + 14, 10, false, CONTENT_W - 14);
-  doc.y -= 6;
+  doc.y -= 8;
   if (item.impact) {
     doc.text("DAMPAK BISNIS", MARGIN + 14, doc.y, 7, false, MUTED);
-    doc.y -= 12;
+    doc.y -= 13;
     doc.paragraph(item.impact, MARGIN + 14, 10, false, CONTENT_W - 14);
-    doc.y -= 6;
+    doc.y -= 8;
   }
   if (item.relation) {
     doc.text("KAITAN DENGAN ALUR BISNIS", MARGIN + 14, doc.y, 7, false, MUTED);
-    doc.y -= 12;
+    doc.y -= 13;
     doc.paragraph(item.relation, MARGIN + 14, 10, false, CONTENT_W - 14);
-    doc.y -= 6;
+    doc.y -= 8;
   }
   if (divider) {
     doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4);
-    doc.y -= 12;
+    doc.y -= 14;
   }
 }
+
 
 
 function nextSteps(doc: Doc, insight: BriefInsight) {
