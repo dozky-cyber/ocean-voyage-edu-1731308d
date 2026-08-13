@@ -71,7 +71,7 @@ export function wibStamp(iso?: string) {
 /** Intro paragraphs (shared by WhatsApp + email). */
 function introLines(brief: OrderBriefData) {
   return [
-    `Halo Kak ${brief.customerName || "Customer"}, terima kasih sudah melakukan konsultasi bersama KERJAKU AI Consultant.`,
+    `Halo Kak ${brief.customerName || "Customer"}, terima kasih sudah melakukan konsultasi bersama Team KERJAKU Consultant.`,
     "",
     "Berikut hasil preview konsultasi awal Kakak yang sudah kami rangkum dalam Order Brief KERJAKU.",
     "",
@@ -81,7 +81,7 @@ function introLines(brief: OrderBriefData) {
 
 function closingLines() {
   return [
-    "Tim KERJAKU akan melakukan pengecekan kebutuhan terlebih dahulu.",
+    "Team KERJAKU akan melakukan pengecekan kebutuhan terlebih dahulu.",
     "Setelah kebutuhan sudah final, tim kami akan memberikan rekomendasi solusi dan penawaran harga yang sesuai.",
     "",
     "Terima kasih sudah mempercayakan konsultasi kepada KERJAKU 🙏",
@@ -186,6 +186,6 @@ export function briefFields(brief: OrderBriefData): { label: string; value: stri
     { label: "Fitur", value: list(brief.features) },
     { label: "Timeline", value: brief.timeline || "-" },
     { label: "Budget", value: brief.budget || "-" },
-    { label: "AI Recommendation", value: brief.recommendation || "-" },
+    { label: "Package Recommendation", value: brief.recommendation || "-" },
   ];
 }

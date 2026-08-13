@@ -120,7 +120,7 @@ function header(doc: Doc, brief: OrderBriefData) {
   doc.rect(MARGIN, top + h - 52, 26, 26, BRAND);
   doc.text("K", MARGIN + 8, top + h - 45, 16, true, "1 1 1");
   doc.text("KERJAKU", MARGIN + 38, top + h - 44, 22, true, "1 1 1");
-  doc.text("AI CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
+  doc.text("TEAM KERJAKU CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
   doc.text("ORDER BRIEF KONSULTASI", MARGIN, top + 26, 11, true, "0.85 0.92 0.94");
   const right = `${stamp.date}  |  ${stamp.time}`;
   doc.text(right, PAGE_W - MARGIN - textWidth(right, 9, false), top + 27, 9, false, "0.66 0.72 0.78");
@@ -211,13 +211,13 @@ function footer(doc: Doc) {
   for (const ops of [...doc.pages, doc.ops]) {
     ops.push(`${LINE} RG 0.7 w ${MARGIN} ${MARGIN + 26} m ${PAGE_W - MARGIN} ${MARGIN + 26} l S`);
     const note =
-      "Order Brief ini adalah hasil konsultasi awal, bukan penawaran harga. Tim KERJAKU akan melakukan";
+      "Order Brief ini adalah hasil konsultasi awal, bukan penawaran harga. Team KERJAKU akan melakukan";
     const note2 =
       "pengecekan kebutuhan sebelum memberikan rekomendasi solusi dan penawaran yang sesuai.";
     ops.push(
       `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${MARGIN} ${MARGIN + 12} Tm (${esc(note)}) Tj ET`,
       `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${MARGIN} ${MARGIN + 2} Tm (${esc(note2)}) Tj ET`,
-      `BT ${BRAND} rg /F2 8 Tf 1 0 0 1 ${PAGE_W - MARGIN - 60} ${MARGIN + 12} Tm (KERJAKU.SPACE) Tj ET`,
+      `BT ${BRAND} rg /F2 8 Tf 1 0 0 1 ${PAGE_W - MARGIN - 128} ${MARGIN + 12} Tm (TEAM KERJAKU CONSULTANT) Tj ET`,
     );
   }
 }

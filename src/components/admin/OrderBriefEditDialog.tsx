@@ -135,7 +135,7 @@ export function OrderBriefEditDialog({ brief, conversationId, leadId, onClose, o
 
         <div className="mt-3 text-xs">
           <Input
-            label="AI Recommendation"
+            label="Package Recommendation"
             value={form.recommendation}
             onChange={set("recommendation")}
           />
