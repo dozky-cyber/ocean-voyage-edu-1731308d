@@ -10,6 +10,7 @@
  */
 
 import { detectBusinessFlowPattern } from "./business-flow-patterns";
+import { buildProblemSolutionPlan } from "./problem-solution-map";
 
 export type ConsultantTier = "basic" | "professional" | "business" | "enterprise";
 
