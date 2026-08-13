@@ -116,3 +116,133 @@ Generate ulang PDF dari data setara sample Tobiin, ekstrak teks, lalu render sel
 ## Catatan teknis
 
 Fokus perubahan: `consultant-library.ts`, `problem-solution-map.ts`, `order-brief-insight.ts`, `order-brief-pdf.ts`, `package-decision-sop.ts`, `consultant-chat.ts`, dan `consultant-scenarios.test.ts`. Tidak ada perubahan database, harga, data customer, atau struktur input Order Brief.
+
+CUSTOMER SCOPE PRIORITY RULE
+
+&nbsp;
+
+Feature yang sudah masuk Customer Need / Order Brief dianggap sudah menjadi solusi yang dipilih customer.
+
+&nbsp;
+
+AI tidak boleh:
+
+- mengevaluasi ulang sebagai rekomendasi baru
+
+- menaikkan menjadi Core Solution
+
+- memasukkan kembali sebagai Potential Feature
+
+&nbsp;
+
+Tugas Consultant Recommendation adalah mencari gap setelah kebutuhan utama customer terpenuhi.
+
+______________________________________
+
+CORE MINIMUM RULE
+
+&nbsp;
+
+Tidak ada kewajiban menghasilkan Core Solution.
+
+&nbsp;
+
+Jika:
+
+- semua Business Problem sudah covered
+
+- tidak ada gap yang signifikan
+
+&nbsp;
+
+maka Core Solution boleh kosong.
+
+&nbsp;
+
+Jangan membuat rekomendasi hanya untuk memenuhi jumlah fitur.
+
+&nbsp;
+
+________________________________________
+
+PROBLEM OWNERSHIP RULE
+
+&nbsp;
+
+Setiap Core Solution harus memiliki hubungan langsung:
+
+&nbsp;
+
+Business Problem
+
+↓
+
+Dampak bisnis
+
+↓
+
+Solusi
+
+&nbsp;
+
+AI dilarang membuat masalah baru hanya untuk memasukkan fitur.
+
+&nbsp;
+
+________________________________________
+
+ENHANCEMENT RULE
+
+&nbsp;
+
+Jika fitur hanya meningkatkan fitur yang sudah tersedia:
+
+&nbsp;
+
+maka masuk Potential Feature.
+
+&nbsp;
+
+Contoh:
+
+&nbsp;
+
+Status Tracking sudah ada
+
+→ Notification Status = Potential
+
+&nbsp;
+
+Portfolio sudah ada
+
+→ Social Media Integration = Potential
+
+&nbsp;
+
+Customer Database sudah ada
+
+→ Automation Follow Up = Potential
+
+______________________________________
+
+PACKAGE INDEPENDENCE RULE
+
+&nbsp;
+
+Core Solution dan Potential Feature tidak boleh menaikkan package.
+
+&nbsp;
+
+Package ditentukan oleh:
+
+- skala bisnis
+
+- kompleksitas operasional
+
+- user
+
+- lokasi
+
+&nbsp;
+
+Bukan karena jumlah fitur rekomendasi.
