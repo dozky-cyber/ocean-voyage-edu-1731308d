@@ -416,7 +416,16 @@ export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
       "pesanan tertukar",
       "antrian pekerjaan",
     ],
-    aliases: ["order management", "manajemen order", "kelola pesanan", "manajemen pesanan"],
+    aliases: [
+      "order management",
+      "manajemen order",
+      "kelola pesanan",
+      "manajemen pesanan",
+      "pencatatan project",
+      "pencatatan proyek",
+      "pencatatan project / order",
+      "pencatatan proyek / order",
+    ],
     // Tidak relevan untuk company profile / portfolio tanpa transaksi.
     requires: [
       "order",
@@ -649,6 +658,13 @@ export function isCoveredByBrief(feature: ConsultantFeature, briefText: string) 
   return includesAny(text, [feature.name, ...feature.aliases]);
 }
 
+/** Canonical Consultant Library ids already selected in the customer's scope. */
+export function consultantCoveredFeatureIds(briefText: string): string[] {
+  return CONSULTANT_LIBRARY.filter((feature) => isCoveredByBrief(feature, briefText)).map(
+    (feature) => feature.id,
+  );
+}
+
 /**
  * CORE = menyelesaikan masalah yang customer sebut pada brief.
  * GROWTH = pengembangan lanjutan setelah masalah utama selesai.
@@ -837,14 +853,10 @@ export function selectConsultantFeatures(input: {
     // Penyebutan pada Business Problem bukan berarti fitur sudah ada di brief.
     if (!isCore && isCoveredByBrief(feature, context)) continue;
 
-    // DUPLICATE PREVENTION RULE: fitur yang sudah ada pada Feature List brief
-    // tidak boleh direkomendasikan ulang dengan nama berbeda. Core hanya lolos
-    // bila customer menyebut masalah pada proses tersebut.
-    if (briefFeatures && isCoveredByBrief(feature, briefFeatures)) {
-      if (!isCore) continue;
-      if (!includesAnyPositive(problemScope, [feature.name, ...feature.aliases, ...feature.signals]))
-        continue;
-    }
+    // CUSTOMER SCOPE PRIORITY RULE: once a feature is selected in the Order
+    // Brief it is already the customer's solution. Never re-evaluate it as a
+    // new Core or Potential Feature, even when its problem is still mentioned.
+    if (briefFeatures && isCoveredByBrief(feature, briefFeatures)) continue;
 
     const key = normalize(feature.name);
     if (excludedTitles.some((title) => title.includes(key) || key.includes(title))) continue;

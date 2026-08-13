@@ -16,6 +16,7 @@ import {
   type PackageKey,
 } from "./admin/feature-library";
 import {
+  consultantCoveredFeatureIds,
   selectConsultantFeatures,
   type ConsultantPick,
   type ConsultantTier,
@@ -152,7 +153,6 @@ function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: s
     `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
     // KERJAKU PACKAGE DECISION SOP: alasan berbasis kompleksitas bisnis.
     rationale,
-    "Rekomendasi ini mengikuti kebutuhan yang tertulis pada Order Brief tanpa menambah kompleksitas baru.",
   ];
   return parts.join(" ");
 
@@ -175,16 +175,11 @@ function buildConsultantOption(
   if (!picks.length) return null;
   // CORE / GROWTH SPLIT RULE: bahasa berbeda saat fitur menyelesaikan masalah.
   const hasCore = picks.some((item) => item.role === "core");
-  // PACKAGE LEVEL CONTROL RULE: opsi pengembangan maksimal satu tingkat, dan
-  // tidak pernah menyentuh Enterprise untuk bisnis satu lokasi/skala kecil.
-  const maxRank = allowEnterprise
-    ? PACKAGE_ORDER.length - 1
-    : PACKAGE_RANK["Digital Workflow Solution"];
-  const upgradeIndex = Math.min(PACKAGE_RANK[base] + 1, maxRank);
-  const upgradeKey = PACKAGE_ORDER[upgradeIndex]!;
-  // Tanpa core solution, section ini hanya berguna bila ada opsi pengembangan.
-  if (upgradeKey === base && !hasCore) return null;
-  const sameLevel = upgradeKey === base;
+  // PACKAGE INDEPENDENCE RULE: consultant ideas refine scope; they never
+  // increase the package. Package level is decided only by business scale and
+  // operational complexity.
+  const upgradeKey = base;
+  const sameLevel = true;
 
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
@@ -212,12 +207,7 @@ function buildConsultantOption(
         benefit: item.benefit,
         solves: item.solves,
       })),
-      comparison: sameLevel
-        ? []
-        : [
-            { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
-            { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
-          ],
+      comparison: [],
       note: CONSULTANT_OPTION_NOTE,
     },
   };
@@ -232,11 +222,15 @@ function buildNextSteps(base: string, upgrade: string | null) {
     `1. ${base}`,
     "Sesuai dengan kebutuhan awal yang disampaikan customer.",
   ];
-  if (upgrade) {
+  if (upgrade && normalize(upgrade) !== normalize(base)) {
     lines.push(
       "",
       `2. ${upgrade}`,
       "Sebagai opsi pengembangan dengan fitur tambahan yang direkomendasikan Team KERJAKU.",
+    );
+  } else if (upgrade) {
+    lines.push(
+      "Fitur yang disepakati akan dirapikan sebagai penyesuaian scope pada solusi yang sama, tanpa membuat opsi package kedua.",
     );
   }
   lines.push(
@@ -281,7 +275,10 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // ORDER BRIEF FEATURE PROTECTION: included scope = the client's own feature
   // list, verbatim. Package defaults never enter the scope.
   const included = briefIncludedFeatures(brief.features);
-  const coreIds = new Set<string>(briefCoveredFeatureIds(brief.features));
+  const coreIds = new Set<string>([
+    ...briefCoveredFeatureIds(brief.features),
+    ...consultantCoveredFeatureIds(brief.features.join(" | ")),
+  ]);
 
   // BUSINESS FEATURE CONSULTANT LIBRARY: analisa jenis bisnis, masalah, tujuan,
   // jumlah user, dan proses operasional — bukan generator fitur.

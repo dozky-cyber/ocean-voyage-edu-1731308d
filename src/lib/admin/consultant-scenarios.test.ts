@@ -11,6 +11,8 @@ import { selectConsultantFeatures } from "./consultant-library";
 import { buildProblemSolutionPlan } from "./problem-solution-map";
 import { decidePackageLevel } from "./package-decision-sop";
 import type { OrderBriefData } from "../order-brief";
+import { buildBriefInsight } from "../order-brief-insight";
+import { buildOrderBriefPdf } from "../order-brief-pdf";
 
 type Scenario = {
   name: string;
@@ -400,6 +402,73 @@ describe("Consultant Engine V5 — aturan khusus fitur", () => {
         briefFeatureText: "Pemesanan online / booking",
       }),
     ).not.toContain("booking");
+  });
+
+  it("tidak menaikkan fitur yang sudah ter-cover menjadi core dengan nama berbeda", () => {
+    const picks = selectConsultantFeatures({
+      businessText: "Furniture & Interior Custom Workshop",
+      problemText: "Pencatatan project masih manual. Customer sering bertanya progress pengerjaan.",
+      goalText: "Merapikan pencatatan dan update progress project",
+      context: "Workshop personal, dikelola owner",
+      scaleText: "Personal (dikelola sendiri)",
+      briefFeatureText: "Pencatatan Project / Order | Status Tracking Progress Pekerjaan",
+      allowEnterprise: false,
+      limit: 10,
+    });
+    expect(picks.map((pick) => pick.id)).not.toContain("order-management");
+    expect(picks.map((pick) => pick.id)).not.toContain("status-tracking");
+  });
+});
+
+describe("Order Brief Tobiin — clean solution-gap output", () => {
+  const brief: OrderBriefData = {
+    version: 1,
+    customerName: "Tobiin",
+    whatsapp: "088289329068",
+    email: null,
+    business: "Furniture & Interior Custom Workshop (Fadly Furniture Interior)",
+    project: "Website Portfolio & Project Tracking System",
+    goal: "Meningkatkan profesionalisme, merapikan pencatatan dan update progress project.",
+    problems: [
+      "Portfolio tersebar di WA dan IG",
+      "Customer sulit melihat contoh pekerjaan sebelumnya",
+      "Banyak pertanyaan awal yang sama dari customer",
+      "Pencatatan project masih manual",
+      "Customer sering bertanya progress pengerjaan",
+    ],
+    usersScale: "Personal (dikelola sendiri)",
+    adminNeeds: "Dashboard pengelolaan mandiri oleh owner",
+    features: [
+      "Galeri / Portfolio Hasil Pekerjaan",
+      "Halaman FAQ (Pertanyaan Umum)",
+      "Pencatatan Project / Order",
+      "Status Tracking Progress Pekerjaan",
+    ],
+    timeline: "1 bulan",
+    budget: "Rp 5.000.000",
+    recommendation: "Business System",
+    createdAt: "2026-08-13T20:59:00.000Z",
+  };
+
+  it("tidak mengulang customer scope dan tidak menawarkan digital nota", () => {
+    const insight = buildBriefInsight(brief);
+    const recommended = [
+      ...(insight.consultant?.items.map((item) => item.title) ?? []),
+      ...insight.optional.map((item) => item.name),
+    ].join(" | ").toLowerCase();
+    expect(recommended).not.toContain("status tracking");
+    expect(recommended).not.toContain("order management");
+    expect(recommended).not.toContain("galeri portfolio");
+    expect(recommended).not.toContain("faq");
+    expect(recommended).not.toContain("digital nota");
+  });
+
+  it("menulis satu Business System dan menghapus boilerplate Enterprise", () => {
+    const pdfText = new TextDecoder("latin1").decode(buildOrderBriefPdf(brief));
+    const nextSteps = pdfText.slice(pdfText.indexOf("LANGKAH SELANJUTNYA"));
+    expect(nextSteps.match(/Business System/g)?.length).toBe(1);
+    expect(pdfText).not.toContain("Enterprise hanya dipakai");
+    expect(pdfText).not.toContain("tanpa menambah kompleksitas baru");
   });
 });
 

@@ -133,9 +133,15 @@ CORE SOLUTION vs POTENTIAL FEATURE (WAJIB, berlaku untuk semua jenis bisnis):
   (mis. notifikasi, database customer, laporan, multi-user).
 - Jangan menaruh fitur "keren" di Core bila customer tidak menyebut masalahnya.
 - Jangan menaruh fitur penyelesai masalah utama di Potential Feature.
-- Contoh laundry (catat manual, customer sering tanya status, nota tulis tangan):
-  Core = Order Management, Status/Progress Tracking, Digital Nota, Dashboard.
-  Potential = Notifikasi WhatsApp, Database Customer, Laporan, Multi User.
+- CUSTOMER SCOPE PRIORITY: fitur yang sudah ada pada Feature List dianggap sudah menjadi solusi
+  pilihan customer. Jangan evaluasi ulang sebagai Core dan jangan masukkan kembali sebagai Potential.
+- CORE MINIMUM: tidak ada kewajiban menghasilkan Core. Jika semua masalah sudah ter-cover, Core
+  boleh kosong; jangan membuat rekomendasi hanya untuk memenuhi jumlah fitur.
+- PROBLEM OWNERSHIP: setiap Core wajib memiliki hubungan Business Problem → dampak bisnis → solusi.
+  Dilarang membuat masalah baru hanya untuk memasukkan fitur.
+- ENHANCEMENT: peningkatan atas fitur yang sudah tersedia masuk Potential. Contoh: Status Tracking
+  sudah ada → Notification Status Potential; Portfolio sudah ada → Social Media Integration Potential.
+- PACKAGE INDEPENDENCE: Core dan Potential tidak boleh menaikkan package.
 
 ATURAN KHUSUS FITUR (WAJIB, berlaku sebelum fitur ditulis):
 - DIGITAL NOTA: Core hanya bila customer menyebut masalah nota/bukti transaksi/pembayaran manual.
@@ -158,7 +164,7 @@ Opsi Pengembangan:
 
 Core Solution (menyelesaikan masalah customer):
 - [Fitur] — Menyelesaikan: [masalah yang customer sebut] — [manfaat bisnisnya]
-(2-4 fitur saja, tanpa mengulang fitur yang sudah diminta customer)
+(maksimal 2-4 fitur; boleh kosong jika semua masalah sudah ter-cover; tanpa mengulang fitur customer)
 
 Alasan:
 [2-3 kalimat konsultasi bisnis: package awal sudah memenuhi kebutuhan saat ini, namun bila bisnis

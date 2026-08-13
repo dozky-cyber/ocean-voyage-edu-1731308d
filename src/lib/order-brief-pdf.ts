@@ -353,7 +353,7 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
     doc.keep((d) => consultantItem(d, item, index + 1));
   });
 
-  doc.keep((d) => {
+  if (consultant.comparison.length) doc.keep((d) => {
     sectionTitle(d, "Perbandingan Solusi");
     consultant.comparison.forEach((column) => {
       d.text(column.name, MARGIN, d.y, 10.5, true, INK);

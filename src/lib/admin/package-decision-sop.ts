@@ -303,12 +303,7 @@ function buildRationale(
   }
   const scale = brief.usersScale?.trim();
   if (scale) parts.push(`Cakupan pengguna sistem: ${scale}.`);
-  if (level !== "enterprise" && blockedReasons.length) {
-    parts.push(
-      `Sistem berskala Enterprise belum diperlukan karena ${blockedReasons.join(
-        ", ",
-      )}. Enterprise hanya dipakai bila organisasi benar-benar kompleks (multi lokasi, struktur berjenjang, pengguna berskala besar, atau integrasi ERP/API).`,
-    );
-  }
+  // Enterprise gating remains an internal decision signal. Its diagnostic
+  // details are intentionally omitted from customer-facing Order Brief copy.
   return parts.join(" ");
 }
