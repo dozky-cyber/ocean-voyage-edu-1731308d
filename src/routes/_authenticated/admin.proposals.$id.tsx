@@ -20,6 +20,12 @@ import { markProposalSent, prepareProposalFile } from "@/lib/proposal.functions"
 import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
 import { buildProposalWhatsappMessage, type ProposalDocData } from "@/lib/proposal-doc";
 import { proposalPdfBlobUrl } from "@/lib/proposal-pdf";
+import {
+  buildTimelineBlock,
+  enhancementsTotal,
+  parseEnhancements,
+  type EnhancementItem,
+} from "@/lib/admin/proposal-logic";
 import { formatDate } from "@/lib/admin/pipeline";
 
 import {
@@ -85,6 +91,9 @@ function ProposalDetailPage() {
   const [versionNote, setVersionNote] = useState("");
   const [sections, setSections] = useState<ProposalSection[]>([]);
   const [pricing, setPricing] = useState<PricingItem[]>([]);
+  const [briefTimeline, setBriefTimeline] = useState("");
+  const [estimatedTimeline, setEstimatedTimeline] = useState("");
+  const [enhancements, setEnhancements] = useState<EnhancementItem[]>([]);
   const [previewVersion, setPreviewVersion] = useState<{ label: string; url: string } | null>(null);
 
   useEffect(() => {
@@ -98,9 +107,23 @@ function ProposalDetailPage() {
     setTimelineNote(data.timeline_note ?? "");
     setSections(parseSections(data.content));
     setPricing(parsePricingItems(data.pricing_items));
+    setBriefTimeline(data.brief_timeline ?? "");
+    setEstimatedTimeline(data.estimated_timeline ?? "");
+    setEnhancements(parseEnhancements(data.enhancements));
   }, [data]);
 
-  const total = useMemo(() => pricingTotal(pricing), [pricing]);
+  const coreTotal = useMemo(() => pricingTotal(pricing), [pricing]);
+  const optionalTotal = useMemo(() => enhancementsTotal(enhancements), [enhancements]);
+  const total = coreTotal + optionalTotal;
+  const timelineBlock = useMemo(
+    () =>
+      buildTimelineBlock({
+        briefTimeline,
+        estimatedTimeline,
+        createdAt: data?.created_at ?? new Date().toISOString(),
+      }),
+    [briefTimeline, estimatedTimeline, data?.created_at],
+  );
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -112,6 +135,13 @@ function ProposalDetailPage() {
           recommended_package: pkg || null,
           content: sections,
           pricing_items: pricing.map((p) => ({ ...p, amount: Number(p.amount) || 0 })),
+          enhancements: enhancements.map((e) => ({
+            name: e.name,
+            benefit: e.benefit,
+            amount: Number(e.amount) || 0,
+          })),
+          brief_timeline: briefTimeline || null,
+          estimated_timeline: estimatedTimeline || null,
           currency,
           valid_until: validUntil || null,
           investment_note: investmentNote || null,
@@ -241,6 +271,9 @@ function ProposalDetailPage() {
     pricing_items: unknown;
     investment_note: string | null;
     timeline_note: string | null;
+    brief_timeline?: string | null;
+    estimated_timeline?: string | null;
+    enhancements?: unknown;
     created_at: string;
   };
 
@@ -259,6 +292,9 @@ function ProposalDetailPage() {
       timelineNote: v.timeline_note,
       sections: parseSections(v.content),
       pricing: parsePricingItems(v.pricing_items),
+      briefTimeline: v.brief_timeline ?? null,
+      estimatedTimeline: v.estimated_timeline ?? null,
+      enhancements: parseEnhancements(v.enhancements),
       createdAt: v.created_at,
     };
     if (previewVersion) URL.revokeObjectURL(previewVersion.url);
@@ -482,6 +518,105 @@ function ProposalDetailPage() {
               <Area label="Catatan investasi" value={investmentNote} onChange={setInvestmentNote} />
               <Area label="Catatan timeline" value={timelineNote} onChange={setTimelineNote} />
             </div>
+          </GlassCard>
+
+          <GlassCard>
+            <p className="text-sm font-medium">Timeline</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Field
+                label="Final Order Brief Timeline (client)"
+                value={briefTimeline}
+                onChange={setBriefTimeline}
+              />
+              <Field
+                label="KERJAKU Estimated Timeline (contoh: 1-2 minggu)"
+                value={estimatedTimeline}
+                onChange={setEstimatedTimeline}
+              />
+            </div>
+            <div className="mt-3 rounded-2xl border border-border/40 bg-background/30 p-3 text-xs text-muted-foreground">
+              {timelineBlock ? (
+                <p className="whitespace-pre-wrap">{timelineBlock.lines.join("\n")}</p>
+              ) : (
+                <p>Belum ada timeline. Isi salah satu field di atas.</p>
+              )}
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Kosong: memakai timeline Final Order Brief. Terisi: memakai estimasi KERJAKU dan
+              deadline produksi dihitung otomatis.
+            </p>
+          </GlassCard>
+
+          <GlassCard>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-medium">Recommended Enhancement</p>
+              <button
+                type="button"
+                onClick={() =>
+                  setEnhancements((prev) => [...prev, { name: "", benefit: "", amount: 0 }])
+                }
+                className="rounded-xl border border-border/60 px-3 py-1.5 text-xs transition hover:text-foreground"
+              >
+                + Tambah enhancement
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {enhancements.map((row, index) => (
+                <div
+                  key={index}
+                  className="grid gap-2 rounded-2xl border border-border/40 bg-background/30 p-3 sm:grid-cols-[1.2fr_1.6fr_0.9fr_auto]"
+                >
+                  <input
+                    value={row.name}
+                    placeholder="Nama fitur"
+                    onChange={(e) =>
+                      setEnhancements((prev) =>
+                        prev.map((p, i) => (i === index ? { ...p, name: e.target.value } : p)),
+                      )
+                    }
+                    className="rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-primary/60"
+                  />
+                  <input
+                    value={row.benefit}
+                    placeholder="Benefit"
+                    onChange={(e) =>
+                      setEnhancements((prev) =>
+                        prev.map((p, i) => (i === index ? { ...p, benefit: e.target.value } : p)),
+                      )
+                    }
+                    className="rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-primary/60"
+                  />
+                  <input
+                    value={String(row.amount)}
+                    inputMode="numeric"
+                    placeholder="0"
+                    onChange={(e) =>
+                      setEnhancements((prev) =>
+                        prev.map((p, i) =>
+                          i === index
+                            ? { ...p, amount: Number(e.target.value.replace(/[^\d]/g, "")) || 0 }
+                            : p,
+                        ),
+                      )
+                    }
+                    className="rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-primary/60"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEnhancements((prev) => prev.filter((_, i) => i !== index))}
+                    className="rounded-xl border border-destructive/40 px-3 py-2 text-xs text-destructive transition hover:bg-destructive/10"
+                  >
+                    Hapus
+                  </button>
+                </div>
+              ))}
+              {!enhancements.length ? (
+                <p className="text-xs text-muted-foreground">Belum ada enhancement.</p>
+              ) : null}
+            </div>
+            <p className="mt-3 text-sm font-semibold text-primary">
+              Optional Enhancement: {formatIDR(optionalTotal, currency)}
+            </p>
           </GlassCard>
 
           <GlassCard>
