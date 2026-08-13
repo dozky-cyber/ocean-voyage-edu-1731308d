@@ -292,10 +292,13 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   });
 
 
-  // CONSULTANT / POTENTIAL SPLIT RULE: 1-2 ide relevan cukup masuk ke
-  // Consultant Recommendation; sisanya baru menjadi Potential Feature.
-  const consultantPicks = picks.length <= 2 ? picks : picks.slice(0, 4);
-  const leftover = picks.length <= 2 ? [] : picks.slice(4, 7);
+  // CORE / GROWTH SPLIT RULE:
+  // - Consultant Recommendation = fitur yang menyelesaikan masalah customer.
+  // - Potential Feature = pengembangan setelah masalah utama selesai.
+  const corePicks = picks.filter((p) => p.role === "core").slice(0, 4);
+  const growthPicks = picks.filter((p) => p.role === "growth");
+  const consultantPicks = corePicks.length ? corePicks : growthPicks.slice(0, 2);
+  const leftover = corePicks.length ? growthPicks.slice(0, 3) : growthPicks.slice(2, 5);
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
