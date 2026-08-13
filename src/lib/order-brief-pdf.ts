@@ -2,7 +2,7 @@
 // Runs both in the browser (download) and in the Worker runtime (email attachment).
 
 import { briefFields, briefFileName, wibStamp, type OrderBriefData } from "./order-brief";
-import { buildBriefInsight, type BriefInsight } from "./order-brief-insight";
+import { buildBriefInsight, resolveAdminNeeds, type BriefInsight } from "./order-brief-insight";
 
 export const PAGE_W = 595.28; // A4
 export const PAGE_H = 841.89;
@@ -318,6 +318,69 @@ function packageRecommendation(doc: Doc, insight: BriefInsight) {
     d.y -= 12;
   });
 }
+
+/** BUSINESS READINESS: konteks singkat sebelum masuk ke rekomendasi. */
+function readinessBlock(doc: Doc, insight: BriefInsight) {
+  doc.keep((d) => {
+    sectionTitle(d, "Business Readiness");
+    d.text(insight.readiness.level.toUpperCase(), MARGIN, d.y, 8, true, BRAND);
+    d.y -= 16;
+    insight.readiness.lines.forEach((line) => {
+      d.paragraph(line, MARGIN, 10, false, CONTENT_W);
+      d.y -= 4;
+    });
+    d.y -= 8;
+  });
+}
+
+const MAP_SOURCE_LABEL: Record<string, string> = {
+  scope: "Sudah ada di Feature List",
+  core: "Core Solution",
+  optional: "Opsional (pengembangan)",
+  open: "Perlu dibahas lanjut",
+};
+
+/** PROBLEM -> SOLUTION MAP: bukti setiap masalah customer punya jawabannya. */
+function problemSolutionMap(doc: Doc, insight: BriefInsight) {
+  if (!insight.problemMap.length) return;
+  doc.keep((d) => {
+    sectionTitle(d, "Peta Masalah & Solusi");
+    d.paragraph(
+      "Setiap masalah yang customer sampaikan dipasangkan dengan solusi yang menanganinya.",
+      MARGIN,
+      9.5,
+      false,
+      CONTENT_W,
+      MUTED,
+    );
+    d.y -= 10;
+  });
+
+  insight.problemMap.forEach((row) => {
+    doc.keep((d) => {
+      const colW = (CONTENT_W - 18) / 2;
+      const left = wrap(row.problem, 9.5, false, colW - 8);
+      const right = wrap(row.solution, 9.5, true, colW - 8);
+      const rows = Math.max(left.length, right.length);
+      const h = 26 + rows * 13;
+      const top = d.y - h;
+      d.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
+      d.rect(MARGIN, top, 3, h, BRAND);
+      d.text("MASALAH", MARGIN + 14, top + h - 14, 7, false, MUTED);
+      d.text("SOLUSI", MARGIN + 18 + colW, top + h - 14, 7, false, MUTED);
+      left.forEach((line, i) => d.text(line, MARGIN + 14, top + h - 28 - i * 13, 9.5, false));
+      right.forEach((line, i) =>
+        d.text(line, MARGIN + 18 + colW, top + h - 28 - i * 13, 9.5, true),
+      );
+      const tag = MAP_SOURCE_LABEL[row.source] ?? "";
+      d.text(tag, PAGE_W - MARGIN - textWidth(tag, 7, false) - 6, top + h - 14, 7, false, BRAND);
+      d.y = top - 10;
+    });
+  });
+
+  doc.y -= 8;
+}
+
 
 /** Consultant block: development option, reason, and benefit per feature. */
 function consultantRecommendation(doc: Doc, insight: BriefInsight) {
