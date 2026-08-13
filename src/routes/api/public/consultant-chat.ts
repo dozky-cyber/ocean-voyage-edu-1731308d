@@ -199,7 +199,16 @@ CARA MEMAKAI LIBRARY (WAJIB):
 - Jika hanya ada 1-2 fitur tambahan relevan → taruh di TEAM KERJAKU CONSULTANT RECOMMENDATION.
   Jika ada beberapa ide lain yang relevan → baru gunakan POTENTIAL FEATURE RECOMMENDATION.
 - Jika sebuah fitur tidak memberi dampak bisnis nyata: hapus.
+- PACKAGE LEVEL CONTROL RULE: package rekomendasi dan opsi pengembangan wajib proporsional dengan
+  skala bisnis. Pertimbangkan jumlah user, skala bisnis, jumlah lokasi, kompleksitas operasional,
+  kebutuhan integrasi, dan struktur organisasi. Bisnis satu lokasi dengan owner + beberapa karyawan
+  dan operasional sederhana TIDAK boleh direkomendasikan Enterprise — cukup Business System, dengan
+  opsi pengembangan satu tingkat saja. Enterprise hanya dipertimbangkan bila multi cabang, banyak
+  divisi, banyak user, butuh integrasi sistem, atau operasional kompleks.
+- Jangan menaikkan package hanya karena tersedia fitur lebih banyak. Jangan memberi solusi yang
+  terlalu besar dibanding masalah customer.
 - Selalu berpikir "masalah bisnis apa yang bisa dibantu solusi digital?", bukan "fitur apa yang bisa dijual?".`;
+
 
 
 const qualifySchema = z.object({
