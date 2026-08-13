@@ -35,7 +35,7 @@ function normalize(value: string) {
 export type ConsultantOption = {
   packageName: string;
   intro: string[];
-  items: { title: string; benefit: string; optional?: boolean }[];
+  items: { title: string; benefit: string; optional?: boolean; solves?: string | null }[];
   comparison: { name: string; points: string[] }[];
   /** PACKAGE UPGRADE PROTECTION: this option never replaces the brief package. */
   note: string;
@@ -173,6 +173,8 @@ function buildConsultantOption(
   allowEnterprise: boolean,
 ): { option: ConsultantOption; ids: string[] } | null {
   if (!picks.length) return null;
+  // CORE / GROWTH SPLIT RULE: bahasa berbeda saat fitur menyelesaikan masalah.
+  const hasCore = picks.some((item) => item.role === "core");
   // PACKAGE LEVEL CONTROL RULE: opsi pengembangan maksimal satu tingkat, dan
   // tidak pernah menyentuh Enterprise untuk bisnis satu lokasi/skala kecil.
   const maxRank = allowEnterprise
@@ -180,7 +182,9 @@ function buildConsultantOption(
     : PACKAGE_RANK["Digital Workflow Solution"];
   const upgradeIndex = Math.min(PACKAGE_RANK[base] + 1, maxRank);
   const upgradeKey = PACKAGE_ORDER[upgradeIndex]!;
-  if (upgradeKey === base) return null;
+  // Tanpa core solution, section ini hanya berguna bila ada opsi pengembangan.
+  if (upgradeKey === base && !hasCore) return null;
+  const sameLevel = upgradeKey === base;
 
 
   const name = brief.customerName?.trim() ? `Kak ${brief.customerName.trim()}` : "customer";
@@ -190,16 +194,30 @@ function buildConsultantOption(
     ids: picks.map((item) => item.id),
     option: {
       packageName: PACKAGE_LABEL[upgradeKey],
-      intro: [
-        `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
-        `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
-        `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
-      ],
-      items: picks.map((item) => ({ title: item.name, benefit: item.benefit })),
-      comparison: [
-        { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
-        { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
-      ],
+      intro: hasCore
+        ? [
+            `Dari masalah yang ${name} sampaikan, Team KERJAKU melihat ada beberapa bagian operasional ${business} yang paling terasa dampaknya bila dibantu sistem.`,
+            `Fitur berikut dipilih karena langsung menjawab masalah tersebut, bukan sekadar menambah fitur.`,
+            sameLevel
+              ? `${PACKAGE_LABEL[base]} pada Order Brief sudah cukup untuk menjalankan fitur-fitur ini, jadi tidak perlu menaikkan level solusi.`
+              : `${PACKAGE_LABEL[base]} tetap menjadi acuan Order Brief; pengerjaan fitur di bawah ini dapat menyesuaikan ke ${PACKAGE_LABEL[upgradeKey]} apabila dibutuhkan.`,
+          ]
+        : [
+            `Setelah melakukan analisa kebutuhan bisnis, Team KERJAKU melihat bahwa website ${business} masih dapat dikembangkan menjadi platform yang lebih mendukung operasional bisnis.`,
+            `${PACKAGE_LABEL[base]} sudah memenuhi kebutuhan awal ${name}.`,
+            `Namun apabila ${name} ingin website tidak hanya menjadi media informasi/katalog, tetapi juga membantu pengelolaan bisnis sehari-hari, Team KERJAKU memberikan opsi pengembangan ke ${PACKAGE_LABEL[upgradeKey]}.`,
+          ],
+      items: picks.map((item) => ({
+        title: item.name,
+        benefit: item.benefit,
+        solves: item.solves,
+      })),
+      comparison: sameLevel
+        ? []
+        : [
+            { name: PACKAGE_LABEL[base], points: PACKAGE_FIT[base] },
+            { name: PACKAGE_LABEL[upgradeKey], points: PACKAGE_FIT[upgradeKey] },
+          ],
       note: CONSULTANT_OPTION_NOTE,
     },
   };
@@ -275,6 +293,8 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   const picks = selectConsultantFeatures({
     businessText,
     context,
+    // CORE / GROWTH SPLIT RULE: tujuan sistem ikut dibaca sebagai masalah.
+    goalText: brief.goal ?? "",
     // BUSINESS FEATURE VALIDATION RULE poin 3: fitur harus mengurangi masalah.
     problemText: normalize(brief.problems.join(" | ")),
     // SCALE RULE: skala pengguna + kebutuhan admin/team menentukan fitur bertim.
@@ -290,10 +310,13 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   });
 
 
-  // CONSULTANT / POTENTIAL SPLIT RULE: 1-2 ide relevan cukup masuk ke
-  // Consultant Recommendation; sisanya baru menjadi Potential Feature.
-  const consultantPicks = picks.length <= 2 ? picks : picks.slice(0, 4);
-  const leftover = picks.length <= 2 ? [] : picks.slice(4, 7);
+  // CORE / GROWTH SPLIT RULE:
+  // - Consultant Recommendation = fitur yang menyelesaikan masalah customer.
+  // - Potential Feature = pengembangan setelah masalah utama selesai.
+  const corePicks = picks.filter((p) => p.role === "core").slice(0, 4);
+  const growthPicks = picks.filter((p) => p.role === "growth");
+  const consultantPicks = corePicks.length ? corePicks : growthPicks.slice(0, 2);
+  const leftover = corePicks.length ? growthPicks.slice(0, 3) : growthPicks.slice(2, 5);
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.

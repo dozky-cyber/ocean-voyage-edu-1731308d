@@ -366,7 +366,7 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
 
 function consultantItem(
   doc: Doc,
-  item: { title: string; benefit: string; optional?: boolean },
+  item: { title: string; benefit: string; optional?: boolean; solves?: string | null },
   index: number,
 ) {
   doc.text(
@@ -378,6 +378,13 @@ function consultantItem(
     INK,
   );
   doc.y -= 15;
+  // CORE / GROWTH SPLIT RULE: core solution menyebut masalah yang diselesaikan.
+  if (item.solves) {
+    doc.text("MENYELESAIKAN", MARGIN + 14, doc.y, 7, false, MUTED);
+    doc.y -= 12;
+    doc.paragraph(item.solves, MARGIN + 14, 10, false, CONTENT_W - 14);
+    doc.y -= 6;
+  }
   doc.text("MANFAAT", MARGIN + 14, doc.y, 7, false, MUTED);
   doc.y -= 12;
   doc.paragraph(item.benefit, MARGIN + 14, 10, false, CONTENT_W - 14);

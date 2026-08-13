@@ -126,14 +126,24 @@ POTENTIAL FEATURE RECOMMENDATION (jika ada) → CLOSING.
 
 Tulis lanjutannya persis dengan format ini:
 
+CORE SOLUTION vs POTENTIAL FEATURE (WAJIB, berlaku untuk semua jenis bisnis):
+- Core Solution = fitur yang LANGSUNG menyelesaikan masalah yang customer sebutkan.
+  Setiap core wajib ditulis dengan kalimat "Menyelesaikan: [masalah customer]".
+- Potential Feature = fitur yang membantu bisnis berkembang SETELAH masalah utama selesai
+  (mis. notifikasi, database customer, laporan, multi-user).
+- Jangan menaruh fitur "keren" di Core bila customer tidak menyebut masalahnya.
+- Jangan menaruh fitur penyelesai masalah utama di Potential Feature.
+- Contoh laundry (catat manual, customer sering tanya status, nota tulis tangan):
+  Core = Order Management, Status/Progress Tracking, Digital Nota, Dashboard.
+  Potential = Notifikasi WhatsApp, Database Customer, Laporan, Multi User.
+
 TEAM KERJAKU CONSULTANT RECOMMENDATION
 
 Opsi Pengembangan:
 [nama package satu tingkat di atas, atau "Tetap di [package awal]" jika memang sudah paling sesuai]
 
-Fitur yang dapat membantu:
-- [Fitur dari Business Feature Consultant Library yang benar-benar relevan dengan jenis bisnis,
-masalah, dan proses operasional customer] — [manfaat bisnisnya]
+Core Solution (menyelesaikan masalah customer):
+- [Fitur] — Menyelesaikan: [masalah yang customer sebut] — [manfaat bisnisnya]
 (2-4 fitur saja, tanpa mengulang fitur yang sudah diminta customer)
 
 Alasan:
