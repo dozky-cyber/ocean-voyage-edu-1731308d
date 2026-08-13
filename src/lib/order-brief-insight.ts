@@ -167,7 +167,6 @@ function complexityCeiling(context: string): PackageKey {
     "follow up",
     "database customer",
     "data pelanggan",
-    "katalog",
     "booking",
     "reservasi",
     "member",
