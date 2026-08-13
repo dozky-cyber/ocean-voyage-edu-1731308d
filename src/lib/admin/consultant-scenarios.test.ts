@@ -334,7 +334,75 @@ describe("Consultant Engine V4 — core solution vs potential feature", () => {
   });
 });
 
+describe("Consultant Engine V5 — aturan khusus fitur", () => {
+  const base = {
+    businessText: "Toko kelontong",
+    context: "1 toko, owner dan 2 karyawan",
+    scaleText: "owner dan 2 karyawan",
+    allowEnterprise: false,
+    limit: 7,
+  };
+
+  const ids = (over: Partial<Parameters<typeof selectConsultantFeatures>[0]>) =>
+    selectConsultantFeatures({ ...base, ...over }).map((p) => p.id);
+  const coreIds = (over: Partial<Parameters<typeof selectConsultantFeatures>[0]>) =>
+    selectConsultantFeatures({ ...base, ...over })
+      .filter((p) => p.role === "core")
+      .map((p) => p.id);
+
+  it("inventory tidak muncul bila stok bukan masalah customer", () => {
+    expect(ids({ problemText: "Pencatatan order manual di buku" })).not.toContain("inventory");
+  });
+
+  it("inventory muncul bila stok memang masalah customer", () => {
+    expect(ids({ problemText: "Stok sering selisih dan kehabisan barang" })).toContain("inventory");
+  });
+
+  it("digital nota bukan core bila nota tidak disebut", () => {
+    expect(coreIds({ problemText: "Pencatatan order manual di buku" })).not.toContain("digital-nota");
+  });
+
+  it("automation tidak pernah muncul kecuali diminta", () => {
+    expect(ids({ problemText: "Order dicatat manual", context: "1 toko, 10 karyawan" })).not.toContain(
+      "automation",
+    );
+  });
+
+  it("crm tidak muncul untuk usaha kecil tanpa kebutuhan sales", () => {
+    expect(ids({ problemText: "Order dicatat manual" })).not.toContain("crm");
+  });
+
+  it("multi user hanya bila ada kebutuhan hak akses berbeda", () => {
+    expect(ids({ problemText: "Order dicatat manual", context: "10 karyawan" })).not.toContain(
+      "multi-user",
+    );
+    expect(
+      ids({
+        problemText: "Order dicatat manual, butuh hak akses berbeda untuk kasir dan owner",
+        context: "10 karyawan, hak akses berbeda",
+      }),
+    ).toContain("multi-user");
+  });
+
+  it("dashboard core hanya bila owner menyebut kebutuhan monitoring", () => {
+    expect(coreIds({ problemText: "Order dicatat manual" })).not.toContain("dashboard-admin");
+    expect(
+      coreIds({ problemText: "Order dicatat manual, owner sulit memantau pekerjaan harian" }),
+    ).toContain("dashboard-admin");
+  });
+
+  it("tidak merekomendasikan ulang fitur yang sudah ada pada brief", () => {
+    expect(
+      ids({
+        problemText: "Customer sulit memesan, ingin pesan online",
+        briefFeatureText: "Pemesanan online / booking",
+      }),
+    ).not.toContain("booking");
+  });
+});
+
 describe("Problem → solution map", () => {
+
   it("tidak menghasilkan core tanpa masalah yang disebut customer", () => {
     const plan = buildProblemSolutionPlan({
       businessText: "Toko bunga",
