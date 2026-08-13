@@ -139,6 +139,21 @@ function RootComponent() {
     });
   }, [router]);
 
+  // Keeps the device quick-unlock snapshot in sync with rotated refresh tokens.
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "TOKEN_REFRESHED" && event !== "INITIAL_SESSION")
+        return;
+      if (!session?.refresh_token) return;
+      void syncStoredSession({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+      });
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+
 
   return (
     <QueryClientProvider client={queryClient}>
