@@ -14,6 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { initAnalytics, trackPageView } from "@/lib/analytics";
 import { initLeadJourney } from "@/lib/lead-journey";
+import { supabase } from "@/integrations/supabase/client";
+import { syncStoredSession } from "@/lib/auth/biometric-unlock";
+
 
 
 function NotFoundComponent() {
