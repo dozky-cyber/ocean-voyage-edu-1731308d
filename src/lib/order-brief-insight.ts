@@ -51,7 +51,14 @@ export type BriefInsight = {
   reason: string;
   included: string[];
   consultant: ConsultantOption | null;
-  optional: { name: string; description: string; reason: string }[];
+  optional: {
+    name: string;
+    description: string;
+    reason: string;
+    impact?: string;
+    relation?: string | null;
+  }[];
+
   disclaimer: string;
   nextSteps: string[];
 };
@@ -113,19 +120,23 @@ function complexityLabel(pkg: PackageDefinition) {
 
 function buildReason(brief: OrderBriefData, pkg: PackageDefinition, rationale: string) {
   const business = brief.business?.trim() || "bisnis Anda";
+  // ALASAN PACKAGE: tiga kalimat saja — kebutuhan bisnis, karakter proses, dan
+  // skala pengguna. Project Summary tidak disalin ulang di sini.
   const goal = brief.goal?.trim();
-  const project = brief.project?.trim();
-  const focus = (goal || project || "memperkenalkan bisnis dan memudahkan calon customer terhubung")
-    .replace(/[.!?]+$/, "");
+  const focus = (goal || "merapikan kebutuhan digital bisnis")
+    .replace(/^tujuan\s*:\s*/i, "")
+    .replace(/[.!?]+$/, "")
+    .split(/\.\s+/)[0]!
+    .trim();
+  const scale = brief.usersScale?.trim();
   const parts = [
-    `Berdasarkan kebutuhan ${business}, website difokuskan untuk ${focus}.`,
-    `Rekomendasi solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
-    // KERJAKU PACKAGE DECISION SOP: alasan berbasis kompleksitas bisnis.
-    rationale,
+    `Kebutuhan ${business} difokuskan untuk ${focus}.`,
+    `Solusi ${PACKAGE_LABEL[pkg.key]} dipilih karena ${complexityLabel(pkg)}.`,
+    scale ? `Cakupan pengguna sistem: ${scale}.` : rationale,
   ];
-  return parts.join(" ");
-
+  return parts.join("\n\n");
 }
+
 
 
 
@@ -139,10 +150,14 @@ function buildConsultantOption(
   brief: OrderBriefData,
   base: PackageKey,
   picks: ConsultantPick[],
+  hasPotential = false,
 ): { option: ConsultantOption; ids: string[] } | null {
-  if (!picks.length) return null;
+  // Tanpa Core Solution, blok ini hanya berisi validasi scope — dan hanya
+  // ditampilkan bila ada Potential Feature yang menyusul.
+  if (!picks.length && !hasPotential) return null;
   // CORE / GROWTH SPLIT RULE: bahasa berbeda saat fitur menyelesaikan masalah.
   const hasCore = picks.some((item) => item.role === "core");
+
   // PACKAGE INDEPENDENCE RULE: consultant ideas refine scope; they never
   // increase the package. Package level is decided only by business scale and
   // operational complexity.
@@ -273,7 +288,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     briefFeatureText: brief.features.join(" | "),
     excludeIds: [...coreIds],
     excludeTitles: included,
-    limit: 7,
+    limit: 12,
 
   });
 
@@ -283,29 +298,28 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
   // - Potential Feature = pengembangan setelah masalah utama selesai.
   const corePicks = picks.filter((p) => p.role === "core").slice(0, 4);
   const growthPicks = picks.filter((p) => p.role === "growth");
-  const consultantPicks = corePicks.length ? corePicks : growthPicks.slice(0, 2);
-  const leftover = corePicks.length ? growthPicks.slice(0, 3) : growthPicks.slice(2, 5);
+
+  // POTENTIAL FEATURE QUOTA: maksimal 5 untuk Business System ke atas,
+  // maksimal 3 untuk level di bawahnya. Tidak ada pengisian paksa.
+  const potentialLimit = PACKAGE_RANK[pkg.key] >= 2 ? 5 : 3;
 
   // FEATURE PLACEMENT RULE: consultant recommendation is built first, so its
   // features are never repeated inside Potential Feature Recommendation.
-  const built = buildConsultantOption(brief, pkg.key, consultantPicks);
+  const built = buildConsultantOption(brief, pkg.key, corePicks, growthPicks.length > 0);
   const consultant = built?.option ?? null;
-  let optional = (consultant ? leftover : picks.slice(0, 3)).map((f) => ({
+  const optional = growthPicks.slice(0, potentialLimit).map((f) => ({
     name: f.name,
     description: f.fn,
-    reason: f.benefit,
+    reason: f.reasons[0] ?? f.benefit,
+    impact: f.benefit,
+    relation: f.relatedTo
+      ? f.relation === "enhancement"
+        ? `Memperkuat ${f.relatedTo} pada scope customer.`
+        : `Kelanjutan alur bisnis setelah ${f.relatedTo}.`
+      : null,
   }));
 
-  // POTENTIAL FEATURE LIMIT RULE: a single leftover idea is folded into the
-  // consultant option instead of creating a nearly empty section.
-  if (optional.length === 1 && consultant) {
-    consultant.items.push({
-      title: optional[0]!.name,
-      benefit: optional[0]!.reason,
-      optional: true,
-    });
-    optional = [];
-  }
+
 
 
   return {

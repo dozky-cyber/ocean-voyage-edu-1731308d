@@ -47,6 +47,111 @@ export type ConsultantFeature = {
   simplerAlternativeId?: string;
 };
 
+/**
+ * FEATURE RELATION MAP (Consultant Engine V7).
+ * Hubungan antar fitur ditulis sebagai data, bukan tebakan teks:
+ * - `enhances`     : memperkuat fitur yang sudah dipilih customer.
+ * - `complements`  : lanjutan wajar pada alur bisnis setelah fitur tersebut.
+ * Sebuah Potential Feature hanya boleh muncul jika punya salah satu relasi ini
+ * terhadap Feature List customer. Tanpa relasi = UNRELATED = dibuang.
+ */
+export const FEATURE_RELATIONS: Record<string, { enhances?: string[]; complements?: string[] }> = {
+  notification: { enhances: ["status-tracking", "order-management", "booking"] },
+  "digital-nota": {
+    complements: ["order-management", "status-tracking", "riwayat-transaksi", "booking"],
+  },
+  "customer-history": {
+    complements: ["order-management", "database-customer", "digital-nota", "booking"],
+  },
+  "database-customer": { complements: ["order-management", "booking", "form-konsultasi"] },
+  "form-konsultasi": { complements: ["portfolio", "katalog", "company-profile", "faq"] },
+  testimonial: { enhances: ["portfolio", "company-profile", "katalog"] },
+  "laporan-penjualan": {
+    complements: ["order-management", "digital-nota", "riwayat-transaksi", "status-tracking"],
+  },
+  "riwayat-transaksi": { complements: ["order-management", "digital-nota"] },
+  "schedule-management": { complements: ["order-management", "booking", "status-tracking"] },
+  cms: { enhances: ["portfolio", "katalog", "company-profile"] },
+  search: { enhances: ["katalog"] },
+  whatsapp: { enhances: ["company-profile", "katalog", "portfolio", "faq"] },
+  "social-media": { enhances: ["portfolio", "katalog"] },
+  maps: { complements: ["company-profile", "katalog"] },
+  membership: { complements: ["database-customer", "customer-history"] },
+  automation: { enhances: ["notification", "status-tracking", "order-management"] },
+  "dashboard-admin": { complements: ["order-management", "cms", "katalog", "status-tracking"] },
+  faq: { complements: ["company-profile", "katalog", "portfolio"] },
+  "order-management": { complements: ["katalog", "booking"] },
+  "status-tracking": { enhances: ["order-management"] },
+  booking: { complements: ["katalog", "company-profile"] },
+  "multi-user": { enhances: ["dashboard-admin"] },
+  crm: { complements: ["database-customer"] },
+  "landing-page": { complements: ["company-profile", "katalog"] },
+  portfolio: { complements: ["company-profile"] },
+  katalog: { complements: ["company-profile"] },
+  inventory: { complements: ["katalog", "order-management"] },
+};
+
+export type FeatureRelation = "enhancement" | "complementary";
+
+/** Urutan penulisan Potential Feature: efisiensi → penjualan → visibilitas. */
+export type GrowthCategory = "operational" | "sales" | "visibility";
+
+const GROWTH_CATEGORY: Record<string, GrowthCategory> = {
+  "order-management": "operational",
+  "status-tracking": "operational",
+  "digital-nota": "operational",
+  notification: "operational",
+  "schedule-management": "operational",
+  inventory: "operational",
+  automation: "operational",
+  "riwayat-transaksi": "operational",
+  "multi-user": "operational",
+  "dashboard-admin": "operational",
+  cms: "operational",
+  "laporan-penjualan": "visibility",
+};
+
+export function growthCategoryOf(id: string): GrowthCategory {
+  return GROWTH_CATEGORY[id] ?? "sales";
+}
+
+const CATEGORY_ORDER: Record<GrowthCategory, number> = {
+  operational: 0,
+  sales: 1,
+  visibility: 2,
+};
+
+export function growthCategoryRank(id: string): number {
+  return CATEGORY_ORDER[growthCategoryOf(id)];
+}
+
+/**
+ * Relasi fitur terhadap scope yang sudah dipilih customer.
+ * Mengembalikan null bila tidak berhubungan (UNRELATED).
+ */
+export function relationToScope(
+  featureId: string,
+  coveredIds: Iterable<string>,
+): { relation: FeatureRelation; relatedTo: string } | null {
+  const covered = new Set(coveredIds);
+  const map = FEATURE_RELATIONS[featureId];
+  if (!map) return null;
+  const enhanced = (map.enhances ?? []).find((id) => covered.has(id));
+  if (enhanced) return { relation: "enhancement", relatedTo: enhanced };
+  const complemented = (map.complements ?? []).find((id) => covered.has(id));
+  if (complemented) return { relation: "complementary", relatedTo: complemented };
+  return null;
+}
+
+/**
+ * BUSINESS MATURITY CONTEXT.
+ * - starter     : belum ada proses operasional rutin (fokus citra & informasi).
+ * - growing     : sudah ada order/produksi/transaksi yang perlu dirapikan.
+ * - established : sudah punya team, cabang, atau volume besar.
+ */
+export type BusinessMaturity = "starter" | "growing" | "established";
+
+
 export const CONSULTANT_LIBRARY: ConsultantFeature[] = [
   {
     id: "company-profile",
@@ -644,6 +749,47 @@ function operationPriorityIds(problem: string, context: string): Set<string> {
   return ids;
 }
 
+/**
+ * BUSINESS MATURITY CONTEXT: dipakai sebagai bobot pemilihan Potential Feature,
+ * bukan sebagai penentu package.
+ */
+export function detectBusinessMaturity(input: {
+  context: string;
+  problemText?: string;
+  scaleText?: string;
+}): BusinessMaturity {
+  const full = normalize(`${input.context} ${input.problemText ?? ""} ${input.scaleText ?? ""}`);
+  const established = includesAnyPositive(full, [
+    "cabang",
+    "outlet",
+    "karyawan",
+    "pegawai",
+    "staff",
+    "staf",
+    "divisi",
+    "tim operasional",
+    "banyak user",
+    "multi user",
+    "puluhan",
+    "ratusan order",
+  ]);
+  if (established) return "established";
+  const growing = includesAnyPositive(full, [
+    "order",
+    "pesanan",
+    "transaksi",
+    "produksi",
+    "pengerjaan",
+    "project",
+    "proyek",
+    "pencatatan",
+    "pelanggan",
+    "customer",
+  ]);
+  return growing ? "growing" : "starter";
+}
+
+
 /** Fitur yang hanya masuk akal jika bisnis dikelola lebih dari satu orang. */
 const TEAM_ONLY_FEATURES = new Set(["multi-user", "dashboard-admin", "automation", "crm", "api"]);
 
@@ -680,7 +826,14 @@ export type ConsultantPick = ConsultantFeature & {
   solves: string | null;
   /** Core prasyarat untuk fitur growth (null jika berdiri sendiri). */
   requiresCoreId: string | null;
+  /** RELATIONSHIP RULE: relasi terhadap scope customer (khusus growth). */
+  relation: FeatureRelation | null;
+  /** Fitur pada Feature List / Core yang diperkuat atau dilanjutkan. */
+  relatedTo: string | null;
+  /** Kelompok penulisan pada Potential Feature. */
+  growthCategory: GrowthCategory;
 };
+
 
 /**
  * BUSINESS FEATURE VALIDATION RULE.
@@ -854,6 +1007,18 @@ export function selectConsultantFeatures(input: {
     context: input.context,
   });
 
+  // RELATIONSHIP-BASED RECOMMENDATION (V7): scope yang sudah dimiliki customer
+  // = Feature List + core solution yang memang dibutuhkan brief.
+  const scopeIds = new Set<string>([
+    ...consultantCoveredFeatureIds(input.briefFeatureText ?? ""),
+    ...plan.core.keys(),
+  ]);
+  const maturity = detectBusinessMaturity({
+    context: input.context,
+    problemText: input.problemText,
+    scaleText: input.scaleText,
+  });
+
   const picks: ConsultantPick[] = [];
   for (const feature of CONSULTANT_LIBRARY) {
     if (excluded.has(feature.id)) continue;
@@ -875,16 +1040,21 @@ export function selectConsultantFeatures(input: {
     const asked = includesAnyPositive(context, [feature.name, ...feature.aliases]);
     if (feature.onRequestOnly && !asked) continue;
 
-    // ATURAN KHUSUS — hard block, berlaku juga untuk core.
-    // INVENTORY: hanya bila stok memang masalah/tujuan customer.
+    // RELATION: enhancement / complementary terhadap scope customer.
+    const rel = isCore ? null : relationToScope(feature.id, scopeIds);
+
+    // ATURAN KHUSUS — hard block untuk Core.
+    // INVENTORY: hanya bila stok memang masalah/tujuan customer (Core maupun
+    // Potential — tidak dilonggarkan).
     if (feature.id === "inventory" && !stockProblem && !asked) continue;
-    // DIGITAL NOTA: transaksi/order saja bukan alasan. Harus ada masalah bukti
-    // transaksi, nota, tagihan, atau pembayaran manual yang disebut customer.
-    if (feature.id === "digital-nota" && !receiptProblem && !asked) continue;
+    // DIGITAL NOTA: sebagai Core butuh masalah nota/pembayaran. Sebagai
+    // Potential boleh muncul bila melanjutkan pencatatan order/project.
+    if (feature.id === "digital-nota" && !receiptProblem && !asked && (isCore || !rel)) continue;
     // MULTI USER: bukan karena ada karyawan, tapi karena butuh hak akses beda.
     if (feature.id === "multi-user" && !accessProblem) continue;
-    // AUTOMATION: selalu potential kecuali customer memintanya.
+    // AUTOMATION FILTER: tetap dipertahankan — hanya bila customer memintanya.
     if (feature.id === "automation" && !automationAsked) continue;
+
     // CRM: hanya untuk kebutuhan pengelolaan customer yang kompleks.
     if (feature.id === "crm" && !crmComplex) continue;
 
@@ -912,12 +1082,18 @@ export function selectConsultantFeatures(input: {
       // Fitur kondisional (mis. Inventory/Search) butuh sinyal kebutuhan nyata.
       if (conditional.has(feature.id) && !asked && !hasSignal) continue;
 
+      // RELATIONSHIP RULE: tanpa relasi terhadap scope customer, kandidat
+      // dianggap UNRELATED dan dibuang — library tidak boleh tumpah.
+      if (!rel && !asked && !plan.growth.has(feature.id)) continue;
+
       // Tanpa kecocokan bisnis maupun sinyal kebutuhan: bukan konsultasi, skip.
-      if (!fitsBusiness && !hasSignal && !priority.has(feature.id) && !plan.growth.has(feature.id))
-        continue;
-      // Bila masalah customer sudah punya core solution, potential feature
-      // dibatasi pada pengembangan lanjutan yang relevan dengan alur bisnis.
-      if (plan.core.size && !plan.growth.has(feature.id) && !priority.has(feature.id) && !asked)
+      if (
+        !fitsBusiness &&
+        !hasSignal &&
+        !priority.has(feature.id) &&
+        !plan.growth.has(feature.id) &&
+        !rel
+      )
         continue;
       if (TIER_RANK[feature.tier] > maxRank && !hasSignal) continue;
     }
@@ -932,21 +1108,50 @@ export function selectConsultantFeatures(input: {
     const onFlow = priority.has(feature.id);
     // A business-flow pattern only affects ranking. It must never bypass the
     // four-question validation or turn the library into a feature generator.
-    if (!validation.valid && !isCore) continue;
+    if (!validation.valid && !isCore && !rel) continue;
+
+    const relatedName = rel ? (consultantFeature(rel.relatedTo)?.name ?? null) : null;
+    const relationReason = rel
+      ? rel.relation === "enhancement"
+        ? `Memperkuat ${relatedName} yang sudah menjadi kebutuhan customer.`
+        : `Melanjutkan alur bisnis setelah ${relatedName}.`
+      : null;
 
     const reasons = isCore
       ? [`Menyelesaikan masalah customer: ${solvesStated}.`, ...validation.reasons]
-      : onFlow
-        ? [
-            pattern
-              ? `Memperbaiki alur bisnis ${pattern.name}.`
-              : "Memperbaiki proses operasional utama pada brief.",
-            ...validation.reasons,
-          ]
-        : validation.reasons;
+      : [
+          ...(relationReason ? [relationReason] : []),
+          ...(onFlow
+            ? [
+                pattern
+                  ? `Memperbaiki alur bisnis ${pattern.name}.`
+                  : "Memperbaiki proses operasional utama pada brief.",
+              ]
+            : []),
+          ...validation.reasons,
+        ];
+
+    // RELATIONSHIP SCORING: enhancement lebih dekat dengan scope customer
+    // dibanding complementary, sehingga selalu diprioritaskan.
+    const relationScore = rel ? (rel.relation === "enhancement" ? 5 : 4) : 0;
+    // BUSINESS MATURITY CONTEXT: bobot tier menyesuaikan kedewasaan bisnis.
+    const maturityScore =
+      maturity === "starter"
+        ? TIER_RANK[feature.tier] <= 1
+          ? 2
+          : -1
+        : maturity === "growing"
+          ? TIER_RANK[feature.tier] >= 1 && TIER_RANK[feature.tier] <= 2
+            ? 2
+            : 0
+          : TIER_RANK[feature.tier] >= 2
+            ? 2
+            : 0;
 
     const score =
       (isCore ? 12 : 0) +
+      relationScore +
+      maturityScore +
       (fitsBusiness ? 2 : 0) +
       (hasSignal ? 2 : 0) +
       (onFlow ? 3 : 0) +
@@ -961,11 +1166,19 @@ export function selectConsultantFeatures(input: {
       role: isCore ? "core" : "growth",
       solves: solvesStated ?? null,
       requiresCoreId: isCore ? null : (plan.growth.get(feature.id) ?? null),
+      relation: rel?.relation ?? null,
+      relatedTo: relatedName,
+      growthCategory: growthCategoryOf(feature.id),
     });
   }
 
 
-  picks.sort((a, b) => b.score - a.score || TIER_RANK[a.tier] - TIER_RANK[b.tier]);
+  picks.sort(
+    (a, b) =>
+      b.score - a.score ||
+      growthCategoryRank(a.id) - growthCategoryRank(b.id) ||
+      TIER_RANK[a.tier] - TIER_RANK[b.tier],
+  );
 
   // Growth yang merupakan lanjutan dari core yang tidak terpilih ikut gugur.
   const coreIds = new Set([
@@ -975,9 +1188,10 @@ export function selectConsultantFeatures(input: {
     ...consultantCoveredFeatureIds(input.briefFeatureText ?? ""),
   ]);
   const filtered = picks.filter(
-    (p) => p.role === "core" || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
+    (p) => p.role === "core" || p.relation || !p.requiresCoreId || coreIds.has(p.requiresCoreId),
   );
 
   return filtered.slice(0, input.limit ?? 6);
 }
+
 

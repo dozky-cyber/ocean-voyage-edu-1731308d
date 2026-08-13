@@ -335,18 +335,20 @@ function consultantRecommendation(doc: Doc, insight: BriefInsight) {
       d.y -= 4;
     });
     d.y -= 6;
-    // CORE / GROWTH SPLIT RULE: judul menyesuaikan isi section.
-    d.text(
-      hasCore ? "CORE SOLUTION (MENYELESAIKAN MASALAH UTAMA)" : "MANFAAT OPSI PENGEMBANGAN",
-      MARGIN,
-      d.y,
-      7.5,
-      false,
-      MUTED,
-    );
-    d.y -= 16;
+    // Tanpa Core Solution, blok ini hanya validasi scope — tanpa daftar fitur.
+    if (first) {
+      d.text(
+        hasCore ? "CORE SOLUTION (MENYELESAIKAN MASALAH UTAMA)" : "MANFAAT OPSI PENGEMBANGAN",
+        MARGIN,
+        d.y,
+        7.5,
+        false,
+        MUTED,
+      );
+      d.y -= 16;
+      consultantItem(d, first, 0);
+    }
 
-    if (first) consultantItem(d, first, 0);
   });
 
   consultant.items.slice(1).forEach((item, index) => {
@@ -445,7 +447,13 @@ function potentialFeatures(doc: Doc, insight: BriefInsight) {
 
 function optionalItem(
   doc: Doc,
-  item: { name: string; description: string; reason: string },
+  item: {
+    name: string;
+    description: string;
+    reason: string;
+    impact?: string;
+    relation?: string | null;
+  },
   divider: boolean,
 ) {
   doc.text("*", MARGIN, doc.y, 11, true, BRAND);
@@ -459,11 +467,24 @@ function optionalItem(
   doc.y -= 12;
   doc.paragraph(item.reason, MARGIN + 14, 10, false, CONTENT_W - 14);
   doc.y -= 6;
+  if (item.impact) {
+    doc.text("DAMPAK BISNIS", MARGIN + 14, doc.y, 7, false, MUTED);
+    doc.y -= 12;
+    doc.paragraph(item.impact, MARGIN + 14, 10, false, CONTENT_W - 14);
+    doc.y -= 6;
+  }
+  if (item.relation) {
+    doc.text("KAITAN DENGAN ALUR BISNIS", MARGIN + 14, doc.y, 7, false, MUTED);
+    doc.y -= 12;
+    doc.paragraph(item.relation, MARGIN + 14, 10, false, CONTENT_W - 14);
+    doc.y -= 6;
+  }
   if (divider) {
     doc.line(MARGIN, doc.y + 4, PAGE_W - MARGIN, doc.y + 4);
     doc.y -= 12;
   }
 }
+
 
 function nextSteps(doc: Doc, insight: BriefInsight) {
   doc.keep((d) => {
