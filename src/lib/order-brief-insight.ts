@@ -318,7 +318,7 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
 
   return {
     packageName: PACKAGE_LABEL[pkg.key],
-    reason: buildReason(brief, pkg, allowEnterprise),
+    reason: buildReason(brief, pkg, decision.rationale),
     included,
     consultant,
     optional,
