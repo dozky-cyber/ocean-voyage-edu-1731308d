@@ -282,7 +282,7 @@ export const INDUSTRY_CONTEXTS: IndustryContext[] = [
   {
     id: "kuliner",
     name: "Kuliner, Restoran & Catering",
-    aka: "bisnis kuliner",
+    aka: "kuliner dan catering",
     model: "product-sales",
     match: ["resto", "restoran", "rumah makan", "cafe", "kafe", "coffee", "catering", "kuliner", "kedai", "warung makan"],
     jobTerm: "pesanan",
@@ -346,7 +346,7 @@ export const INDUSTRY_CONTEXTS: IndustryContext[] = [
   {
     id: "properti",
     name: "Properti, Kos & Sewa",
-    aka: "bisnis properti",
+    aka: "properti dan sewa",
     model: "rental",
     match: ["properti", "kos", "kontrakan", "sewa", "rental", "villa", "homestay", "apartemen"],
     jobTerm: "penyewaan",
@@ -541,8 +541,8 @@ const NARRATIVES: Record<string, Narrative> = {
   },
   "riwayat-transaksi": {
     situation: (c) => `nilai tiap ${c.jobTerm} berbeda-beda dan tercatat terpisah`,
-    solution: () =>
-      `Riwayat transaksi membuat owner bisa menelusuri kembali pekerjaan dan pembayaran kapan pun dibutuhkan`,
+    solution: (c) =>
+      `Riwayat ${c.jobTerm} yang tersimpan membuat owner bisa menelusuri kembali pekerjaan dan pembayaran kapan pun dibutuhkan`,
   },
   "laporan-penjualan": {
     situation: (c) => `owner perlu tahu berapa ${c.jobTerm} yang masuk dan selesai setiap bulan`,
@@ -659,6 +659,8 @@ export function describeFeatureForIndustry(input: {
   ctx: IndustryContext | null;
   stage: BusinessStage;
   relation?: "enhancement" | "complementary" | null;
+  /** BUSINESS STAGE AWARENESS: kalimat tahap bisnis hanya untuk item pertama. */
+  withStageNote?: boolean;
   relatedTo?: string | null;
 }): IndustryVoice | null {
   const { ctx } = input;
@@ -672,8 +674,11 @@ export function describeFeatureForIndustry(input: {
     ? narrative.solution(ctx)
     : `${input.featureName} membantu bagian tersebut agar tidak lagi dikerjakan manual`;
 
-  const reason = `Pada bisnis ${ctx.aka} seperti ${business}, ${situation}. ${solution}.`;
-  const impact = `${input.benefit} ${STAGE_NOTE[input.stage]}`;
+  const akaPhrase = /^(bisnis|usaha) /i.test(ctx.aka) ? ctx.aka : `bisnis ${ctx.aka}`;
+  const reason = `Pada ${akaPhrase} seperti ${business}, ${situation}. ${solution}.`;
+  const impact = input.withStageNote
+    ? `${input.benefit} ${STAGE_NOTE[input.stage]}`
+    : input.benefit;
 
   let relation: string | null = null;
   if (input.relatedTo) {
