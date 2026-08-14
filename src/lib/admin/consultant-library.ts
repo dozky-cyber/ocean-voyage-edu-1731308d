@@ -773,6 +773,15 @@ export function detectBusinessMaturity(input: {
     "puluhan",
     "ratusan order",
   ]);
+  // Skala kecil (mis. "owner + 2 karyawan") tidak boleh dianggap mapan hanya
+  // karena kata "karyawan" muncul. Tanpa cabang/divisi dan dengan jumlah
+  // pengguna kecil, bisnis tetap dibaca sebagai tahap berkembang.
+  const scaleNumbers = normalize(input.scaleText ?? "").match(/\d+/g);
+  const peopleCount = scaleNumbers ? Math.max(...scaleNumbers.map(Number)) : 0;
+  const structural = includesAnyPositive(full, ["cabang", "outlet", "divisi", "puluhan", "ratusan order"]);
+  if (established && !structural && peopleCount > 0 && peopleCount < 10) {
+    return "growing";
+  }
   if (established) return "established";
   const growing = includesAnyPositive(full, [
     "order",
