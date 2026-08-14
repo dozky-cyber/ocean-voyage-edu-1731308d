@@ -39,7 +39,7 @@ const PATTERNS: Pattern[] = [
       `Pertanyaan yang sama datang berulang setiap hari dan harus dijawab satu per satu, sehingga waktu ${t.customer} menunggu jawaban jadi lebih lama.`,
   },
   {
-    match: /(progress|status|update|perkembangan|sampai mana|sudah sampai)/i,
+    match: /(progress|status|update|perkembangan|sampai mana|sudah sampai|selesai belum|sudah jadi|nanya|nanyain|bertanya)/i,
     text: (t) =>
       `${cap(t.customer)} sering menanyakan perkembangan pekerjaan karena belum ada informasi status ${t.job} yang bisa dilihat sendiri.`,
   },
@@ -117,13 +117,10 @@ export function conditionSentence(
 
 /** Label solusi yang mudah dipahami customer (tetap merujuk fitur yang sama). */
 const SOLUTION_LABELS: { match: RegExp; label: string }[] = [
-  { match: /(portfolio|portofolio|galeri)/i, label: "Galeri / Portfolio Hasil Pekerjaan" },
-  { match: /\bfaq\b/i, label: "FAQ / Informasi Customer" },
-  { match: /(nota|invoice)/i, label: "Invoice / Nota Digital" },
-  { match: /(status|tracking)/i, label: "Status Tracking Progress Pekerjaan" },
-  { match: /(notifikasi|notification)/i, label: "Notifikasi Progress Otomatis" },
-  { match: /(booking|reservasi)/i, label: "Booking Jadwal Online" },
-  { match: /(katalog|produk online)/i, label: "Katalog Produk Online" },
+  { match: /^(website\s+)?(portfolio|portofolio|galeri)\b/i, label: "Galeri / Portfolio Hasil Pekerjaan" },
+  { match: /^faq\b/i, label: "FAQ / Informasi Customer" },
+  { match: /^(nota|invoice)( digital)?$/i, label: "Invoice / Nota Digital" },
+  { match: /^(status|status tracking|tracking)( pengerjaan| project| order)?$/i, label: "Status Tracking Progress Pekerjaan" },
 ];
 
 export function solutionLabel(name: string): string {
