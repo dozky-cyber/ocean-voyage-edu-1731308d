@@ -18,7 +18,11 @@ import {
   wrap,
 } from "./order-brief-pdf";
 import { buildPaymentTermsLines, buildTimelineBlock } from "./admin/proposal-logic";
-import { proposalFileName, type ProposalDocData } from "./proposal-doc";
+import {
+  proposalFileName,
+  type ProposalDocData,
+  type ProposalEnhancementItem,
+} from "./proposal-doc";
 
 function money(amount: number, currency: string) {
   const value = Math.round(Number(amount) || 0).toLocaleString("id-ID");
@@ -178,7 +182,7 @@ function subtotalLine(doc: Doc, label: string, value: number, currency: string) 
   doc.y -= 22;
 }
 
-function enhancementItem(doc: Doc, item: ProposalDocData["enhancements"][number], currency: string) {
+function enhancementItem(doc: Doc, item: ProposalEnhancementItem, currency: string) {
   const amount = money(item.amount, currency);
   doc.text("*", MARGIN, doc.y, 11, true, BRAND);
   doc.text(item.name || "-", MARGIN + 14, doc.y, 10.5, true, INK);
@@ -244,12 +248,11 @@ function coreSolutionSection(doc: Doc, data: ProposalDocData) {
     doc.keep((d) => {
       const lines = feature.description ? wrap(feature.description, 9, false, CONTENT_W - 26) : [];
       d.text("-", MARGIN + 4, d.y, 10, true, BRAND);
-      wrap(feature.name || "-", 10, true, CONTENT_W - 26).forEach((row, i) => {
+      wrap(feature.name || "-", 10, true, CONTENT_W - 26).forEach((row) => {
         d.text(row, MARGIN + 18, d.y, 10, true);
-        if (i < 1) return;
         d.y -= 13;
       });
-      d.y -= 14;
+      d.y -= 1;
       lines.forEach((line) => {
         d.text(line, MARGIN + 18, d.y, 9, false, MUTED);
         d.y -= 12;
