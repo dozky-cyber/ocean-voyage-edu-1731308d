@@ -423,7 +423,10 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
 
   const isMapping = (heading: string) =>
     heading.trim().toLowerCase() === "problem & solution mapping";
-  const isBudget = (heading: string) => heading.trim().toLowerCase() === "budget alignment";
+  const isBudget = (heading: string) =>
+    ["budget alignment", "rekomendasi implementasi bertahap"].includes(
+      heading.trim().toLowerCase(),
+    );
   const hasCoreFeatures = Boolean(data.coreFeatures?.length);
   const isCoreHeading = (heading: string) => heading.trim().toLowerCase() === "core solution";
   const isNextSteps = (heading: string) => heading.trim().toLowerCase() === "next steps";
@@ -438,12 +441,18 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
 
   for (const section of mainSections) {
     if (!section.heading && !section.body) continue;
-    // Mapping problem-solution tidak boleh pecah antar halaman.
+    // Mapping naratif: setiap pasangan Kondisi/Solusi dijaga utuh satu halaman.
     if (isMapping(section.heading)) {
+      const body = section.body || "-";
+      const chunks = body.split(/\n\s*\n(?=Kondisi:)/);
+      const intro = chunks.shift() ?? "";
       doc.keep((d) => {
         sectionTitle(d, section.heading);
-        bodyBlock(d, section.body || "-");
+        bodyBlock(d, intro);
       });
+      for (const chunk of chunks) {
+        doc.keep((d) => bodyBlock(d, chunk));
+      }
       continue;
     }
     sectionTitle(doc, section.heading || "Bagian");
@@ -455,11 +464,15 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
   timelineSection(doc, data);
   pricingTable(doc, data);
   if (budget?.body) {
-    doc.keep((d) => {
-      sectionTitle(d, budget.heading || "Budget Alignment");
-      bodyBlock(d, budget.body);
-    });
+    sectionTitle(doc, budget.heading || "Rekomendasi Implementasi Bertahap");
+    const parts = budget.body.split(/\n\s*\n(?=Tahap )/);
+    const intro = parts.shift() ?? "";
+    if (intro.trim()) bodyBlock(doc, intro);
+    for (const part of parts) {
+      doc.keep((d) => bodyBlock(d, part));
+    }
   }
+
   paymentTerms(doc, data);
 
   for (const section of closing) {
