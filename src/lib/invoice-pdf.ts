@@ -301,6 +301,43 @@ function paymentTerms(doc: Doc, data: InvoiceDocData) {
   doc.y = totalTop - 22;
 }
 
+/** Kartu rekening resmi KERJAKU — digambar vektor (engine PDF tanpa gambar). */
+function bankAccountCard(doc: Doc) {
+  doc.keep((d) => {
+    const h = 86;
+    d.ensure(h + 12);
+    const top = d.y - h;
+    d.rect(MARGIN, top, CONTENT_W, h, "0.96 0.97 0.98");
+    d.rect(MARGIN, top, 3, h, BRAND);
+
+    // Logo mark BCA
+    const badgeW = 74;
+    const badgeH = 28;
+    const badgeX = MARGIN + 18;
+    const badgeY = top + h - 18 - badgeH;
+    d.rect(badgeX, badgeY, badgeW, badgeH, "0 0.376 0.686");
+    const mark = "BCA";
+    d.text(
+      mark,
+      badgeX + (badgeW - textWidth(mark, 16, true)) / 2,
+      badgeY + 9,
+      16,
+      true,
+      "1 1 1",
+    );
+    d.text(KERJAKU_BANK.name, badgeX + badgeW + 12, badgeY + 9, 10, true, INK);
+
+    const infoY = badgeY - 16;
+    const colW = (CONTENT_W - 36) / 2;
+    d.text("NO. REKENING", MARGIN + 18, infoY, 7, false, MUTED);
+    d.text(KERJAKU_BANK.account, MARGIN + 18, infoY - 16, 13, true, INK);
+    d.text("ATAS NAMA", MARGIN + 18 + colW, infoY, 7, false, MUTED);
+    d.text(KERJAKU_BANK.holder, MARGIN + 18 + colW, infoY - 15, 10.5, true, INK);
+
+    d.y = top - 20;
+  });
+}
+
 function paymentInfo(doc: Doc, data: InvoiceDocData) {
   sectionTitle(doc, "Metode Pembayaran & Catatan");
 
@@ -319,6 +356,9 @@ function paymentInfo(doc: Doc, data: InvoiceDocData) {
     doc.paragraph(data.paymentLink, MARGIN, 9, false, CONTENT_W, BRAND, 12);
     doc.y -= 6;
   }
+
+  bankAccountCard(doc);
+
 
   if (data.notes) {
     doc.ensure(24);
