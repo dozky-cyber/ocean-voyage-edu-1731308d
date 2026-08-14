@@ -181,7 +181,43 @@ function investment(doc: Doc, data: InvoiceDocData) {
   doc.text(label, MARGIN + 14, boxTop + 11, 9, true, MUTED);
   doc.text(value, PAGE_W - MARGIN - 14 - textWidth(value, 12, true), boxTop + 9, 12, true, BRAND);
   doc.y = boxTop - 22;
+
+  estimatesBlock(doc, data);
 }
+
+/** Mirror proposal: pengembangan opsional tampil informatif, di luar total. */
+function estimatesBlock(doc: Doc, data: InvoiceDocData) {
+  if (!data.estimates.length) return;
+  groupHeader(doc, "Pengembangan Opsional (Belum Termasuk Total)");
+  let sum = 0;
+  for (const row of data.estimates) {
+    sum += row.amount;
+    doc.ensure(34);
+    const amount = invoiceMoney(row.amount, data.currency);
+    doc.text(row.name, MARGIN, doc.y, 10, true);
+    doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false);
+    doc.y -= 13;
+    if (row.note) {
+      doc.text(row.note, MARGIN, doc.y, 8.5, false, MUTED);
+      doc.y -= 12;
+    }
+    doc.y -= 4;
+    doc.line(MARGIN, doc.y, PAGE_W - MARGIN, doc.y, "0.92 0.94 0.96");
+    doc.y -= 12;
+  }
+  subtotalLine(doc, "Estimasi Pengembangan Opsional", sum, data.currency);
+  doc.paragraph(
+    "Item pengembangan opsional hanya masuk tagihan setelah Anda menyetujuinya dan dikonfirmasi ulang oleh tim KERJAKU.",
+    MARGIN,
+    8.5,
+    false,
+    CONTENT_W,
+    MUTED,
+    12,
+  );
+  doc.y -= 10;
+}
+
 
 function paymentTerms(doc: Doc, data: InvoiceDocData) {
   sectionTitle(doc, "Payment Terms");
