@@ -68,10 +68,14 @@ function clientCard(doc: Doc, data: ProposalDocData) {
   doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
   doc.rect(MARGIN, top, 3, h, BRAND);
   doc.text("CLIENT INFORMATION", MARGIN + 16, top + h - 20, 8, true, MUTED);
+  const wa = (data.whatsapp ?? "").trim();
+  const mail = (data.email ?? "").trim();
+  const contactLabel = wa && mail ? "WhatsApp / Email" : wa ? "WhatsApp" : mail ? "Email" : "Kontak Lain";
+  const contactValue = [wa, mail].filter(Boolean).join("  |  ") || "-";
   const cols: [string, string][] = [
     ["Client", data.clientName || "-"],
     ["Kontak", data.contactName || "-"],
-    ["WhatsApp / Email", data.whatsapp || data.email || "-"],
+    [contactLabel, contactValue],
   ];
   const colW = (CONTENT_W - 32) / 3;
   cols.forEach(([label, value], index) => {
@@ -257,7 +261,16 @@ function coreSolutionSection(doc: Doc, data: ProposalDocData) {
         d.text(line, MARGIN + 18, d.y, 9, false, MUTED);
         d.y -= 12;
       });
-      d.y -= 4;
+      if (feature.solves) {
+        d.y -= 2;
+        d.text("MENJAWAB MASALAH", MARGIN + 18, d.y, 7, false, MUTED);
+        d.y -= 12;
+        wrap(feature.solves, 9, false, CONTENT_W - 26).forEach((line) => {
+          d.text(line, MARGIN + 18, d.y, 9, false, INK);
+          d.y -= 12;
+        });
+      }
+      d.y -= 6;
     });
   }
   doc.y -= 6;
@@ -270,8 +283,14 @@ function timelineSection(doc: Doc, data: ProposalDocData) {
     createdAt: data.createdAt,
   });
   if (!block) return;
-  sectionTitle(doc, block.heading);
-  bodyBlock(doc, block.lines.join("\n"));
+  const stagesAt = block.lines.findIndex((line) => line.startsWith("Tahapan pengerjaan"));
+  const head = stagesAt >= 0 ? block.lines.slice(0, stagesAt) : block.lines;
+  const rest = stagesAt >= 0 ? block.lines.slice(stagesAt) : [];
+  doc.keep((d) => {
+    sectionTitle(d, block.heading);
+    if (head.length) bodyBlock(d, head.join("\n"));
+  });
+  if (rest.length) doc.keep((d) => bodyBlock(d, rest.join("\n")));
 }
 
 function pricingTable(doc: Doc, data: ProposalDocData) {
@@ -354,16 +373,31 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
   clientCard(doc, data);
   summaryBox(doc, data);
 
+  const isMapping = (heading: string) =>
+    heading.trim().toLowerCase() === "problem & solution mapping";
+  const isBudget = (heading: string) => heading.trim().toLowerCase() === "budget alignment";
   const hasCoreFeatures = Boolean(data.coreFeatures?.length);
   const isCoreHeading = (heading: string) => heading.trim().toLowerCase() === "core solution";
   const isNextSteps = (heading: string) => heading.trim().toLowerCase() === "next steps";
   const mainSections = data.sections.filter(
-    (s) => !(hasCoreFeatures && isCoreHeading(s.heading)) && !isNextSteps(s.heading),
+    (s) =>
+      !(hasCoreFeatures && isCoreHeading(s.heading)) &&
+      !isNextSteps(s.heading) &&
+      !isBudget(s.heading),
   );
   const closing = data.sections.filter((s) => isNextSteps(s.heading));
+  const budget = data.sections.find((s) => isBudget(s.heading));
 
   for (const section of mainSections) {
     if (!section.heading && !section.body) continue;
+    // Mapping problem-solution tidak boleh pecah antar halaman.
+    if (isMapping(section.heading)) {
+      doc.keep((d) => {
+        sectionTitle(d, section.heading);
+        bodyBlock(d, section.body || "-");
+      });
+      continue;
+    }
     sectionTitle(doc, section.heading || "Bagian");
     bodyBlock(doc, section.body || "-");
   }
@@ -372,6 +406,12 @@ export function buildProposalPdf(data: ProposalDocData): Uint8Array {
   coreSolutionSection(doc, data);
   timelineSection(doc, data);
   pricingTable(doc, data);
+  if (budget?.body) {
+    doc.keep((d) => {
+      sectionTitle(d, budget.heading || "Budget Alignment");
+      bodyBlock(d, budget.body);
+    });
+  }
   paymentTerms(doc, data);
 
   for (const section of closing) {

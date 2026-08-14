@@ -17,7 +17,7 @@ export type ProposalEnhancementItem = {
   phase?: 1 | 2 | null;
 };
 
-export type ProposalCoreFeature = { name: string; description: string };
+export type ProposalCoreFeature = { name: string; description: string; solves?: string | null };
 
 export type ProposalDocData = {
   title: string;
