@@ -101,7 +101,11 @@ export function coreFeaturesFromBrief(
         ctx: industry,
         stage,
       });
-      description = voice?.impact?.trim() || consultant.fn;
+      // CLOSING QUALITY: deskripsi menjual hasil bisnis dengan bahasa industri
+      // customer (alur kerja nyata), bukan kalimat fitur generik.
+      const flow = voice?.reason?.trim() ?? "";
+      const outcome = voice?.impact?.trim() || consultant.benefit || consultant.fn;
+      description = flow ? `${outcome} ${flow}`.replace(/\s+/g, " ").trim() : outcome;
     } else if (master) {
       description = master.description;
     } else {
