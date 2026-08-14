@@ -294,70 +294,73 @@ function dedupeNames(names: string[]): string[] {
   return kept;
 }
 
-/** Budget Alignment — bahasa konsultatif, bukan penawaran ulang. */
+/**
+ * REKOMENDASI IMPLEMENTASI BERTAHAP — alasan utamanya hasil analisa kebutuhan
+ * bisnis, bukan angka budget. Angka budget hanya disebut sebagai konteks.
+ */
 export function budgetAlignmentFromBrief(
   brief: OrderBriefData,
   insight: BriefInsight,
   basePrice?: number,
 ): string {
-  const budget = brief.budget?.trim();
-  const lines = [
-    `Prioritas pertama adalah scope utama (${insight.packageName}) agar sistem bisa langsung dipakai pada operasional harian.`,
-  ];
-  if (budget) {
-    lines.push(`Range budget yang Anda sampaikan pada sesi konsultasi: ${budget}.`);
-    const ceiling = budgetCeiling(budget);
-    if (ceiling && basePrice && basePrice > ceiling * 1.05) {
-      lines.push(
-        "Angka pada halaman Investment berada di atas range tersebut karena mencakup seluruh kebutuhan yang Anda sampaikan. Bila ingin tetap berada di dalam range, pengerjaan dapat dibagi bertahap: kebutuhan paling mendesak dikerjakan lebih dulu, sisanya menyusul tanpa membangun ulang sistem.",
-      );
-    } else {
-      lines.push(
-        "Angka pada halaman Investment sudah menyesuaikan range tersebut. Bila ada penyesuaian, yang diatur adalah urutan pengerjaan, bukan memangkas kebutuhan inti.",
-      );
-    }
-  }
-  lines.push(
-    insight.optional.length
-      ? "Rekomendasi pengembangan tidak harus diambil sekaligus. Tahap 1 dapat menyusul setelah sistem utama berjalan, dan Tahap 2 dikerjakan ketika kebutuhannya sudah terlihat dari pemakaian sehari-hari."
-      : "Pengembangan lanjutan dapat ditambahkan bertahap setelah sistem utama berjalan.",
+  void basePrice;
+  const industry = detectIndustryContext(
+    [brief.business, brief.project].filter(Boolean).join(" "),
+    normalize(
+      [brief.business, brief.project, brief.goal, ...brief.features, ...brief.problems]
+        .filter(Boolean)
+        .join(" | "),
+    ),
   );
+  const job = industry?.jobTerm || "pekerjaan";
+  const customer = industry?.customerTerm || "customer";
+  const business = brief.business?.trim() || "bisnis Anda";
 
-  const body = [lines.join(" ")];
+  const early = dedupeNames(insight.included).slice(0, 4);
+  const later = dedupeNames([
+    ...dedupeNames(insight.included).slice(4),
+    ...insight.optional.map((item) => item.name),
+  ]).slice(0, 5);
 
-  // CLOSING: kalau budget customer jauh di bawah angka proposal, jangan hanya
-  // menampilkan total — tunjukkan bahwa solusi bisa dibangun bertahap.
-  const ceiling = budgetCeiling(budget);
-  const gap = Boolean(ceiling && basePrice && basePrice > ceiling * 1.05);
-  if (gap) {
-    const early = insight.included.slice(0, 4);
-    const later = dedupeNames([
-      ...insight.included.slice(4),
-      ...insight.optional.map((item) => item.name),
-    ]).slice(0, 5);
-    body.push("", "REKOMENDASI IMPLEMENTASI BERTAHAP");
-    if (early.length) {
-      body.push(
-        "",
-        "Tahap Awal — fitur paling penting untuk menyelesaikan masalah utama:",
-        ...early.map((name) => `- ${name}`),
-      );
-    }
-    if (later.length) {
-      body.push(
-        "",
-        "Tahap Pengembangan — ditambahkan setelah sistem berjalan:",
-        ...later.map((name) => `- ${name}`),
-      );
-    }
+  const body: string[] = [
+    "Berdasarkan hasil analisa kebutuhan bisnis, KERJAKU menyarankan implementasi dilakukan secara bertahap agar sistem dapat dibangun sesuai prioritas utama dan kebutuhan operasional.",
+  ];
+
+  if (early.length) {
     body.push(
       "",
-      "Pembagian tahap ini membuat sistem tetap bisa dipakai lebih cepat tanpa membangun ulang saat fitur berikutnya ditambahkan.",
+      "Tahap Awal",
+      "Fokus pada fitur yang menjadi kebutuhan utama bisnis:",
+      ...early.map((name) => `- ${solutionLabel(name)}`),
+      "",
+      "Tujuan:",
+      `Membangun pondasi digital agar ${customer} lebih mudah mengenal ${business} dan owner dapat mengelola informasi ${job} dengan lebih rapi.`,
+    );
+  }
+
+  if (later.length) {
+    body.push(
+      "",
+      "Tahap Pengembangan",
+      "Setelah sistem utama berjalan, beberapa pengembangan dapat dilanjutkan:",
+      ...later.map((name) => `- ${solutionLabel(name)}`),
+      "",
+      "Tujuan:",
+      `Meningkatkan pengalaman ${customer} dan efisiensi pengelolaan ${job} sehari-hari.`,
+    );
+  }
+
+  const budget = brief.budget?.trim();
+  if (budget) {
+    body.push(
+      "",
+      `Sebagai konteks, range budget yang Anda sampaikan pada sesi konsultasi: ${budget}. Angka pada halaman Investment mengikuti kebutuhan yang tercatat pada Final Order Brief; bila perlu disesuaikan, yang diatur adalah urutan pengerjaan, bukan memangkas kebutuhan inti.`,
     );
   }
 
   return body.join("\n");
 }
+
 
 /**
  * Section teks proposal. Core Solution, Feature Recommendation, Timeline,
