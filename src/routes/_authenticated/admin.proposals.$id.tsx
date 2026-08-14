@@ -156,6 +156,7 @@ function ProposalDetailPage() {
           content: sections,
           pricing_items: pricing.map((p) => ({ ...p, amount: Number(p.amount) || 0 })),
           enhancements: enhancements.map((e) => ({
+            ...e,
             name: e.name,
             benefit: e.benefit,
             amount: Number(e.amount) || 0,

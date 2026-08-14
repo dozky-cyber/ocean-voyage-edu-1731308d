@@ -9,6 +9,12 @@ export type ProposalEnhancementItem = {
   benefit: string;
   amount: number;
   recommended?: boolean;
+  /** Mirror Order Brief — alasan relevansi, dampak, dan kaitan alur bisnis. */
+  reason?: string | null;
+  impact?: string | null;
+  relation?: string | null;
+  priority?: number | null;
+  phase?: 1 | 2 | null;
 };
 
 export type ProposalCoreFeature = { name: string; description: string };
