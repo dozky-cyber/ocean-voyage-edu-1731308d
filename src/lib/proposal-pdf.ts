@@ -19,6 +19,8 @@ import {
 } from "./order-brief-pdf";
 import { buildPaymentTermsLines, buildTimelineBlock } from "./admin/proposal-logic";
 import {
+  customerEmail,
+  customerWhatsapp,
   proposalFileName,
   type ProposalDocData,
   type ProposalEnhancementItem,
@@ -69,8 +71,8 @@ function header(doc: Doc, data: ProposalDocData) {
 function clientCard(doc: Doc, data: ProposalDocData) {
   const business = (data.clientName ?? "").trim();
   const person = (data.contactName ?? "").trim();
-  const wa = (data.whatsapp ?? "").trim();
-  const mail = (data.email ?? "").trim();
+  const wa = customerWhatsapp(data.whatsapp) ?? "";
+  const mail = customerEmail(data.email) ?? "";
 
   const fields: [string, string][] = [];
   if (business) fields.push(["Nama Bisnis", business]);
