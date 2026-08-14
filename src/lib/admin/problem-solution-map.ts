@@ -201,7 +201,13 @@ export const PROBLEM_RULES: ProblemRule[] = [
   },
   {
     problem: "Stok barang sulit dikontrol",
-    tokens: ["stok", "persediaan", "gudang", "restock", "kehabisan barang"      "habis mendadak",
+    tokens: [
+      "stok",
+      "persediaan",
+      "gudang",
+      "restock",
+      "kehabisan barang",
+      "habis mendadak",
       "selisih stok",
       "stok selisih",
       "kehabisan bahan",
