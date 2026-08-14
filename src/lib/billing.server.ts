@@ -30,6 +30,8 @@ import {
   type PaymentType,
 } from "@/lib/admin/invoice-schedule";
 import { parsePricingItems, type PricingItem } from "@/lib/admin/sales-ai";
+import { cleanContactName, customerEmail, customerWhatsapp } from "@/lib/invoice-doc";
+
 
 type Client = SupabaseClient<Database>;
 
