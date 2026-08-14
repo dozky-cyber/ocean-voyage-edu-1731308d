@@ -404,17 +404,35 @@ export function proposalSectionsFromBrief(input: {
   const optionNames = new Map(
     enhancementsFromBrief(insight).map((o) => [normalize(o.name), o.name] as const),
   );
-  const mapLines = insight.problemMap.map((row) => {
+  const mapIndustry = detectIndustryContext(
+    [brief.business, brief.project].filter(Boolean).join(" "),
+    normalize(
+      [brief.business, brief.project, brief.goal, ...brief.features, ...brief.problems]
+        .filter(Boolean)
+        .join(" | "),
+    ),
+  );
+  // MAPPING NARATIF: setiap masalah ditulis sebagai kalimat kondisi bisnis,
+  // lalu solusinya disebut dengan nama yang dipahami customer.
+  const mapBlocks = insight.problemMap.map((row) => {
     const key = normalize(row.solution);
-    if (scopeNames.has(key)) return `${row.problem} -> ${row.solution} (termasuk scope utama)`;
     const parts = row.solution.split(" + ").map((p) => p.trim());
-    if (parts.length > 1 && parts.every((p) => scopeNames.has(normalize(p)))) {
-      return `${row.problem} -> ${row.solution} (termasuk scope utama)`;
-    }
+    const inScope =
+      scopeNames.has(key) || (parts.length > 1 && parts.every((p) => scopeNames.has(normalize(p))));
     const option = optionNames.get(key);
-    if (option) return `${row.problem} -> ${option} (rekomendasi pengembangan, di luar scope utama)`;
-    return `${row.problem} -> Dibahas bersama Anda sebelum pengerjaan dimulai`;
+
+    let solution: string;
+    if (inScope) {
+      solution = parts.map((p) => solutionLabel(p)).join(" + ");
+    } else if (option) {
+      solution = `${solutionLabel(option)} — rekomendasi pengembangan, di luar scope utama`;
+    } else {
+      solution = "Dibahas bersama Anda sebelum pengerjaan dimulai";
+    }
+
+    return ["Kondisi:", conditionSentence(row.problem, mapIndustry), "", "Solusi:", solution].join("\n");
   });
+
 
   const recommended = [
     `KERJAKU merekomendasikan ${insight.packageName} sebagai solusi utama (Core Solution) untuk ${client}.`,
