@@ -23,6 +23,7 @@ import {
   describeFeatureForIndustry,
   detectIndustryContext,
 } from "./industry-context";
+import { conditionSentence, solutionLabel } from "./problem-narrative";
 import type { CoreFeatureItem, EnhancementItem } from "./proposal-logic";
 import type { ProposalSection, PricingItem } from "./sales-ai";
 
