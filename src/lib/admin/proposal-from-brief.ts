@@ -278,7 +278,9 @@ export function proposalSectionsFromBrief(input: {
   // Tanpa guard ini customer bisa membaca nama fitur yang tidak pernah muncul
   // di halaman manapun — terlihat seperti fitur yang muncul tiba-tiba.
   const scopeNames = new Set(insight.included.map((n) => normalize(n)));
-  const optionNames = new Map(insight.optional.map((o) => [normalize(o.name), o.name] as const));
+  const optionNames = new Map(
+    enhancementsFromBrief(insight).map((o) => [normalize(o.name), o.name] as const),
+  );
   const mapLines = insight.problemMap.map((row) => {
     const key = normalize(row.solution);
     if (scopeNames.has(key)) return `${row.problem} -> ${row.solution} (termasuk scope utama)`;
