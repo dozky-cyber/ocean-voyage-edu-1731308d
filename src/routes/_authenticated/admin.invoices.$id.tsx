@@ -40,7 +40,13 @@ import {
   setInstallmentStatusFn,
   setInvoiceStatusFn,
 } from "@/lib/billing.functions";
-import { cleanContactName, customerEmail, customerWhatsapp } from "@/lib/invoice-doc";
+import {
+  cleanContactName,
+  customerEmail,
+  customerWhatsapp,
+  KERJAKU_BANK,
+} from "@/lib/invoice-doc";
+
 import { prepareInvoiceFile } from "@/lib/invoice.functions";
 
 import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
