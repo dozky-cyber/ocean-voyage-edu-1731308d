@@ -284,6 +284,10 @@ export function proposalSectionsFromBrief(input: {
         ]
       : []),
     {
+      heading: "Budget Alignment",
+      body: budgetAlignmentFromBrief(brief, insight),
+    },
+    {
       heading: "Next Steps",
       body: bullets([
         `Konfirmasi scope ${insight.packageName} bersama Team KERJAKU`,
@@ -318,6 +322,5 @@ export function buildProposalFromBrief(input: {
     enhancements: enhancementsFromBrief(insight),
     pricing: pricingFromBrief(insight, basePrice),
     investmentNote: investmentNoteFromBrief(input.brief, insight),
-    budgetAlignment: budgetAlignmentFromBrief(input.brief, insight),
   };
 }
