@@ -57,7 +57,6 @@ async function loadProposalDoc(
     currency: String(proposal.currency ?? "IDR"),
     validUntil: (proposal.valid_until as string) ?? null,
     investmentNote: (proposal.investment_note as string) ?? null,
-    budgetAlignment: (proposal.budget_alignment as string) ?? null,
     paymentType: (proposal.payment_type as "full" | "termin") ?? "full",
     paymentDpPercent: (proposal.payment_dp_percent as number) ?? null,
     paymentTermsText: (proposal.payment_terms_text as string) ?? null,
