@@ -121,7 +121,27 @@ export function coreFeaturesFromBrief(
  * ---------------------------------------------------------------------- */
 
 export function enhancementsFromBrief(insight: BriefInsight): EnhancementItem[] {
-  return insight.optional.map((item) => ({
+  // MIRROR RULE: Core Solution hasil analisa Team KERJAKU pada Order Brief
+  // tidak boleh hilang di proposal. Fitur ini bukan bagian scope utama
+  // (customer tidak memintanya), jadi tampil sebagai rekomendasi prioritas.
+  const consultantCore: EnhancementItem[] = insight.coreSolutions
+    .filter((item) => item.solves)
+    .map((item) => ({
+      name: item.name,
+      benefit: item.benefit,
+      amount: indicativePrice(item.name),
+      recommended: true,
+      reason: item.benefit,
+      impact: `Menjawab langsung masalah: ${item.solves}`,
+      relation: "Melengkapi scope utama pada Final Order Brief.",
+      priority: 1,
+      phase: 1 as const,
+    }));
+
+  const seen = new Set(consultantCore.map((item) => normalize(item.name)));
+  const optional = insight.optional
+    .filter((item) => !seen.has(normalize(item.name)))
+    .map((item) => ({
     name: item.name,
     benefit: item.description,
     amount: indicativePrice(item.name),
@@ -131,6 +151,11 @@ export function enhancementsFromBrief(insight: BriefInsight): EnhancementItem[] 
     relation: item.relation ?? null,
     priority: item.priority,
     phase: item.phase,
+  }));
+
+  return [...consultantCore, ...optional].map((item, index) => ({
+    ...item,
+    priority: index + 1,
   }));
 }
 
