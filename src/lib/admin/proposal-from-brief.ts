@@ -290,7 +290,41 @@ export function budgetAlignmentFromBrief(
       ? "Rekomendasi pengembangan tidak harus diambil sekaligus. Tahap 1 dapat menyusul setelah sistem utama berjalan, dan Tahap 2 dikerjakan ketika kebutuhannya sudah terlihat dari pemakaian sehari-hari."
       : "Pengembangan lanjutan dapat ditambahkan bertahap setelah sistem utama berjalan.",
   );
-  return lines.join(" ");
+
+  const body = [lines.join(" ")];
+
+  // CLOSING: kalau budget customer jauh di bawah angka proposal, jangan hanya
+  // menampilkan total — tunjukkan bahwa solusi bisa dibangun bertahap.
+  const ceiling = budgetCeiling(budget);
+  const gap = Boolean(ceiling && basePrice && basePrice > ceiling * 1.05);
+  if (gap) {
+    const early = insight.included.slice(0, 4);
+    const later = [
+      ...insight.included.slice(4),
+      ...insight.optional.map((item) => item.name),
+    ].slice(0, 5);
+    body.push("", "REKOMENDASI IMPLEMENTASI BERTAHAP");
+    if (early.length) {
+      body.push(
+        "",
+        "Tahap Awal — fitur paling penting untuk menyelesaikan masalah utama:",
+        ...early.map((name) => `- ${name}`),
+      );
+    }
+    if (later.length) {
+      body.push(
+        "",
+        "Tahap Pengembangan — ditambahkan setelah sistem berjalan:",
+        ...later.map((name) => `- ${name}`),
+      );
+    }
+    body.push(
+      "",
+      "Pembagian tahap ini membuat sistem tetap bisa dipakai lebih cepat tanpa membangun ulang saat fitur berikutnya ditambahkan.",
+    );
+  }
+
+  return body.join("\n");
 }
 
 /**
