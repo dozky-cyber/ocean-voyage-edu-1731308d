@@ -40,7 +40,13 @@ import {
   setInstallmentStatusFn,
   setInvoiceStatusFn,
 } from "@/lib/billing.functions";
-import { cleanContactName, customerEmail, customerWhatsapp } from "@/lib/invoice-doc";
+import {
+  cleanContactName,
+  customerEmail,
+  customerWhatsapp,
+  KERJAKU_BANK,
+} from "@/lib/invoice-doc";
+
 import { prepareInvoiceFile } from "@/lib/invoice.functions";
 
 import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
@@ -706,7 +712,34 @@ function InvoiceDetailPage() {
           </tbody>
         </table>
 
+        <div className="proposal-section mt-6 rounded-xl border border-border/40 px-4 py-3">
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            Metode Pembayaran
+          </p>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="rounded bg-[#0060AF] px-2.5 py-1 text-sm font-bold tracking-wide text-white">
+              {KERJAKU_BANK.bank}
+            </span>
+            <span className="text-sm font-medium">{KERJAKU_BANK.name}</span>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                No. Rekening
+              </p>
+              <p className="text-base font-semibold tabular-nums">{KERJAKU_BANK.account}</p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Atas Nama
+              </p>
+              <p className="text-sm font-semibold">{KERJAKU_BANK.holder}</p>
+            </div>
+          </div>
+        </div>
+
         {form.notes ? (
+
           <p className="proposal-section mt-6 whitespace-pre-wrap text-xs text-muted-foreground">
             {form.notes}
           </p>

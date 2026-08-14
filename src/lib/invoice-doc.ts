@@ -8,6 +8,15 @@ export { customerEmail, customerWhatsapp };
 
 export type InvoiceLine = { item: string; detail: string; amount: number };
 
+/** Rekening resmi KERJAKU untuk transfer manual (dipakai di semua dokumen). */
+export const KERJAKU_BANK = {
+  bank: "BCA",
+  name: "Bank Central Asia",
+  account: "6280 664349",
+  holder: "AJI TAUFIK AKBAR",
+} as const;
+
+
 /** Estimasi pengembangan opsional dari proposal — informatif, tidak masuk total. */
 export type InvoiceEstimate = { name: string; note: string; amount: number };
 
