@@ -274,6 +274,26 @@ export function budgetCeiling(text: string | null | undefined): number | null {
   return Math.round(max);
 }
 
+/** Nama fitur yang saling memuat dianggap satu item oleh customer. */
+function dedupeNames(names: string[]): string[] {
+  const kept: string[] = [];
+  for (const name of names) {
+    const words = new Set(normalize(name).split(" "));
+    const clash = kept.some((other) => {
+      const otherWords = new Set(normalize(other).split(" "));
+      const smaller = words.size <= otherWords.size ? words : otherWords;
+      const larger = smaller === words ? otherWords : words;
+      let shared = 0;
+      smaller.forEach((w) => {
+        if (larger.has(w)) shared += 1;
+      });
+      return smaller.size > 0 && shared === smaller.size;
+    });
+    if (!clash) kept.push(name);
+  }
+  return kept;
+}
+
 /** Budget Alignment — bahasa konsultatif, bukan penawaran ulang. */
 export function budgetAlignmentFromBrief(
   brief: OrderBriefData,
@@ -311,10 +331,10 @@ export function budgetAlignmentFromBrief(
   const gap = Boolean(ceiling && basePrice && basePrice > ceiling * 1.05);
   if (gap) {
     const early = insight.included.slice(0, 4);
-    const later = [
+    const later = dedupeNames([
       ...insight.included.slice(4),
       ...insight.optional.map((item) => item.name),
-    ].slice(0, 5);
+    ]).slice(0, 5);
     body.push("", "REKOMENDASI IMPLEMENTASI BERTAHAP");
     if (early.length) {
       body.push(
