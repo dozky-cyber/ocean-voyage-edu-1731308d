@@ -176,7 +176,7 @@ export const PROBLEM_RULES: ProblemRule[] = [
       "menu paling laku",
     ],
     core: ["laporan-penjualan"],
-    growth: [],
+    growth: ["dashboard-admin"],
   },
   {
     problem: "Jadwal pekerjaan sering bentrok",

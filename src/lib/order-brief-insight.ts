@@ -103,6 +103,12 @@ export type BriefInsight = {
   reason: string;
   included: string[];
   consultant: ConsultantOption | null;
+  /**
+   * CORE SOLUTION hasil analisa Team KERJAKU (di luar Feature List brief).
+   * Dipakai agar Proposal bisa mirror isi Order Brief tanpa memunculkan nama
+   * fitur baru yang tidak pernah tampil di dokumen manapun.
+   */
+  coreSolutions: { id: string; name: string; benefit: string; solves: string | null }[];
   /** PROBLEM -> SOLUTION MAP: bukti setiap masalah customer ada jawabannya. */
   problemMap: ProblemMapRow[];
   /** Ringkasan kesiapan bisnis (maturity + catatan singkat). */
@@ -280,6 +286,14 @@ function buildProblemMap(input: {
             .join(" + "),
           source: "scope" as const,
         };
+      }
+      // Fitur pendukung yang sudah dipilih customer lebih diutamakan daripada
+      // rekomendasi baru (mis. "rekam kunjungan" -> Customer History di scope).
+      const scopedGrowth = [...plan.growth.keys()].find(
+        (id) => scopeIds.has(id) && briefLabels.has(id),
+      );
+      if (scopedGrowth) {
+        return { problem, solution: briefLabels.get(scopedGrowth)!, source: "scope" as const };
       }
       const core = ids.find((id) => coreById.has(id));
       if (core) {
@@ -592,6 +606,12 @@ export function buildBriefInsight(brief: OrderBriefData): BriefInsight {
     reason: buildReason(brief, pkg, decision.rationale),
     included,
     consultant,
+    coreSolutions: voicedCorePicks.map((f) => ({
+      id: f.id,
+      name: f.name,
+      benefit: f.benefit,
+      solves: f.solves,
+    })),
     problemMap,
     readiness,
     optional,
