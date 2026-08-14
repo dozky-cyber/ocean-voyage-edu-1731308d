@@ -19,7 +19,20 @@ export type EnhancementItem = {
   benefit: string;
   amount: number;
   recommended?: boolean;
+  /** Mirror Order Brief: alasan relevansi bisnis. */
+  reason?: string | null;
+  /** Mirror Order Brief: dampak bisnis. */
+  impact?: string | null;
+  /** Mirror Order Brief: kaitan dengan alur bisnis customer. */
+  relation?: string | null;
+  priority?: number | null;
+  phase?: 1 | 2 | null;
 };
+
+function optionalText(value: unknown): string | null {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text ? text : null;
+}
 
 export function parseEnhancements(value: unknown): EnhancementItem[] {
   if (!Array.isArray(value)) return [];
@@ -31,6 +44,11 @@ export function parseEnhancements(value: unknown): EnhancementItem[] {
             benefit: String((row as { benefit?: unknown }).benefit ?? ""),
             amount: Number((row as { amount?: unknown }).amount ?? 0) || 0,
             recommended: Boolean((row as { recommended?: unknown }).recommended),
+            reason: optionalText((row as { reason?: unknown }).reason),
+            impact: optionalText((row as { impact?: unknown }).impact),
+            relation: optionalText((row as { relation?: unknown }).relation),
+            priority: Number((row as { priority?: unknown }).priority) || null,
+            phase: ((row as { phase?: unknown }).phase === 1 ? 1 : (row as { phase?: unknown }).phase === 2 ? 2 : null),
           },
         ]
       : [],

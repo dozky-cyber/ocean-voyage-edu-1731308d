@@ -414,7 +414,6 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
     : baseLead;
   const brief = buildSalesBrief(lead);
   const { buildEnhancements, buildCoreFeatures } = await import("./admin/proposal-logic");
-  const packageName = recommendPackage(lead);
   const context = [
     lead.requirement,
     lead.project_type,
@@ -424,16 +423,35 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
   ]
     .filter(Boolean)
     .join(" ");
-  const enhancements = buildEnhancements({
-    features: brief.features,
-    context,
-    packageName,
-  });
-  const coreFeatures = buildCoreFeatures({
-    packageName,
-    briefFeatures: brief.features,
-    context,
-  });
+
+  // PROPOSAL MIRROR ENGINE: kalau Final Order Brief ada, seluruh isi proposal
+  // diturunkan dari engine yang sama dengan PDF Order Brief (1:1, no re-analysis).
+  const mirror = finalBrief
+    ? (await import("./admin/proposal-from-brief")).buildProposalFromBrief({
+        brief: finalBrief.brief,
+        contactName: lead.name ?? finalBrief.brief.customerName,
+      })
+    : null;
+  const packageName = mirror?.packageName ?? recommendPackage(lead);
+  const enhancements =
+    mirror?.enhancements ??
+    buildEnhancements({
+      features: brief.features,
+      context,
+      packageName,
+    });
+  const coreFeatures =
+    mirror?.coreFeatures ??
+    buildCoreFeatures({
+      packageName,
+      briefFeatures: brief.features,
+      context,
+    });
+  const sections = mirror?.sections ?? buildProposalSections(lead);
+  const pricingItems = mirror?.pricing ?? buildPricingItems(lead);
+  const investmentNote = mirror?.investmentNote ?? brief.investment;
+
+
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + 30);
   const { data, error } = await supabase
@@ -443,8 +461,8 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       title: `KERJAKU Digital Solution Proposal — ${lead.business_name || lead.company || lead.name}`,
       status: "Draft",
       recommended_package: packageName,
-      content: buildProposalSections(lead),
-      pricing_items: buildPricingItems(lead),
+      content: sections,
+      pricing_items: pricingItems,
       enhancements,
       core_features: coreFeatures,
       payment_type: "full",
@@ -456,7 +474,7 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       valid_until: validUntil.toISOString().slice(0, 10),
       version: 1,
       client_name: lead.business_name || lead.company || lead.name,
-      investment_note: brief.investment,
+      investment_note: investmentNote,
       created_by: userId,
     })
     .select("id")
