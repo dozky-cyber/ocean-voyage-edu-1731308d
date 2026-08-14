@@ -23,11 +23,13 @@ Galeri / Portfolio Hasil Pekerjaan
 ```
 
 Aturan penyusunan kalimat Kondisi:
+
 - Kalimat dibangun dari masalah yang customer sampaikan, ditulis ulang jadi satu kalimat kondisi bisnis (situasi + akibatnya pada operasional/customer), bukan pengulangan mentah teks brief.
 - Memakai Industry Context Library yang sudah ada supaya istilahnya mengikuti jenis usaha customer (workshop, klinik, laundry, distributor, kuliner, dst).
 - Bila masalah tidak punya kalimat khusus, dipakai pola generik yang tetap natural — tidak pernah menampilkan potongan mentah brief sebagai panah.
 
 Aturan baris Solusi:
+
 - Nama fitur ditulis dengan label yang dipahami customer (mis. "Galeri / Portfolio Hasil Pekerjaan"), tetap merujuk fitur yang sama dengan Feature List agar mirror Order Brief tidak rusak.
 - Keterangan sumber tetap ada tapi tidak lagi berupa label teknis dalam kurung di tengah kalimat: fitur di luar scope utama diberi keterangan singkat sebagai rekomendasi pengembangan pada baris Solusi.
 - Masalah yang belum ada solusinya tetap ditulis apa adanya sebagai poin yang akan dibahas sebelum pengerjaan.
@@ -66,6 +68,7 @@ Meningkatkan pengalaman customer dan efisiensi pengelolaan project.
 ```
 
 Aturan:
+
 - Isi Tahap Awal diambil dari scope utama Order Brief (prioritas tertinggi), Tahap Pengembangan dari sisa scope + rekomendasi pengembangan. Tidak ada fitur baru.
 - Kalimat "Tujuan" dibuat dari manfaat fitur pada tahap tersebut, mengikuti konteks industri customer — jadi tetap relevan untuk semua jenis usaha.
 - Blok bertahap ini muncul untuk setiap proposal yang punya lebih dari satu tahap kebutuhan, bukan hanya saat budget di bawah angka proposal. Angka budget customer masih boleh disebut satu kali sebagai konteks, tanpa dijadikan alasan pemangkasan fitur.
