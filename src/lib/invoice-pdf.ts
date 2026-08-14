@@ -71,31 +71,40 @@ function metaCard(doc: Doc, data: InvoiceDocData) {
 }
 
 function billTo(doc: Doc, data: InvoiceDocData) {
-  // Hanya field yang benar-benar terisi yang ditampilkan (tanpa "-",
-  // tanpa email/WhatsApp internal sistem).
-  const rows: [string, string][] = [["Client Name", data.clientName]];
-  if (data.businessName) rows.push(["Business Name", data.businessName]);
-  if (data.email) rows.push(["Email", data.email]);
-  if (data.whatsapp) rows.push(["WhatsApp", data.whatsapp]);
+  // Kolom kiri = identitas client, kolom kanan = kontak. Field kosong
+  // (termasuk email/WhatsApp internal sistem) tidak ditampilkan sama sekali.
+  const colW = (CONTENT_W - 32) / 2;
+  const left: [string, string[]][] = [
+    ["Client Name", wrap(data.clientName, 9.5, true, colW - 14).slice(0, 2)],
+  ];
+  if (data.businessName) {
+    left.push(["Business Name", wrap(data.businessName, 9.5, true, colW - 14).slice(0, 2)]);
+  }
+  const right: [string, string[]][] = [];
+  if (data.email) right.push(["Email", wrap(data.email, 9.5, true, colW - 14).slice(0, 1)]);
+  if (data.whatsapp) right.push(["WhatsApp", [data.whatsapp]]);
 
-  const perColumn = Math.ceil(rows.length / 2);
-  const h = 34 + perColumn * 28;
+  const blockHeight = (rows: [string, string[]][]) =>
+    rows.reduce((sum, [, value]) => sum + 15 + value.length * 13 + 8, 0);
+  const bodyH = Math.max(blockHeight(left), blockHeight(right));
+  const h = 30 + bodyH;
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, "0.94 0.98 0.98");
   doc.text("BILL TO", MARGIN + 16, top + h - 18, 8, true, BRAND);
-  const colW = (CONTENT_W - 32) / 2;
-  rows.forEach(([label, value], index) => {
-    const colIndex = Math.floor(index / perColumn);
-    const rowIndex = index % perColumn;
+
+  [left, right].forEach((rows, colIndex) => {
+    let y = top + h - 38;
     const x = MARGIN + 16 + colIndex * colW;
-    const y = top + h - 38 - rowIndex * 28;
-    doc.text(label.toUpperCase(), x, y, 7, false, MUTED);
-    const line = wrap(value, 9.5, true, colW - 14)[0] ?? "";
-    doc.text(line, x, y - 13, 9.5, true);
+    rows.forEach(([label, value]) => {
+      doc.text(label.toUpperCase(), x, y, 7, false, MUTED);
+      value.forEach((line, i) => doc.text(line, x, y - 13 - i * 13, 9.5, true));
+      y -= 15 + value.length * 13 + 8;
+    });
   });
   doc.y = top - 22;
 }
+
 
 function sectionTitle(doc: Doc, title: string) {
   doc.ensure(36);
