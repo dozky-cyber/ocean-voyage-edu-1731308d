@@ -290,17 +290,49 @@ function paymentTerms(doc: Doc, data: InvoiceDocData) {
   doc.y = totalTop - 22;
 }
 
-function notesBlock(doc: Doc, data: InvoiceDocData) {
-  if (!data.notes) return;
-  sectionTitle(doc, "Catatan");
-  for (const raw of data.notes.split("\n")) {
-    const line = raw.trim();
-    if (!line) {
-      doc.y -= 6;
-      continue;
-    }
-    doc.paragraph(line, MARGIN, 10, false, CONTENT_W, INK, 15);
+function paymentInfo(doc: Doc, data: InvoiceDocData) {
+  sectionTitle(doc, "Metode Pembayaran & Catatan");
+
+  if (data.paymentMethod) {
+    doc.ensure(24);
+    doc.text("METODE PEMBAYARAN", MARGIN, doc.y, 7.5, false, MUTED);
+    doc.y -= 13;
+    doc.text(data.paymentMethod, MARGIN, doc.y, 10, true, INK);
+    doc.y -= 18;
   }
+
+  if (data.paymentLink) {
+    doc.ensure(24);
+    doc.text("LINK PEMBAYARAN", MARGIN, doc.y, 7.5, false, MUTED);
+    doc.y -= 13;
+    doc.paragraph(data.paymentLink, MARGIN, 9, false, CONTENT_W, BRAND, 12);
+    doc.y -= 6;
+  }
+
+  if (data.notes) {
+    doc.ensure(24);
+    doc.text("CATATAN", MARGIN, doc.y, 7.5, false, MUTED);
+    doc.y -= 13;
+    for (const raw of data.notes.split("\n")) {
+      const line = raw.trim();
+      if (!line) {
+        doc.y -= 6;
+        continue;
+      }
+      doc.paragraph(line, MARGIN, 10, false, CONTENT_W, INK, 15);
+    }
+    doc.y -= 6;
+  }
+
+  doc.paragraph(
+    "Mohon konfirmasi setelah pembayaran dilakukan agar tim KERJAKU dapat langsung menjadwalkan pengerjaan. Terima kasih atas kepercayaan Anda kepada KERJAKU Business System Consultant.",
+    MARGIN,
+    9,
+    false,
+    CONTENT_W,
+    MUTED,
+    13,
+  );
   doc.y -= 8;
 }
 
@@ -327,9 +359,10 @@ export function buildInvoicePdf(data: InvoiceDocData): Uint8Array {
   projectBlock(doc, data);
   investment(doc, data);
   paymentTerms(doc, data);
-  notesBlock(doc, data);
+  paymentInfo(doc, data);
   return serializePdf(footer(doc, data.clientName));
 }
+
 
 /** Browser-only: open the invoice PDF preview in a new tab. */
 export function invoicePdfBlobUrl(data: InvoiceDocData): string {
