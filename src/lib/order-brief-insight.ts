@@ -215,9 +215,35 @@ function buildReadiness(
   return { level: MATURITY_LABEL[maturity], lines };
 }
 
+/** Nama fitur pada brief, dipetakan ke id library (untuk penamaan konsisten). */
+function briefLabelMap(features: string[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const text of features) {
+    const norm = normalize(text);
+    if (!norm) continue;
+    const feature = CONSULTANT_LIBRARY.find((f) => {
+      if (normalize(f.name) === norm) return true;
+      return [f.name, ...f.aliases].some((alias) => {
+        const a = normalize(alias);
+        return a.length > 3 && (norm.includes(a) || a.includes(norm));
+      });
+    });
+    if (feature && !map.has(feature.id)) map.set(feature.id, text.trim());
+  }
+  return map;
+}
+
 /**
  * PROBLEM -> SOLUTION MAP: setiap masalah pada brief dipasangkan dengan solusi
- * yang sudah ada di scope customer, Core Solution, atau ide opsional.
+ * yang sudah ada di scope customer, Core Solution, atau opsi pengembangan.
+ *
+ * ATURAN SALES (V12):
+ * - Nama solusi SELALU memakai penulisan pada Feature List Order Brief bila
+ *   fitur tersebut memang ada di scope. Tidak boleh muncul nama versi lain.
+ * - Solusi tidak boleh menyebut fitur yang tidak ada di dokumen (scope, core
+ *   solution, atau daftar opsi pengembangan) — supaya tidak ada fitur yang
+ *   "muncul tiba-tiba".
+ * - Kalimat fallback ditulis untuk customer, bukan catatan internal.
  */
 function buildProblemMap(input: {
   brief: OrderBriefData;
@@ -228,6 +254,7 @@ function buildProblemMap(input: {
   const { brief, scopeIds, corePicks, growthPicks } = input;
   const coreById = new Map(corePicks.map((p) => [p.id, p.name] as const));
   const growthById = new Map(growthPicks.map((p) => [p.id, p.name] as const));
+  const briefLabels = briefLabelMap(brief.features);
 
   return brief.problems
     .map((problem) => {
@@ -238,12 +265,13 @@ function buildProblemMap(input: {
         context: normalize(problem),
       });
       const ids = [...plan.core.keys()];
-      const scoped = ids.filter((id) => scopeIds.has(id));
+      // Hanya fitur yang benar-benar ada pada Feature List Order Brief.
+      const scoped = ids.filter((id) => scopeIds.has(id) && briefLabels.has(id));
       if (scoped.length) {
         return {
           problem,
           solution: scoped
-            .map((id) => consultantFeature(id)?.name ?? id)
+            .map((id) => briefLabels.get(id)!)
             .slice(0, 2)
             .join(" + "),
           source: "scope" as const,
@@ -269,10 +297,10 @@ function buildProblemMap(input: {
           .split(/[^a-z0-9]+/)
           .some((w) => w.length > 4 && words.has(w)),
       );
-      if (matched) return { problem, solution: matched, source: "scope" as const };
+      if (matched) return { problem, solution: matched.trim(), source: "scope" as const };
       return {
         problem,
-        solution: "Dibahas pada tahap pengecekan kebutuhan bersama Team KERJAKU",
+        solution: OPEN_PROBLEM_SOLUTION,
         source: "open" as const,
       };
     })
