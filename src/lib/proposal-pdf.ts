@@ -327,7 +327,13 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
   // ANTI-DUPLICATE: deskripsi panjang hanya di Feature Recommendation.
   const optional = (data.enhancements ?? []).map((e) => ({
     item: e.name,
-    detail: e.priority ? `Fase ${e.phase ?? 2} — opsional` : "Opsional",
+    detail: [
+      e.priority ? `Prioritas ${e.priority}` : null,
+      `Fase ${e.phase ?? 2}`,
+      "estimasi harga, belum termasuk total",
+    ]
+      .filter(Boolean)
+      .join("  |  "),
     amount: Number(e.amount) || 0,
   }));
   if (!core.length && !optional.length) return;
@@ -341,16 +347,27 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
     subtotalLine(doc, "Subtotal Core Solution", coreTotal, data.currency);
   }
 
-  let optionalTotal = 0;
+  // SALES RULE: pengembangan opsional adalah rekomendasi, bukan tagihan.
+  // Angkanya tidak pernah dijumlahkan ke Total Investment maupun Invoice.
   if (optional.length) {
-    groupHeader(doc, "Optional Feature");
-    optionalTotal = priceRows(doc, optional, data.currency);
-    subtotalLine(doc, "Subtotal Optional Feature", optionalTotal, data.currency);
+    groupHeader(doc, "Pengembangan Opsional (belum termasuk total)");
+    const optionalTotal = priceRows(doc, optional, data.currency);
+    subtotalLine(doc, "Estimasi Pengembangan Opsional", optionalTotal, data.currency);
+    doc.paragraph(
+      "Item pengembangan opsional hanya masuk tagihan setelah Anda menyetujuinya dan dikonfirmasi ulang oleh tim KERJAKU.",
+      MARGIN,
+      9,
+      false,
+      CONTENT_W,
+      MUTED,
+      13,
+    );
+    doc.y -= 8;
   }
 
   doc.ensure(34);
-  const totalLabel = "TOTAL INVESTMENT";
-  const totalValue = money(coreTotal + optionalTotal, data.currency);
+  const totalLabel = "TOTAL INVESTMENT (SCOPE UTAMA)";
+  const totalValue = money(coreTotal, data.currency);
   const boxTop = doc.y - 30;
   doc.rect(MARGIN, boxTop, CONTENT_W, 30, CARD_BG);
   doc.text(totalLabel, MARGIN + 14, boxTop + 11, 9, true, MUTED);
