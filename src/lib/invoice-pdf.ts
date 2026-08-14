@@ -17,7 +17,14 @@ import {
   textWidth,
   wrap,
 } from "./order-brief-pdf";
-import { invoiceFileName, invoiceMoney, type InvoiceDocData, type InvoiceLine } from "./invoice-doc";
+import {
+  invoiceFileName,
+  invoiceMoney,
+  KERJAKU_BANK,
+  type InvoiceDocData,
+  type InvoiceLine,
+} from "./invoice-doc";
+
 
 function wibDate(iso: string) {
   return new Date(iso).toLocaleDateString("id-ID", {
