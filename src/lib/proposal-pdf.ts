@@ -48,7 +48,7 @@ function header(doc: Doc, data: ProposalDocData) {
   doc.rect(MARGIN, top + h - 52, 26, 26, BRAND);
   doc.text("K", MARGIN + 8, top + h - 45, 16, true, "1 1 1");
   doc.text("KERJAKU", MARGIN + 38, top + h - 44, 22, true, "1 1 1");
-  doc.text("BUSINESS SYSTEM CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
+  doc.text("TEAM KERJAKU CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
   doc.text("PROPOSAL SOLUSI DIGITAL", MARGIN, top + 26, 11, true, "0.85 0.92 0.94");
   const right = `${stamp.date}  |  ${stamp.time}`;
   doc.text(right, PAGE_W - MARGIN - textWidth(right, 9, false), top + 27, 9, false, "0.66 0.72 0.78");
@@ -58,7 +58,7 @@ function header(doc: Doc, data: ProposalDocData) {
 }
 
 function clientCard(doc: Doc, data: ProposalDocData) {
-  const h = 82;
+  const h = 96;
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
@@ -73,9 +73,9 @@ function clientCard(doc: Doc, data: ProposalDocData) {
   cols.forEach(([label, value], index) => {
     const x = MARGIN + 16 + index * colW;
     doc.text(label.toUpperCase(), x, top + h - 40, 7, false, MUTED);
-    wrap(value, 9.5, true, colW - 10)
-      .slice(0, 2)
-      .forEach((row, i) => doc.text(row, x, top + h - 53 - i * 12, 9.5, true));
+    wrap(value, 9, true, colW - 8)
+      .slice(0, 3)
+      .forEach((row, i) => doc.text(row, x, top + h - 53 - i * 12, 9, true));
   });
   doc.y = top - 22;
 }
@@ -86,17 +86,24 @@ function summaryBox(doc: Doc, data: ProposalDocData) {
     ["Rekomendasi Paket", data.recommendedPackage || "-"],
     ["Berlaku Sampai", data.validUntil || "-"],
   ];
-  const h = 38 + rows.length * 24;
+  const wrapped = rows.map(([label, value]) => ({
+    label,
+    lines: wrap(value || "-", 10, true, CONTENT_W - 40).slice(0, 2),
+  }));
+  const h = 38 + wrapped.reduce((sum, row) => sum + 12 + row.lines.length * 13, 0);
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, "0.94 0.98 0.98");
   doc.text("PROPOSAL SUMMARY", MARGIN + 16, top + h - 18, 8, true, BRAND);
   let y = top + h - 38;
-  rows.forEach(([label, value]) => {
-    doc.text(label.toUpperCase(), MARGIN + 16, y, 7, false, MUTED);
-    const line = wrap(value, 10, true, CONTENT_W - 40)[0] ?? "-";
-    doc.text(line, MARGIN + 16, y - 13, 10, true);
-    y -= 24;
+  wrapped.forEach((row) => {
+    doc.text(row.label.toUpperCase(), MARGIN + 16, y, 7, false, MUTED);
+    y -= 13;
+    (row.lines.length ? row.lines : ["-"]).forEach((line) => {
+      doc.text(line, MARGIN + 16, y, 10, true);
+      y -= 13;
+    });
+    y -= 1;
   });
   doc.y = top - 22;
 }
@@ -171,54 +178,84 @@ function subtotalLine(doc: Doc, label: string, value: number, currency: string) 
   doc.y -= 22;
 }
 
+function enhancementItem(doc: Doc, item: ProposalDocData["enhancements"][number], currency: string) {
+  const amount = money(item.amount, currency);
+  doc.text("*", MARGIN, doc.y, 11, true, BRAND);
+  doc.text(item.name || "-", MARGIN + 14, doc.y, 10.5, true, INK);
+  doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false, BRAND);
+  doc.y -= 14;
+  if (item.priority) {
+    const tag = `PRIORITAS ${item.priority}  |  FASE ${item.phase ?? 2}`;
+    doc.text(tag, MARGIN + 14, doc.y, 7.5, true, BRAND);
+    doc.y -= 13;
+  }
+  if (item.benefit) {
+    doc.paragraph(item.benefit, MARGIN + 14, 9.5, false, CONTENT_W - 14, MUTED, 13);
+    doc.y -= 4;
+  }
+  const blocks: [string, string | null | undefined][] = [
+    ["KENAPA RELEVAN", item.reason],
+    ["DAMPAK BISNIS", item.impact],
+    ["KAITAN DENGAN ALUR BISNIS", item.relation],
+  ];
+  for (const [label, value] of blocks) {
+    if (!value) continue;
+    doc.text(label, MARGIN + 14, doc.y, 7, false, MUTED);
+    doc.y -= 13;
+    doc.paragraph(value, MARGIN + 14, 10, false, CONTENT_W - 14);
+    doc.y -= 6;
+  }
+  doc.y -= 6;
+}
+
+/** Feature Recommendation = mirror Potential Feature pada Order Brief. */
 function enhancementSection(doc: Doc, data: ProposalDocData) {
   const items = data.enhancements ?? [];
   if (!items.length) return;
-  sectionTitle(doc, "Feature Recommendation");
-  doc.paragraph(
-    "Rekomendasi fitur tambahan hasil analisa kebutuhan bisnis KERJAKU. Fitur yang sudah dipilih client tidak ditampilkan kembali. Bersifat opsional dan dapat dikerjakan bertahap.",
-    MARGIN,
-    9.5,
-    false,
-    CONTENT_W,
-    MUTED,
-    14,
-  );
-  doc.y -= 6;
-  for (const item of items) {
-    const benefitLines = item.benefit ? wrap(item.benefit, 9, false, CONTENT_W - 140) : [];
-    doc.ensure(34 + benefitLines.length * 12);
-    const amount = money(item.amount, data.currency);
-    doc.text(`${item.recommended ? "* " : ""}${item.name || "-"}`, MARGIN, doc.y, 10, true);
-    doc.text(amount, PAGE_W - MARGIN - textWidth(amount, 10, false), doc.y, 10, false, BRAND);
-    doc.y -= 14;
-    benefitLines.forEach((line) => {
-      doc.text(line, MARGIN, doc.y, 9, false, MUTED);
-      doc.y -= 12;
-    });
-    doc.y -= 10;
-  }
+  const first = items[0];
+  doc.keep((d) => {
+    sectionTitle(d, "Feature Recommendation");
+    d.paragraph(
+      "Rekomendasi pengembangan lanjutan hasil analisa Team KERJAKU Consultant, mengikuti Order Brief. Fitur yang sudah masuk Core Solution tidak diulang. Fase 1 dapat dikerjakan bersamaan bila budget memungkinkan, Fase 2 menyusul sebagai pengembangan berikutnya.",
+      MARGIN,
+      9.5,
+      false,
+      CONTENT_W,
+      MUTED,
+      14,
+    );
+    d.y -= 6;
+    if (first) enhancementItem(d, first, data.currency);
+  });
+  items.slice(1).forEach((item) => doc.keep((d) => enhancementItem(d, item, data.currency)));
 }
 
 function coreSolutionSection(doc: Doc, data: ProposalDocData) {
   const features = data.coreFeatures ?? [];
   if (!features.length) return;
-  sectionTitle(doc, "Core Solution");
-  doc.text(data.recommendedPackage || "Core Solution", MARGIN, doc.y, 11, true, INK);
-  doc.y -= 20;
-  doc.text("INCLUDED FEATURE", MARGIN, doc.y, 8, true, MUTED);
-  doc.y -= 16;
+  doc.keep((d) => sectionTitle(d, "Core Solution"));
+  doc.keep((d) => {
+    d.text(data.recommendedPackage || "Core Solution", MARGIN, d.y, 11, true, INK);
+    d.y -= 20;
+    d.text("INCLUDED FEATURE (SESUAI FEATURE LIST ORDER BRIEF)", MARGIN, d.y, 8, true, MUTED);
+    d.y -= 16;
+  });
   for (const feature of features) {
-    const lines = feature.description ? wrap(feature.description, 9, false, CONTENT_W - 26) : [];
-    doc.ensure(20 + lines.length * 12);
-    doc.text("-", MARGIN + 4, doc.y, 10, true, BRAND);
-    doc.text(feature.name || "-", MARGIN + 18, doc.y, 10, true);
-    doc.y -= 14;
-    lines.forEach((line) => {
-      doc.text(line, MARGIN + 18, doc.y, 9, false, MUTED);
-      doc.y -= 12;
+    doc.keep((d) => {
+      const lines = feature.description ? wrap(feature.description, 9, false, CONTENT_W - 26) : [];
+      d.text("-", MARGIN + 4, d.y, 10, true, BRAND);
+      wrap(feature.name || "-", 10, true, CONTENT_W - 26).forEach((row, i) => {
+        d.text(row, MARGIN + 18, d.y, 10, true);
+        if (i < 1) return;
+        d.y -= 13;
+      });
+      d.y -= 14;
+      lines.forEach((line) => {
+        d.text(line, MARGIN + 18, d.y, 9, false, MUTED);
+        d.y -= 12;
+      });
+      d.y -= 4;
     });
-    doc.y -= 4;
   }
   doc.y -= 6;
 }
@@ -236,9 +273,10 @@ function timelineSection(doc: Doc, data: ProposalDocData) {
 
 function pricingTable(doc: Doc, data: ProposalDocData) {
   const core = data.pricing;
+  // ANTI-DUPLICATE: deskripsi panjang hanya di Feature Recommendation.
   const optional = (data.enhancements ?? []).map((e) => ({
     item: e.name,
-    detail: e.benefit,
+    detail: e.priority ? `Fase ${e.phase ?? 2} — opsional` : "Opsional",
     amount: Number(e.amount) || 0,
   }));
   if (!core.length && !optional.length) return;
