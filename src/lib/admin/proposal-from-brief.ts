@@ -108,10 +108,11 @@ export function coreFeaturesFromBrief(
       description = `Bagian dari kebutuhan ${business} yang dikerjakan pada scope utama.`;
     }
 
-    if (solved && solved.source !== "open") {
-      description = `${description.replace(/\s*$/, "").replace(/\.$/, "")}. Menjawab masalah: ${solved.problem}.`;
-    }
-    return { name, description };
+    return {
+      name,
+      description: description.replace(/\s*$/, ""),
+      solves: solved && solved.source !== "open" ? solved.problem : null,
+    };
   });
 }
 
@@ -164,16 +165,27 @@ function numbered(items: string[]) {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
 }
 
-export function investmentNoteFromBrief(brief: OrderBriefData, insight: BriefInsight): string {
+/** Investment = angka dan item saja. Penjelasan value ada di Recommendation. */
+export function investmentNoteFromBrief(_brief: OrderBriefData, insight: BriefInsight): string {
+  return `Seluruh angka mengikuti scope ${insight.packageName} pada Final Order Brief. Harga bersifat indikatif dan dikonfirmasi ulang sebelum kesepakatan kerja.`;
+}
+
+/** Budget Alignment — bahasa konsultatif, bukan penawaran ulang. */
+export function budgetAlignmentFromBrief(brief: OrderBriefData, insight: BriefInsight): string {
   const budget = brief.budget?.trim();
   const lines = [
-    `Angka berikut disusun mengikuti scope ${insight.packageName} pada Order Brief. Fitur opsional dipisahkan agar kebutuhan utama tetap bisa berjalan lebih dulu.`,
+    `Prioritas pertama adalah scope utama (${insight.packageName}) agar sistem bisa langsung dipakai pada operasional harian.`,
   ];
   if (budget) {
     lines.push(
-      `Range budget yang disampaikan: ${budget}. Bila diperlukan, scope fase pertama dapat disesuaikan tanpa mengubah kebutuhan inti.`,
+      `Range budget yang disampaikan pada Order Brief: ${budget}. Bila angka scope utama perlu disesuaikan, penyesuaian dilakukan pada urutan pengerjaan, bukan dengan memangkas kebutuhan inti.`,
     );
   }
+  lines.push(
+    insight.optional.length
+      ? "Fitur tambahan tidak harus diambil sekaligus. Fase 1 dapat menyusul setelah scope utama berjalan, dan Fase 2 dikerjakan ketika kebutuhan bisnis sudah terlihat dari data pemakaian."
+      : "Pengembangan lanjutan dapat ditambahkan bertahap setelah scope utama berjalan.",
+  );
   return lines.join(" ");
 }
 
@@ -221,9 +233,6 @@ export function proposalSectionsFromBrief(input: {
     `${insight.readiness.level}`,
     ...insight.readiness.lines,
   ];
-  if (mapLines.length) {
-    recommended.push("", "Peta masalah dan solusi:", bullets(mapLines));
-  }
 
   return [
     {
@@ -262,6 +271,18 @@ export function proposalSectionsFromBrief(input: {
       ].join("\n"),
     },
     { heading: "Recommended Solution", body: recommended.join("\n") },
+    ...(mapLines.length
+      ? [
+          {
+            heading: "Problem & Solution Mapping",
+            body: [
+              "Setiap masalah yang customer sampaikan dipetakan langsung ke solusinya:",
+              "",
+              bullets(mapLines),
+            ].join("\n"),
+          },
+        ]
+      : []),
     {
       heading: "Next Steps",
       body: bullets([
@@ -297,5 +318,6 @@ export function buildProposalFromBrief(input: {
     enhancements: enhancementsFromBrief(insight),
     pricing: pricingFromBrief(insight, basePrice),
     investmentNote: investmentNoteFromBrief(input.brief, insight),
+    budgetAlignment: budgetAlignmentFromBrief(input.brief, insight),
   };
 }
