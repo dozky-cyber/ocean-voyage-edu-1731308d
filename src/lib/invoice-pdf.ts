@@ -244,8 +244,8 @@ function paymentTerms(doc: Doc, data: InvoiceDocData) {
 
   // Table: Tahap | Keterangan | Persentase | Jumlah | Status
   const cols = [
-    { label: "Tahap", w: 60 },
-    { label: "Keterangan", w: CONTENT_W - 60 - 66 - 96 - 56 },
+    { label: "Tahap", w: 96 },
+    { label: "Keterangan", w: CONTENT_W - 96 - 66 - 96 - 56 },
     { label: "Persentase", w: 66 },
     { label: "Jumlah", w: 96 },
     { label: "Status", w: 56 },
@@ -266,12 +266,14 @@ function paymentTerms(doc: Doc, data: InvoiceDocData) {
   doc.y = headTop - 6;
 
   data.schedule.forEach((item, index) => {
-    const noteLines = wrap(item.note || "-", 9, false, (cols[1]?.w ?? 120) - 12);
+    const noteLines = item.note ? wrap(item.note, 9, false, (cols[1]?.w ?? 120) - 12) : [];
     const rowH = Math.max(20, 8 + noteLines.length * 12);
     doc.ensure(rowH + 10);
     const rowTop = doc.y - rowH;
     const baseline = rowTop + rowH - 12;
-    doc.text(`DP ${index + 1}`, (xs[0] ?? MARGIN) + 6, baseline, 9.5, true);
+    const stageName = (item.name || "").trim();
+    const stage = wrap(stageName || `DP ${index + 1}`, 9.5, true, (cols[0]?.w ?? 96) - 12)[0] ?? `DP ${index + 1}`;
+    doc.text(stage, (xs[0] ?? MARGIN) + 6, baseline, 9.5, true);
     noteLines.forEach((line, i) => {
       doc.text(line, (xs[1] ?? MARGIN) + 6, baseline - i * 12, 9, false, MUTED);
     });
