@@ -170,21 +170,46 @@ export function investmentNoteFromBrief(_brief: OrderBriefData, insight: BriefIn
   return `Seluruh angka mengikuti scope ${insight.packageName} pada Final Order Brief. Harga bersifat indikatif dan dikonfirmasi ulang sebelum kesepakatan kerja.`;
 }
 
+/** Angka maksimum pada teks budget ("15-20 juta" -> 20.000.000). */
+export function budgetCeiling(text: string | null | undefined): number | null {
+  const raw = (text ?? "").toLowerCase().replace(/[–—]/g, "-");
+  const numbers = raw.match(/\d+(?:[.,]\d+)?/g);
+  if (!numbers?.length) return null;
+  const max = Math.max(...numbers.map((n) => Number(n.replace(/\./g, "").replace(",", "."))));
+  if (!Number.isFinite(max) || max <= 0) return null;
+  if (/miliar|milyar/.test(raw)) return Math.round(max * 1_000_000_000);
+  if (/juta|jt/.test(raw)) return Math.round(max * 1_000_000);
+  if (/ribu|rb/.test(raw)) return Math.round(max * 1_000);
+  return Math.round(max);
+}
+
 /** Budget Alignment — bahasa konsultatif, bukan penawaran ulang. */
-export function budgetAlignmentFromBrief(brief: OrderBriefData, insight: BriefInsight): string {
+export function budgetAlignmentFromBrief(
+  brief: OrderBriefData,
+  insight: BriefInsight,
+  basePrice?: number,
+): string {
   const budget = brief.budget?.trim();
   const lines = [
     `Prioritas pertama adalah scope utama (${insight.packageName}) agar sistem bisa langsung dipakai pada operasional harian.`,
   ];
   if (budget) {
-    lines.push(
-      `Range budget yang disampaikan pada Order Brief: ${budget}. Bila angka scope utama perlu disesuaikan, penyesuaian dilakukan pada urutan pengerjaan, bukan dengan memangkas kebutuhan inti.`,
-    );
+    lines.push(`Range budget yang Anda sampaikan pada sesi konsultasi: ${budget}.`);
+    const ceiling = budgetCeiling(budget);
+    if (ceiling && basePrice && basePrice > ceiling * 1.05) {
+      lines.push(
+        "Angka pada halaman Investment berada di atas range tersebut karena mencakup seluruh kebutuhan yang Anda sampaikan. Bila ingin tetap berada di dalam range, pengerjaan dapat dibagi bertahap: kebutuhan paling mendesak dikerjakan lebih dulu, sisanya menyusul tanpa membangun ulang sistem.",
+      );
+    } else {
+      lines.push(
+        "Angka pada halaman Investment sudah menyesuaikan range tersebut. Bila ada penyesuaian, yang diatur adalah urutan pengerjaan, bukan memangkas kebutuhan inti.",
+      );
+    }
   }
   lines.push(
     insight.optional.length
-      ? "Fitur tambahan tidak harus diambil sekaligus. Fase 1 dapat menyusul setelah scope utama berjalan, dan Fase 2 dikerjakan ketika kebutuhan bisnis sudah terlihat dari data pemakaian."
-      : "Pengembangan lanjutan dapat ditambahkan bertahap setelah scope utama berjalan.",
+      ? "Rekomendasi pengembangan tidak harus diambil sekaligus. Tahap 1 dapat menyusul setelah sistem utama berjalan, dan Tahap 2 dikerjakan ketika kebutuhannya sudah terlihat dari pemakaian sehari-hari."
+      : "Pengembangan lanjutan dapat ditambahkan bertahap setelah sistem utama berjalan.",
   );
   return lines.join(" ");
 }
