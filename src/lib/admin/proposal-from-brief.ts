@@ -482,22 +482,23 @@ export function proposalSectionsFromBrief(input: {
       ].join("\n"),
     },
     { heading: "Recommended Solution", body: recommended.join("\n") },
-    ...(mapLines.length
+    ...(mapBlocks.length
       ? [
           {
             heading: "Problem & Solution Mapping",
             body: [
-              "Setiap masalah yang customer sampaikan dipetakan langsung ke solusinya:",
+              "Setiap kondisi yang customer sampaikan dipetakan langsung ke solusinya:",
               "",
-              bullets(mapLines),
+              mapBlocks.join("\n\n"),
             ].join("\n"),
           },
         ]
       : []),
     {
-      heading: "Budget Alignment",
+      heading: "Rekomendasi Implementasi Bertahap",
       body: budgetAlignmentFromBrief(brief, insight, input.basePrice),
     },
+
     {
       heading: "Next Steps",
       // Bahasa customer-oriented, tanpa istilah internal.
