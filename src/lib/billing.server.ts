@@ -90,11 +90,17 @@ export async function createInvoiceFromProposal(
   // item opsional hanya setelah customer benar-benar menyetujuinya.
   const optionalItems: PricingItem[] = [];
   const total = invoiceTotal(items);
+  // MIRROR RULE: project = kebutuhan project pada Final Order Brief/proposal,
+  // paket tetap disimpan terpisah sebagai keterangan solusi.
   const projectName =
-    (proposal.recommended_package as string) ??
     lead?.project_type ??
+    (proposal.recommended_package as string) ??
     proposal.title ??
     "Project Digital";
+
+  // Nama kontak (orang) vs nama bisnis dipisah agar tidak tertukar di dokumen.
+  const businessName = lead?.company ?? lead?.business_name ?? (proposal.client_name as string) ?? null;
+  const contactName = cleanContactName(lead?.name ?? (proposal.client_name as string) ?? "Client");
 
   const payload = {
     lead_id: proposal.lead_id,
@@ -102,10 +108,10 @@ export async function createInvoiceFromProposal(
     number: buildInvoiceNumber(),
     title: `Invoice — ${proposal.title}`,
     project_name: projectName,
-    client_name: proposal.client_name ?? lead?.name ?? null,
-    client_email: lead?.email ?? null,
-    client_whatsapp: lead?.whatsapp ?? null,
-    client_company: lead?.company ?? lead?.business_name ?? null,
+    client_name: contactName,
+    client_email: customerEmail(lead?.email),
+    client_whatsapp: customerWhatsapp(lead?.whatsapp),
+    client_company: businessName,
     package: proposal.recommended_package,
     items,
     optional_items: optionalItems,
@@ -118,6 +124,7 @@ export async function createInvoiceFromProposal(
     provider: "manual_transfer",
     created_by: userId,
   };
+
 
   const { data, error } = await supabase
     .from("invoices")
