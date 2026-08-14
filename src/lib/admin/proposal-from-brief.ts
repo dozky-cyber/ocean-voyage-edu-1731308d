@@ -101,7 +101,11 @@ export function coreFeaturesFromBrief(
         ctx: industry,
         stage,
       });
-      description = voice?.impact?.trim() || consultant.fn;
+      // CLOSING QUALITY: deskripsi menjual hasil bisnis dengan bahasa industri
+      // customer (alur kerja nyata), bukan kalimat fitur generik.
+      const flow = voice?.reason?.trim() ?? "";
+      const outcome = voice?.impact?.trim() || consultant.benefit || consultant.fn;
+      description = flow ? `${outcome} ${flow}`.replace(/\s+/g, " ").trim() : outcome;
     } else if (master) {
       description = master.description;
     } else {
@@ -153,10 +157,72 @@ export function enhancementsFromBrief(insight: BriefInsight): EnhancementItem[] 
     phase: item.phase,
   }));
 
-  return [...consultantCore, ...optional].map((item, index) => ({
+  return dedupeEnhancements([...consultantCore, ...optional]).map((item, index) => ({
     ...item,
     priority: index + 1,
   }));
+}
+
+/** Kata isi (tanpa kata umum) untuk mengukur kemiripan manfaat antar fitur. */
+const STOP_WORDS = new Set([
+  "yang","untuk","dan","dengan","pada","dari","agar","bisa","dapat","tidak","ini","itu","ke","di",
+  "customer","client","pelanggan","bisnis","usaha","sistem","fitur","setiap","saat","tanpa","lebih",
+  "sudah","masih","akan","oleh","dalam","atau","juga","semua","satu","secara","harus",
+]);
+
+function contentWords(text: string) {
+  return new Set(
+    normalize(text)
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !STOP_WORDS.has(w)),
+  );
+}
+
+function benefitOverlap(a: string, b: string) {
+  const left = contentWords(a);
+  const right = contentWords(b);
+  if (!left.size || !right.size) return 0;
+  let shared = 0;
+  left.forEach((word) => {
+    if (right.has(word)) shared += 1;
+  });
+  return shared / Math.min(left.size, right.size);
+}
+
+/**
+ * ANTI-OVERLAP: dua rekomendasi dengan manfaat yang pada dasarnya sama
+ * (mis. Riwayat Project vs Database Customer bila kalimatnya bertabrakan)
+ * membingungkan customer. Yang berprioritas lebih tinggi dipertahankan.
+ */
+export function dedupeEnhancements(items: EnhancementItem[]): EnhancementItem[] {
+  const kept: EnhancementItem[] = [];
+  for (const item of items) {
+    const key = normalize(item.name);
+    const libId = consultantFeatureByText(item.name)?.id ?? null;
+    const words = new Set(key.split(" "));
+    const clash = kept.find((other) => {
+      const otherKey = normalize(other.name);
+      if (otherKey === key) return true;
+      // Nama yang saling memuat (mis. "Riwayat Project" vs "Riwayat Project
+      // Customer") adalah fitur yang sama di mata customer.
+      const otherWords = new Set(otherKey.split(" "));
+      const smaller = words.size <= otherWords.size ? words : otherWords;
+      const larger = smaller === words ? otherWords : words;
+      let shared = 0;
+      smaller.forEach((w) => {
+        if (larger.has(w)) shared += 1;
+      });
+      if (smaller.size && shared === smaller.size) return true;
+      const otherId = consultantFeatureByText(other.name)?.id ?? null;
+      if (libId && otherId && libId === otherId) return true;
+      const textA = `${item.benefit} ${item.reason ?? ""} ${item.impact ?? ""}`;
+      const textB = `${other.benefit} ${other.reason ?? ""} ${other.impact ?? ""}`;
+      return benefitOverlap(textA, textB) >= 0.7;
+    });
+    if (!clash) kept.push(item);
+  }
+  return kept;
 }
 
 /* -------------------------------------------------------------------------
@@ -208,6 +274,26 @@ export function budgetCeiling(text: string | null | undefined): number | null {
   return Math.round(max);
 }
 
+/** Nama fitur yang saling memuat dianggap satu item oleh customer. */
+function dedupeNames(names: string[]): string[] {
+  const kept: string[] = [];
+  for (const name of names) {
+    const words = new Set(normalize(name).split(" "));
+    const clash = kept.some((other) => {
+      const otherWords = new Set(normalize(other).split(" "));
+      const smaller = words.size <= otherWords.size ? words : otherWords;
+      const larger = smaller === words ? otherWords : words;
+      let shared = 0;
+      smaller.forEach((w) => {
+        if (larger.has(w)) shared += 1;
+      });
+      return smaller.size > 0 && shared === smaller.size;
+    });
+    if (!clash) kept.push(name);
+  }
+  return kept;
+}
+
 /** Budget Alignment — bahasa konsultatif, bukan penawaran ulang. */
 export function budgetAlignmentFromBrief(
   brief: OrderBriefData,
@@ -236,7 +322,41 @@ export function budgetAlignmentFromBrief(
       ? "Rekomendasi pengembangan tidak harus diambil sekaligus. Tahap 1 dapat menyusul setelah sistem utama berjalan, dan Tahap 2 dikerjakan ketika kebutuhannya sudah terlihat dari pemakaian sehari-hari."
       : "Pengembangan lanjutan dapat ditambahkan bertahap setelah sistem utama berjalan.",
   );
-  return lines.join(" ");
+
+  const body = [lines.join(" ")];
+
+  // CLOSING: kalau budget customer jauh di bawah angka proposal, jangan hanya
+  // menampilkan total — tunjukkan bahwa solusi bisa dibangun bertahap.
+  const ceiling = budgetCeiling(budget);
+  const gap = Boolean(ceiling && basePrice && basePrice > ceiling * 1.05);
+  if (gap) {
+    const early = insight.included.slice(0, 4);
+    const later = dedupeNames([
+      ...insight.included.slice(4),
+      ...insight.optional.map((item) => item.name),
+    ]).slice(0, 5);
+    body.push("", "REKOMENDASI IMPLEMENTASI BERTAHAP");
+    if (early.length) {
+      body.push(
+        "",
+        "Tahap Awal — fitur paling penting untuk menyelesaikan masalah utama:",
+        ...early.map((name) => `- ${name}`),
+      );
+    }
+    if (later.length) {
+      body.push(
+        "",
+        "Tahap Pengembangan — ditambahkan setelah sistem berjalan:",
+        ...later.map((name) => `- ${name}`),
+      );
+    }
+    body.push(
+      "",
+      "Pembagian tahap ini membuat sistem tetap bisa dipakai lebih cepat tanpa membangun ulang saat fitur berikutnya ditambahkan.",
+    );
+  }
+
+  return body.join("\n");
 }
 
 /**
@@ -358,11 +478,12 @@ export function proposalSectionsFromBrief(input: {
     },
     {
       heading: "Next Steps",
+      // Bahasa customer-oriented, tanpa istilah internal.
       body: bullets([
-        `Konfirmasi scope ${insight.packageName} bersama Team KERJAKU`,
-        "Pengecekan kebutuhan final dan prioritas pengerjaan",
-        "Penandatanganan kesepakatan kerja",
-        "Kick-off pengembangan sesuai timeline yang disepakati",
+        "Review proposal dan prioritas fitur",
+        "Finalisasi scope pengerjaan",
+        "Persetujuan penawaran",
+        "Kick-off project",
       ]),
     },
   ];

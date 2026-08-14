@@ -19,6 +19,8 @@ import {
 } from "./order-brief-pdf";
 import { buildPaymentTermsLines, buildTimelineBlock } from "./admin/proposal-logic";
 import {
+  customerEmail,
+  customerWhatsapp,
   proposalFileName,
   type ProposalDocData,
   type ProposalEnhancementItem,
@@ -61,42 +63,71 @@ function header(doc: Doc, data: ProposalDocData) {
   doc.y = top - 28;
 }
 
+/**
+ * CLIENT DATA INTEGRITY: hanya data customer yang valid yang ditampilkan.
+ * Field kosong disembunyikan (tidak ada "-", tidak ada email internal),
+ * dan nama bisnis panjang dibungkus multi-baris tanpa terpotong.
+ */
 function clientCard(doc: Doc, data: ProposalDocData) {
-  const h = 96;
+  const business = (data.clientName ?? "").trim();
+  const person = (data.contactName ?? "").trim();
+  const wa = customerWhatsapp(data.whatsapp) ?? "";
+  const mail = customerEmail(data.email) ?? "";
+
+  const fields: [string, string][] = [];
+  if (business) fields.push(["Nama Bisnis", business]);
+  if (person && person.toLowerCase() !== business.toLowerCase()) fields.push(["Nama Client", person]);
+  if (wa) fields.push(["WhatsApp", wa]);
+  if (mail) fields.push(["Email", mail]);
+  if (!fields.length) return;
+
+  const colW = (CONTENT_W - 32) / 2;
+  const cells = fields.map(([label, value]) => ({
+    label,
+    lines: wrap(value, 9, true, colW - 10),
+  }));
+
+  // Tinggi kartu mengikuti isi, dua kolom per baris.
+  const rowHeights: number[] = [];
+  for (let i = 0; i < cells.length; i += 2) {
+    const left = cells[i];
+    const right = cells[i + 1];
+    const lines = Math.max(left?.lines.length ?? 1, right?.lines.length ?? 1);
+    rowHeights.push(13 + lines * 12 + 8);
+  }
+  const h = 34 + rowHeights.reduce((sum, v) => sum + v, 0);
+
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
   doc.rect(MARGIN, top, 3, h, BRAND);
   doc.text("CLIENT INFORMATION", MARGIN + 16, top + h - 20, 8, true, MUTED);
-  const wa = (data.whatsapp ?? "").trim();
-  const mail = (data.email ?? "").trim();
-  const contactLabel = wa && mail ? "WhatsApp / Email" : wa ? "WhatsApp" : mail ? "Email" : "Kontak Lain";
-  const contactValue = [wa, mail].filter(Boolean).join("  |  ") || "-";
-  const cols: [string, string][] = [
-    ["Client", data.clientName || "-"],
-    ["Kontak", data.contactName || "-"],
-    [contactLabel, contactValue],
-  ];
-  const colW = (CONTENT_W - 32) / 3;
-  cols.forEach(([label, value], index) => {
-    const x = MARGIN + 16 + index * colW;
-    doc.text(label.toUpperCase(), x, top + h - 40, 7, false, MUTED);
-    wrap(value, 9, true, colW - 8)
-      .slice(0, 3)
-      .forEach((row, i) => doc.text(row, x, top + h - 53 - i * 12, 9, true));
-  });
+
+  let y = top + h - 40;
+  for (let i = 0; i < cells.length; i += 2) {
+    const pair = [cells[i], cells[i + 1]];
+    pair.forEach((cell, index) => {
+      if (!cell) return;
+      const x = MARGIN + 16 + index * colW;
+      doc.text(cell.label.toUpperCase(), x, y, 7, false, MUTED);
+      cell.lines.forEach((line, li) => doc.text(line, x, y - 13 - li * 12, 9, true));
+    });
+    y -= rowHeights[i / 2];
+  }
   doc.y = top - 22;
 }
 
 function summaryBox(doc: Doc, data: ProposalDocData) {
   const rows: [string, string][] = [
-    ["Judul Proposal", data.title || "-"],
-    ["Rekomendasi Paket", data.recommendedPackage || "-"],
-    ["Berlaku Sampai", data.validUntil || "-"],
-  ];
+    ["Judul Proposal", (data.title ?? "").trim()],
+    ["Rekomendasi Paket", (data.recommendedPackage ?? "").trim()],
+    ["Berlaku Sampai", (data.validUntil ?? "").trim()],
+  ].filter((row): row is [string, string] => Boolean(row[1]));
+  if (!rows.length) return;
+  // Judul panjang dibungkus penuh — tidak dipotong.
   const wrapped = rows.map(([label, value]) => ({
     label,
-    lines: wrap(value || "-", 10, true, CONTENT_W - 40).slice(0, 2),
+    lines: wrap(value, 10, true, CONTENT_W - 40),
   }));
   const h = 38 + wrapped.reduce((sum, row) => sum + 12 + row.lines.length * 13, 0);
   doc.ensure(h + 12);
@@ -298,7 +329,13 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
   // ANTI-DUPLICATE: deskripsi panjang hanya di Feature Recommendation.
   const optional = (data.enhancements ?? []).map((e) => ({
     item: e.name,
-    detail: e.priority ? `Fase ${e.phase ?? 2} — opsional` : "Opsional",
+    detail: [
+      e.priority ? `Prioritas ${e.priority}` : null,
+      `Fase ${e.phase ?? 2}`,
+      "estimasi harga, belum termasuk total",
+    ]
+      .filter(Boolean)
+      .join("  |  "),
     amount: Number(e.amount) || 0,
   }));
   if (!core.length && !optional.length) return;
@@ -312,16 +349,27 @@ function pricingTable(doc: Doc, data: ProposalDocData) {
     subtotalLine(doc, "Subtotal Core Solution", coreTotal, data.currency);
   }
 
-  let optionalTotal = 0;
+  // SALES RULE: pengembangan opsional adalah rekomendasi, bukan tagihan.
+  // Angkanya tidak pernah dijumlahkan ke Total Investment maupun Invoice.
   if (optional.length) {
-    groupHeader(doc, "Optional Feature");
-    optionalTotal = priceRows(doc, optional, data.currency);
-    subtotalLine(doc, "Subtotal Optional Feature", optionalTotal, data.currency);
+    groupHeader(doc, "Pengembangan Opsional (belum termasuk total)");
+    const optionalTotal = priceRows(doc, optional, data.currency);
+    subtotalLine(doc, "Estimasi Pengembangan Opsional", optionalTotal, data.currency);
+    doc.paragraph(
+      "Item pengembangan opsional hanya masuk tagihan setelah Anda menyetujuinya dan dikonfirmasi ulang oleh tim KERJAKU.",
+      MARGIN,
+      9,
+      false,
+      CONTENT_W,
+      MUTED,
+      13,
+    );
+    doc.y -= 8;
   }
 
   doc.ensure(34);
-  const totalLabel = "TOTAL INVESTMENT";
-  const totalValue = money(coreTotal + optionalTotal, data.currency);
+  const totalLabel = "TOTAL INVESTMENT (SCOPE UTAMA)";
+  const totalValue = money(coreTotal, data.currency);
   const boxTop = doc.y - 30;
   doc.rect(MARGIN, boxTop, CONTENT_W, 30, CARD_BG);
   doc.text(totalLabel, MARGIN + 14, boxTop + 11, 9, true, MUTED);

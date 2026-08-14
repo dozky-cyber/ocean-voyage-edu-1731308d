@@ -45,6 +45,40 @@ export type ProposalDocData = {
   createdAt: string;
 };
 
+/* -------------------------------------------------------------------------
+ * Client contact integrity — only real customer data reaches the document.
+ * ---------------------------------------------------------------------- */
+
+const INTERNAL_EMAIL_DOMAINS = ["kerjaku.space", "leads.kerjaku.space", "localhost", "example.com", "test.com"];
+const GENERATED_EMAIL_PREFIXES = ["ai-", "ai_sess", "ai-sess", "lead-", "lead_", "guest-", "anon-", "noreply", "no-reply", "system-"];
+const PLACEHOLDER_EMAILS = ["-", "n/a", "na", "none", "null", "undefined", "email"];
+
+/**
+ * Returns the customer email only when it is a real address given by the
+ * client. Internal/system/generated/placeholder emails become null so the
+ * document never shows an address the customer does not recognise.
+ */
+export function customerEmail(value: string | null | undefined): string | null {
+  const email = (value ?? "").trim().toLowerCase();
+  if (!email) return null;
+  if (PLACEHOLDER_EMAILS.includes(email)) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return null;
+  const [local, domain] = email.split("@");
+  if (!local || !domain) return null;
+  if (INTERNAL_EMAIL_DOMAINS.some((d) => domain === d || domain.endsWith(`.${d}`))) return null;
+  if (GENERATED_EMAIL_PREFIXES.some((p) => local.startsWith(p))) return null;
+  return email;
+}
+
+/** Digits-only sanity check so "-" or "belum ada" never renders as a phone. */
+export function customerWhatsapp(value: string | null | undefined): string | null {
+  const raw = (value ?? "").trim();
+  if (!raw) return null;
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 8) return null;
+  return raw;
+}
+
 function safeName(value: string) {
   return (
     value
