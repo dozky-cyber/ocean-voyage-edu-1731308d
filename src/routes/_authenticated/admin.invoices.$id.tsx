@@ -655,8 +655,8 @@ function InvoiceDetailPage() {
           <div className="proposal-section sm:text-right">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Project</p>
             <p className="mt-1 text-sm font-medium">{form.project_name || "-"}</p>
-            {form.package && form.package !== form.project_name ? (
-              <p className="text-xs text-muted-foreground">Paket solusi: {form.package}</p>
+            {form.packageName && form.packageName !== form.project_name ? (
+              <p className="text-xs text-muted-foreground">Paket solusi: {form.packageName}</p>
             ) : null}
           </div>
 
