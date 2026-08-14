@@ -117,13 +117,15 @@ function clientCard(doc: Doc, data: ProposalDocData) {
 
 function summaryBox(doc: Doc, data: ProposalDocData) {
   const rows: [string, string][] = [
-    ["Judul Proposal", data.title || "-"],
-    ["Rekomendasi Paket", data.recommendedPackage || "-"],
-    ["Berlaku Sampai", data.validUntil || "-"],
-  ];
+    ["Judul Proposal", (data.title ?? "").trim()],
+    ["Rekomendasi Paket", (data.recommendedPackage ?? "").trim()],
+    ["Berlaku Sampai", (data.validUntil ?? "").trim()],
+  ].filter((row): row is [string, string] => Boolean(row[1]));
+  if (!rows.length) return;
+  // Judul panjang dibungkus penuh — tidak dipotong.
   const wrapped = rows.map(([label, value]) => ({
     label,
-    lines: wrap(value || "-", 10, true, CONTENT_W - 40).slice(0, 2),
+    lines: wrap(value, 10, true, CONTENT_W - 40),
   }));
   const h = 38 + wrapped.reduce((sum, row) => sum + 12 + row.lines.length * 13, 0);
   doc.ensure(h + 12);
