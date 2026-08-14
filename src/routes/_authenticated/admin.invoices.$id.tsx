@@ -40,7 +40,9 @@ import {
   setInstallmentStatusFn,
   setInvoiceStatusFn,
 } from "@/lib/billing.functions";
+import { cleanContactName, customerEmail, customerWhatsapp } from "@/lib/invoice-doc";
 import { prepareInvoiceFile } from "@/lib/invoice.functions";
+
 import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
 
 export const Route = createFileRoute("/_authenticated/admin/invoices/$id")({
@@ -636,15 +638,30 @@ function InvoiceDetailPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <div className="proposal-section">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Bill To</p>
-            <p className="mt-1 text-sm font-medium">{form.client_name || "-"}</p>
-            <p className="text-xs text-muted-foreground">{form.client_company || "-"}</p>
-            <p className="text-xs text-muted-foreground">{form.client_email || "-"}</p>
-            <p className="text-xs text-muted-foreground">{form.client_whatsapp || "-"}</p>
+            <p className="mt-1 text-sm font-medium">
+              {cleanContactName(form.client_name) || "-"}
+            </p>
+            {form.client_company &&
+            form.client_company.toLowerCase() !== form.client_name.toLowerCase() ? (
+              <p className="text-xs text-muted-foreground">{form.client_company}</p>
+            ) : null}
+            {customerEmail(form.client_email) ? (
+              <p className="text-xs text-muted-foreground">{customerEmail(form.client_email)}</p>
+            ) : null}
+            {customerWhatsapp(form.client_whatsapp) ? (
+              <p className="text-xs text-muted-foreground">
+                {customerWhatsapp(form.client_whatsapp)}
+              </p>
+            ) : null}
           </div>
           <div className="proposal-section sm:text-right">
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Project</p>
             <p className="mt-1 text-sm font-medium">{form.project_name || "-"}</p>
+            {form.packageName && form.packageName !== form.project_name ? (
+              <p className="text-xs text-muted-foreground">Paket solusi: {form.packageName}</p>
+            ) : null}
           </div>
+
         </div>
 
         <PrintTable title="Core Solution" items={items} currency={form.currency} />
