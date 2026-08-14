@@ -157,10 +157,60 @@ export function enhancementsFromBrief(insight: BriefInsight): EnhancementItem[] 
     phase: item.phase,
   }));
 
-  return [...consultantCore, ...optional].map((item, index) => ({
+  return dedupeEnhancements([...consultantCore, ...optional]).map((item, index) => ({
     ...item,
     priority: index + 1,
   }));
+}
+
+/** Kata isi (tanpa kata umum) untuk mengukur kemiripan manfaat antar fitur. */
+const STOP_WORDS = new Set([
+  "yang","untuk","dan","dengan","pada","dari","agar","bisa","dapat","tidak","ini","itu","ke","di",
+  "customer","client","pelanggan","bisnis","usaha","sistem","fitur","setiap","saat","tanpa","lebih",
+  "sudah","masih","akan","oleh","dalam","atau","juga","semua","satu","secara","harus",
+]);
+
+function contentWords(text: string) {
+  return new Set(
+    normalize(text)
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !STOP_WORDS.has(w)),
+  );
+}
+
+function benefitOverlap(a: string, b: string) {
+  const left = contentWords(a);
+  const right = contentWords(b);
+  if (!left.size || !right.size) return 0;
+  let shared = 0;
+  left.forEach((word) => {
+    if (right.has(word)) shared += 1;
+  });
+  return shared / Math.min(left.size, right.size);
+}
+
+/**
+ * ANTI-OVERLAP: dua rekomendasi dengan manfaat yang pada dasarnya sama
+ * (mis. Riwayat Project vs Database Customer bila kalimatnya bertabrakan)
+ * membingungkan customer. Yang berprioritas lebih tinggi dipertahankan.
+ */
+export function dedupeEnhancements(items: EnhancementItem[]): EnhancementItem[] {
+  const kept: EnhancementItem[] = [];
+  for (const item of items) {
+    const key = normalize(item.name);
+    const libId = consultantFeatureByText(item.name)?.id ?? null;
+    const clash = kept.find((other) => {
+      if (normalize(other.name) === key) return true;
+      const otherId = consultantFeatureByText(other.name)?.id ?? null;
+      if (libId && otherId && libId === otherId) return true;
+      const textA = `${item.benefit} ${item.reason ?? ""} ${item.impact ?? ""}`;
+      const textB = `${other.benefit} ${other.reason ?? ""} ${other.impact ?? ""}`;
+      return benefitOverlap(textA, textB) >= 0.7;
+    });
+    if (!clash) kept.push(item);
+  }
+  return kept;
 }
 
 /* -------------------------------------------------------------------------
