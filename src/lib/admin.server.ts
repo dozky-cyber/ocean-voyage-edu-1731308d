@@ -461,8 +461,8 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       title: `KERJAKU Digital Solution Proposal — ${lead.business_name || lead.company || lead.name}`,
       status: "Draft",
       recommended_package: packageName,
-      content: buildProposalSections(lead),
-      pricing_items: buildPricingItems(lead),
+      content: sections,
+      pricing_items: pricingItems,
       enhancements,
       core_features: coreFeatures,
       payment_type: "full",
@@ -474,7 +474,7 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       valid_until: validUntil.toISOString().slice(0, 10),
       version: 1,
       client_name: lead.business_name || lead.company || lead.name,
-      investment_note: brief.investment,
+      investment_note: investmentNote,
       created_by: userId,
     })
     .select("id")

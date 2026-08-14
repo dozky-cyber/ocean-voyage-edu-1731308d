@@ -13,13 +13,16 @@
 
 import type { OrderBriefData } from "@/lib/order-brief";
 import { buildBriefInsight, resolveAdminNeeds, type BriefInsight } from "@/lib/order-brief-insight";
-import { CONSULTANT_LIBRARY, type ConsultantFeature } from "./consultant-library";
-import { matchLibraryFeature } from "./feature-library";
+import {
+  CONSULTANT_LIBRARY,
+  detectBusinessMaturity,
+  type ConsultantFeature,
+} from "./consultant-library";
+import { matchLibraryFeature, resolvePackage } from "./feature-library";
 import {
   describeFeatureForIndustry,
   detectIndustryContext,
 } from "./industry-context";
-import { detectBusinessMaturity } from "./consultant-library";
 import type { CoreFeatureItem, EnhancementItem } from "./proposal-logic";
 import type { ProposalSection, PricingItem } from "./sales-ai";
 
@@ -275,10 +278,12 @@ export function proposalSectionsFromBrief(input: {
 export function buildProposalFromBrief(input: {
   brief: OrderBriefData;
   contactName: string;
-  basePrice: number;
+  /** Harga dasar indikatif; default = harga package hasil Order Brief. */
+  basePrice?: number;
   createdAt?: string;
 }) {
   const insight = buildBriefInsight(input.brief);
+  const basePrice = input.basePrice ?? resolvePackage(insight.packageName).basePrice;
   return {
     insight,
     packageName: insight.packageName,
@@ -290,7 +295,7 @@ export function buildProposalFromBrief(input: {
     }),
     coreFeatures: coreFeaturesFromBrief(input.brief, insight),
     enhancements: enhancementsFromBrief(insight),
-    pricing: pricingFromBrief(insight, input.basePrice),
+    pricing: pricingFromBrief(insight, basePrice),
     investmentNote: investmentNoteFromBrief(input.brief, insight),
   };
 }
