@@ -210,7 +210,7 @@ export function proposalSectionsFromBrief(input: {
   if (brief.timeline?.trim()) requirement.push(`Target waktu: ${brief.timeline.trim()}`);
   if (brief.budget?.trim()) requirement.push(`Range budget: ${brief.budget.trim()}`);
 
-  const mapLines = insight.problemMap.map((row) => `${row.problem} → ${row.solution}`);
+  const mapLines = insight.problemMap.map((row) => `${row.problem} -> ${row.solution}`);
 
   const recommended = [
     `KERJAKU merekomendasikan ${insight.packageName} sebagai solusi utama (Core Solution) untuk ${client}.`,

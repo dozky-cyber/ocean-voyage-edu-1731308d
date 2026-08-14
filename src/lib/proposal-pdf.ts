@@ -333,12 +333,14 @@ function paymentTerms(doc: Doc, data: ProposalDocData) {
 
 function footer(doc: Doc, clientName: string) {
   const pages = [...doc.pages, doc.ops].filter((ops) => ops.length);
-  const escName = proposalFileName(clientName);
+  const full = proposalFileName(clientName);
+  // Nama file panjang dipangkas agar tidak menabrak nomor halaman.
+  const escName = full.length > 46 ? `${full.slice(0, 43)}...` : full;
   pages.forEach((ops, index) => {
     ops.push(`${LINE} RG 0.7 w ${MARGIN} ${MARGIN + 24} m ${PAGE_W - MARGIN} ${MARGIN + 24} l S`);
     ops.push(
       `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${MARGIN} ${MARGIN + 10} Tm (${escName}) Tj ET`,
-      `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${PAGE_W / 2 - 40} ${MARGIN + 10} Tm (Halaman ${index + 1} dari ${pages.length}) Tj ET`,
+      `BT ${MUTED} rg /F1 8 Tf 1 0 0 1 ${PAGE_W - MARGIN - 190} ${MARGIN + 10} Tm (Halaman ${index + 1} dari ${pages.length}) Tj ET`,
       `BT ${BRAND} rg /F2 8 Tf 1 0 0 1 ${PAGE_W - MARGIN - 62} ${MARGIN + 10} Tm (KERJAKU.SPACE) Tj ET`,
     );
   });
