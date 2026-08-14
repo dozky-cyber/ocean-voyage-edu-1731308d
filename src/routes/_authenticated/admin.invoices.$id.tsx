@@ -40,7 +40,9 @@ import {
   setInstallmentStatusFn,
   setInvoiceStatusFn,
 } from "@/lib/billing.functions";
+import { cleanContactName, customerEmail, customerWhatsapp } from "@/lib/invoice-doc";
 import { prepareInvoiceFile } from "@/lib/invoice.functions";
+
 import { normalizeWhatsapp, waLink } from "@/lib/order-brief";
 
 export const Route = createFileRoute("/_authenticated/admin/invoices/$id")({
