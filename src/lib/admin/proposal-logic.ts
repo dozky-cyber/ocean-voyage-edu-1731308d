@@ -63,7 +63,12 @@ export function enhancementsTotal(items: EnhancementItem[]): number {
  * Core Solution feature list (stored on the proposal, editable by admin)
  * ---------------------------------------------------------------------- */
 
-export type CoreFeatureItem = { name: string; description: string };
+export type CoreFeatureItem = {
+  name: string;
+  description: string;
+  /** Business problem yang dijawab fitur ini (mirror Order Brief). */
+  solves?: string | null;
+};
 
 export function parseCoreFeatures(value: unknown): CoreFeatureItem[] {
   if (!Array.isArray(value)) return [];
@@ -73,6 +78,7 @@ export function parseCoreFeatures(value: unknown): CoreFeatureItem[] {
           {
             name: String((row as { name?: unknown }).name ?? ""),
             description: String((row as { description?: unknown }).description ?? ""),
+            solves: optionalText((row as { solves?: unknown }).solves),
           },
         ]
       : [],

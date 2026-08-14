@@ -57,6 +57,7 @@ async function loadProposalDoc(
     currency: String(proposal.currency ?? "IDR"),
     validUntil: (proposal.valid_until as string) ?? null,
     investmentNote: (proposal.investment_note as string) ?? null,
+    budgetAlignment: (proposal.budget_alignment as string) ?? null,
     paymentType: (proposal.payment_type as "full" | "termin") ?? "full",
     paymentDpPercent: (proposal.payment_dp_percent as number) ?? null,
     paymentTermsText: (proposal.payment_terms_text as string) ?? null,
@@ -68,6 +69,7 @@ async function loadProposalDoc(
       ? (proposal.core_features as unknown[]).map((row) => ({
           name: String((row as { name?: unknown })?.name ?? ""),
           description: String((row as { description?: unknown })?.description ?? ""),
+          solves: ((row as { solves?: unknown })?.solves as string) ?? null,
         }))
       : [],
     enhancements: Array.isArray(proposal.enhancements)
@@ -76,6 +78,11 @@ async function loadProposalDoc(
           benefit: String((row as { benefit?: unknown })?.benefit ?? ""),
           amount: Number((row as { amount?: unknown })?.amount ?? 0) || 0,
           recommended: Boolean((row as { recommended?: unknown })?.recommended),
+          reason: ((row as { reason?: unknown })?.reason as string) ?? null,
+          impact: ((row as { impact?: unknown })?.impact as string) ?? null,
+          relation: ((row as { relation?: unknown })?.relation as string) ?? null,
+          priority: Number((row as { priority?: unknown })?.priority) || null,
+          phase: ((row as { phase?: unknown })?.phase === 1 ? 1 : (row as { phase?: unknown })?.phase === 2 ? 2 : null) as 1 | 2 | null,
         }))
       : [],
     createdAt: String(proposal.created_at ?? new Date().toISOString()),

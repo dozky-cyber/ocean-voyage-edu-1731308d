@@ -17,7 +17,7 @@ export type ProposalEnhancementItem = {
   phase?: 1 | 2 | null;
 };
 
-export type ProposalCoreFeature = { name: string; description: string };
+export type ProposalCoreFeature = { name: string; description: string; solves?: string | null };
 
 export type ProposalDocData = {
   title: string;
@@ -30,6 +30,8 @@ export type ProposalDocData = {
   currency: string;
   validUntil: string | null;
   investmentNote: string | null;
+  /** Bahasa konsultatif soal prioritas scope vs budget. */
+  budgetAlignment?: string | null;
   /** Payment agreement only — the Invoice system does the actual math. */
   paymentType: "full" | "termin";
   paymentDpPercent?: number | null;
