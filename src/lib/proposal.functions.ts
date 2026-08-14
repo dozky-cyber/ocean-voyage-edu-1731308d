@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { ProposalDocData } from "@/lib/proposal-doc";
+import { customerEmail, customerWhatsapp, type ProposalDocData } from "@/lib/proposal-doc";
 
 const idSchema = z.object({ id: z.string().uuid() });
 
