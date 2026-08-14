@@ -446,11 +446,12 @@ export function proposalSectionsFromBrief(input: {
     },
     {
       heading: "Next Steps",
+      // Bahasa customer-oriented, tanpa istilah internal.
       body: bullets([
-        `Konfirmasi scope ${insight.packageName} bersama Team KERJAKU`,
-        "Pengecekan kebutuhan final dan prioritas pengerjaan",
-        "Penandatanganan kesepakatan kerja",
-        "Kick-off pengembangan sesuai timeline yang disepakati",
+        "Review proposal dan prioritas fitur",
+        "Finalisasi scope pengerjaan",
+        "Persetujuan penawaran",
+        "Kick-off project",
       ]),
     },
   ];
