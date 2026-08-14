@@ -190,6 +190,13 @@ export type TimelineBlock = { heading: string; lines: string[] };
  * Admin left "KERJAKU estimated timeline" empty -> show only the Order Brief
  * timeline. Filled -> show the KERJAKU estimate paragraph + production deadline.
  */
+export const TIMELINE_STAGES: { name: string; detail: string }[] = [
+  { name: "Analisa & Perencanaan", detail: "Konfirmasi scope, alur bisnis, dan struktur data bersama client." },
+  { name: "Development", detail: "Pengerjaan fitur Core Solution sesuai Final Order Brief." },
+  { name: "Testing & Revisi", detail: "Uji coba alur, perbaikan temuan, dan penyesuaian sebelum rilis." },
+  { name: "Handover & Pendampingan", detail: "Serah terima sistem, panduan pemakaian, dan pendampingan awal." },
+];
+
 export function buildTimelineBlock(input: {
   briefTimeline?: string | null;
   estimatedTimeline?: string | null;
@@ -198,18 +205,28 @@ export function buildTimelineBlock(input: {
   const estimated = (input.estimatedTimeline ?? "").trim();
   const brief = (input.briefTimeline ?? "").trim();
 
-  if (!estimated) {
-    if (!brief) return null;
-    return { heading: "PROJECT TIMELINE", lines: [brief] };
+  const lines: string[] = [];
+  if (estimated) {
+    lines.push(
+      `Estimasi pengerjaan KERJAKU sekitar ${estimated} karena menyesuaikan antrean project aktif. Project dapat selesai lebih cepat apabila kapasitas tersedia.`,
+    );
+  } else if (brief) {
+    lines.push(`Target waktu yang disampaikan pada Order Brief: ${brief}.`);
+  } else {
+    lines.push("Durasi final dikonfirmasi setelah scope disepakati bersama.");
   }
 
-  const lines = [
-    `Estimasi pengerjaan KERJAKU sekitar ${estimated} karena menyesuaikan antrean project aktif. Project dapat selesai lebih cepat apabila kapasitas tersedia.`,
-  ];
-  const deadline = computeDeadline(input.createdAt, estimated);
+  lines.push("", "Tahapan pengerjaan:");
+  TIMELINE_STAGES.forEach((stage, index) => {
+    lines.push(`- Tahap ${index + 1} — ${stage.name}: ${stage.detail}`);
+  });
+
+  if (estimated && brief) lines.push("", `Target waktu pada Order Brief: ${brief}.`);
+  const deadline = estimated ? computeDeadline(input.createdAt, estimated) : null;
   if (deadline) lines.push("", "Deadline Produksi:", deadline);
   return { heading: "PROJECT TIMELINE", lines };
 }
+
 
 /* -------------------------------------------------------------------------
  * Feature Recommendation (AI business analysis, master library only)
