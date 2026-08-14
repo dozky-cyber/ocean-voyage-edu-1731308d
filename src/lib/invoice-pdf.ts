@@ -36,7 +36,7 @@ function header(doc: Doc, data: InvoiceDocData) {
   doc.rect(MARGIN, top + h - 52, 26, 26, BRAND);
   doc.text("K", MARGIN + 8, top + h - 45, 16, true, "1 1 1");
   doc.text("KERJAKU", MARGIN + 38, top + h - 44, 22, true, "1 1 1");
-  doc.text("BUSINESS SYSTEM CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
+  doc.text("TEAM KERJAKU CONSULTANT", MARGIN + 38, top + h - 60, 8, false, "0.62 0.86 0.87");
   doc.text("INVOICE", MARGIN, top + 26, 11, true, "0.85 0.92 0.94");
   const right = data.number;
   doc.text(right, PAGE_W - MARGIN - textWidth(right, 11, true), top + 25, 11, true, "0.62 0.86 0.87");
@@ -44,7 +44,7 @@ function header(doc: Doc, data: InvoiceDocData) {
 }
 
 function metaCard(doc: Doc, data: InvoiceDocData) {
-  const h = 62;
+  const h = data.proposalRef ? 82 : 62;
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
@@ -62,32 +62,37 @@ function metaCard(doc: Doc, data: InvoiceDocData) {
     const line = wrap(value || "-", 9.5, true, colW - 10)[0] ?? "-";
     doc.text(line, x, top + h - 38, 9.5, true);
   });
+  if (data.proposalRef) {
+    doc.text("REFERENSI DOKUMEN", MARGIN + 16, top + h - 58, 7, false, MUTED);
+    const ref = wrap(data.proposalRef, 9, false, CONTENT_W - 32)[0] ?? "";
+    doc.text(ref, MARGIN + 16, top + h - 71, 9, false, INK);
+  }
   doc.y = top - 22;
 }
 
 function billTo(doc: Doc, data: InvoiceDocData) {
-  const h = 92;
+  // Hanya field yang benar-benar terisi yang ditampilkan (tanpa "-",
+  // tanpa email/WhatsApp internal sistem).
+  const rows: [string, string][] = [["Client Name", data.clientName]];
+  if (data.businessName) rows.push(["Business Name", data.businessName]);
+  if (data.email) rows.push(["Email", data.email]);
+  if (data.whatsapp) rows.push(["WhatsApp", data.whatsapp]);
+
+  const perColumn = Math.ceil(rows.length / 2);
+  const h = 34 + perColumn * 28;
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, "0.94 0.98 0.98");
   doc.text("BILL TO", MARGIN + 16, top + h - 18, 8, true, BRAND);
-  const left: [string, string][] = [
-    ["Client Name", data.clientName || "-"],
-    ["Business Name", data.businessName || "-"],
-  ];
-  const right: [string, string][] = [
-    ["Email", data.email || "-"],
-    ["WhatsApp", data.whatsapp || "-"],
-  ];
   const colW = (CONTENT_W - 32) / 2;
-  [left, right].forEach((col, colIndex) => {
-    col.forEach(([label, value], rowIndex) => {
-      const x = MARGIN + 16 + colIndex * colW;
-      const y = top + h - 38 - rowIndex * 28;
-      doc.text(label.toUpperCase(), x, y, 7, false, MUTED);
-      const line = wrap(value, 9.5, true, colW - 14)[0] ?? "-";
-      doc.text(line, x, y - 13, 9.5, true);
-    });
+  rows.forEach(([label, value], index) => {
+    const colIndex = Math.floor(index / perColumn);
+    const rowIndex = index % perColumn;
+    const x = MARGIN + 16 + colIndex * colW;
+    const y = top + h - 38 - rowIndex * 28;
+    doc.text(label.toUpperCase(), x, y, 7, false, MUTED);
+    const line = wrap(value, 9.5, true, colW - 14)[0] ?? "";
+    doc.text(line, x, y - 13, 9.5, true);
   });
   doc.y = top - 22;
 }
@@ -104,8 +109,14 @@ function projectBlock(doc: Doc, data: InvoiceDocData) {
   sectionTitle(doc, "Project");
   doc.ensure(24);
   doc.text(data.projectName || "-", MARGIN, doc.y, 11, true, INK);
-  doc.y -= 26;
+  doc.y -= 14;
+  if (data.packageName && data.packageName !== data.projectName) {
+    doc.text(`Paket solusi: ${data.packageName}`, MARGIN, doc.y, 9, false, MUTED);
+    doc.y -= 14;
+  }
+  doc.y -= 12;
 }
+
 
 function groupHeader(doc: Doc, label: string) {
   doc.ensure(34);
