@@ -61,30 +61,57 @@ function header(doc: Doc, data: ProposalDocData) {
   doc.y = top - 28;
 }
 
+/**
+ * CLIENT DATA INTEGRITY: hanya data customer yang valid yang ditampilkan.
+ * Field kosong disembunyikan (tidak ada "-", tidak ada email internal),
+ * dan nama bisnis panjang dibungkus multi-baris tanpa terpotong.
+ */
 function clientCard(doc: Doc, data: ProposalDocData) {
-  const h = 96;
+  const business = (data.clientName ?? "").trim();
+  const person = (data.contactName ?? "").trim();
+  const wa = (data.whatsapp ?? "").trim();
+  const mail = (data.email ?? "").trim();
+
+  const fields: [string, string][] = [];
+  if (business) fields.push(["Nama Bisnis", business]);
+  if (person && person.toLowerCase() !== business.toLowerCase()) fields.push(["Nama Client", person]);
+  if (wa) fields.push(["WhatsApp", wa]);
+  if (mail) fields.push(["Email", mail]);
+  if (!fields.length) return;
+
+  const colW = (CONTENT_W - 32) / 2;
+  const cells = fields.map(([label, value]) => ({
+    label,
+    lines: wrap(value, 9, true, colW - 10),
+  }));
+
+  // Tinggi kartu mengikuti isi, dua kolom per baris.
+  const rowHeights: number[] = [];
+  for (let i = 0; i < cells.length; i += 2) {
+    const left = cells[i];
+    const right = cells[i + 1];
+    const lines = Math.max(left?.lines.length ?? 1, right?.lines.length ?? 1);
+    rowHeights.push(13 + lines * 12 + 8);
+  }
+  const h = 34 + rowHeights.reduce((sum, v) => sum + v, 0);
+
   doc.ensure(h + 12);
   const top = doc.y - h;
   doc.rect(MARGIN, top, CONTENT_W, h, CARD_BG);
   doc.rect(MARGIN, top, 3, h, BRAND);
   doc.text("CLIENT INFORMATION", MARGIN + 16, top + h - 20, 8, true, MUTED);
-  const wa = (data.whatsapp ?? "").trim();
-  const mail = (data.email ?? "").trim();
-  const contactLabel = wa && mail ? "WhatsApp / Email" : wa ? "WhatsApp" : mail ? "Email" : "Kontak Lain";
-  const contactValue = [wa, mail].filter(Boolean).join("  |  ") || "-";
-  const cols: [string, string][] = [
-    ["Client", data.clientName || "-"],
-    ["Kontak", data.contactName || "-"],
-    [contactLabel, contactValue],
-  ];
-  const colW = (CONTENT_W - 32) / 3;
-  cols.forEach(([label, value], index) => {
-    const x = MARGIN + 16 + index * colW;
-    doc.text(label.toUpperCase(), x, top + h - 40, 7, false, MUTED);
-    wrap(value, 9, true, colW - 8)
-      .slice(0, 3)
-      .forEach((row, i) => doc.text(row, x, top + h - 53 - i * 12, 9, true));
-  });
+
+  let y = top + h - 40;
+  for (let i = 0; i < cells.length; i += 2) {
+    const pair = [cells[i], cells[i + 1]];
+    pair.forEach((cell, index) => {
+      if (!cell) return;
+      const x = MARGIN + 16 + index * colW;
+      doc.text(cell.label.toUpperCase(), x, y, 7, false, MUTED);
+      cell.lines.forEach((line, li) => doc.text(line, x, y - 13 - li * 12, 9, true));
+    });
+    y -= rowHeights[i / 2];
+  }
   doc.y = top - 22;
 }
 
