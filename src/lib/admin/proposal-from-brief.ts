@@ -224,6 +224,7 @@ export function proposalSectionsFromBrief(input: {
   insight: BriefInsight;
   contactName: string;
   createdAt?: string;
+  basePrice?: number;
 }): ProposalSection[] {
   const { brief, insight } = input;
   const client = brief.business?.trim() || input.contactName || "Klien";
@@ -247,7 +248,23 @@ export function proposalSectionsFromBrief(input: {
   if (brief.timeline?.trim()) requirement.push(`Target waktu: ${brief.timeline.trim()}`);
   if (brief.budget?.trim()) requirement.push(`Range budget: ${brief.budget.trim()}`);
 
-  const mapLines = insight.problemMap.map((row) => `${row.problem} -> ${row.solution}`);
+  // GUARD SALES: solusi yang ditampilkan hanya boleh menyebut fitur yang benar
+  // benar ada di dokumen ini (scope utama atau rekomendasi pengembangan).
+  // Tanpa guard ini customer bisa membaca nama fitur yang tidak pernah muncul
+  // di halaman manapun — terlihat seperti fitur yang muncul tiba-tiba.
+  const scopeNames = new Set(insight.included.map((n) => normalize(n)));
+  const optionNames = new Map(insight.optional.map((o) => [normalize(o.name), o.name] as const));
+  const mapLines = insight.problemMap.map((row) => {
+    const key = normalize(row.solution);
+    if (scopeNames.has(key)) return `${row.problem} -> ${row.solution} (termasuk scope utama)`;
+    const parts = row.solution.split(" + ").map((p) => p.trim());
+    if (parts.length > 1 && parts.every((p) => scopeNames.has(normalize(p)))) {
+      return `${row.problem} -> ${row.solution} (termasuk scope utama)`;
+    }
+    const option = optionNames.get(key);
+    if (option) return `${row.problem} -> ${option} (rekomendasi pengembangan, di luar scope utama)`;
+    return `${row.problem} -> Dibahas bersama Anda sebelum pengerjaan dimulai`;
+  });
 
   const recommended = [
     `KERJAKU merekomendasikan ${insight.packageName} sebagai solusi utama (Core Solution) untuk ${client}.`,
@@ -310,7 +327,7 @@ export function proposalSectionsFromBrief(input: {
       : []),
     {
       heading: "Budget Alignment",
-      body: budgetAlignmentFromBrief(brief, insight),
+      body: budgetAlignmentFromBrief(brief, insight, input.basePrice),
     },
     {
       heading: "Next Steps",
@@ -342,6 +359,7 @@ export function buildProposalFromBrief(input: {
       insight,
       contactName: input.contactName,
       createdAt: input.createdAt,
+      basePrice,
     }),
     coreFeatures: coreFeaturesFromBrief(input.brief, insight),
     enhancements: enhancementsFromBrief(insight),
