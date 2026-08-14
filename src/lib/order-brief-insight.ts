@@ -87,6 +87,10 @@ export type ConsultantOption = {
 export const CONSULTANT_OPTION_NOTE =
   "Rekomendasi ini merupakan opsi pengembangan, bukan keharusan. Package pada Order Brief tetap mengikuti kebutuhan yang customer sampaikan. Opsi ini dapat dipertimbangkan apabila bisnis ingin berkembang atau jika membutuhkan pengelolaan yang lebih lanjut di kemudian hari.";
 
+/** Kalimat customer-facing bila masalah belum tercakup scope utama. */
+export const OPEN_PROBLEM_SOLUTION =
+  "Belum termasuk scope utama — akan dibahas bersama Anda sebelum pengerjaan dimulai";
+
 export type ProblemMapRow = {
   problem: string;
   solution: string;
