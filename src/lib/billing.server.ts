@@ -85,14 +85,11 @@ export async function createInvoiceFromProposal(
   if (leadError) throw new Error(leadError.message);
 
   const items: PricingItem[] = parsePricingItems(proposal.pricing_items);
-  const optionalItems: PricingItem[] = Array.isArray(proposal.enhancements)
-    ? (proposal.enhancements as unknown[]).map((row) => ({
-        item: String((row as { name?: unknown })?.name ?? ""),
-        detail: String((row as { benefit?: unknown })?.benefit ?? ""),
-        amount: Number((row as { amount?: unknown })?.amount ?? 0) || 0,
-      }))
-    : [];
-  const total = invoiceTotal(items) + invoiceTotal(optionalItems);
+  // SALES RULE: rekomendasi pengembangan pada proposal BUKAN item yang sudah
+  // disetujui customer. Invoice dibuat dari scope utama saja; admin menambahkan
+  // item opsional hanya setelah customer benar-benar menyetujuinya.
+  const optionalItems: PricingItem[] = [];
+  const total = invoiceTotal(items);
   const projectName =
     (proposal.recommended_package as string) ??
     lead?.project_type ??

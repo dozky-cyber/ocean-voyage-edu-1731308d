@@ -47,6 +47,11 @@ export const PROBLEM_RULES: ProblemRule[] = [
       "pencatatan order",
       "data order",
       "excel manual",
+          "tertukar",
+      "sering kelewat",
+      "kelewat",
+      "tercecer",
+      "hilang catatan",
     ],
     core: ["order-management"],
     growth: ["laporan-penjualan", "riwayat-transaksi"],
@@ -64,6 +69,12 @@ export const PROBLEM_RULES: ProblemRule[] = [
       "tanya status",
       "bertanya terus",
       "sudah selesai belum",
+          "progres",
+      "menanyakan progres",
+      "menanyakan perkembangan",
+      "cek status",
+      "update pengerjaan",
+      "berulang kali",
     ],
     core: ["status-tracking"],
     growth: ["notification"],
@@ -129,6 +140,13 @@ export const PROBLEM_RULES: ProblemRule[] = [
       "data customer",
       "pelanggan tidak tercatat",
       "kehilangan data pelanggan",
+          "riwayat kunjungan",
+      "rekam kunjungan",
+      "catatan pelanggan",
+      "riwayat pelanggan",
+      "riwayat customer",
+      "masih buku",
+      "masih di buku",
     ],
     core: ["database-customer"],
     growth: ["customer-history", "membership"],
@@ -141,9 +159,22 @@ export const PROBLEM_RULES: ProblemRule[] = [
   },
   {
     problem: "Laporan bisnis masih manual",
-    tokens: ["laporan manual", "laporan penjualan", "rekap", "omzet", "pemasukan", "laporan bulanan"],
+    tokens: [
+      "laporan manual",
+      "laporan penjualan",
+      "rekap",
+      "omzet",
+      "pemasukan",
+      "laporan bulanan",
+      "paling laku",
+      "terlaris",
+      "tidak tahu penjualan",
+      "performa penjualan",
+      "produk laku",
+      "menu paling laku",
+    ],
     core: ["laporan-penjualan"],
-    growth: [],
+    growth: ["dashboard-admin"],
   },
   {
     problem: "Jadwal pekerjaan sering bentrok",
@@ -157,13 +188,30 @@ export const PROBLEM_RULES: ProblemRule[] = [
       "jadwal team",
       "jadwal pasien",
       "jadwal servis",
+          "lupa jadwal",
+      "jadwal kontrol",
+      "antrian",
+      "antre",
+      "jadwal kunjungan",
+      "pengingat jadwal",
+      "menumpuk",
     ],
     core: ["schedule-management"],
     growth: ["notification"],
   },
   {
     problem: "Stok barang sulit dikontrol",
-    tokens: ["stok", "persediaan", "gudang", "restock", "kehabisan barang"],
+    tokens: [
+      "stok",
+      "persediaan",
+      "gudang",
+      "restock",
+      "kehabisan barang",
+      "habis mendadak",
+      "selisih stok",
+      "stok selisih",
+      "kehabisan bahan",
+    ],
     core: ["inventory"],
     growth: ["laporan-penjualan"],
   },
@@ -205,8 +253,24 @@ export type ProblemSolutionPlan = {
   growth: Map<string, string | null>;
 };
 
+const tokenCache = new Map<string, RegExp>();
+
+/**
+ * Pencocokan berbasis batas kata agar tidak terjadi false positive
+ * (mis. "menumpuk" tidak boleh dianggap mengandung token "menu").
+ */
+function tokenRegex(token: string) {
+  let re = tokenCache.get(token);
+  if (!re) {
+    const escaped = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+    re = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
+    tokenCache.set(token, re);
+  }
+  return re;
+}
+
 function matches(haystack: string, tokens: string[]) {
-  return tokens.some((token) => token && haystack.includes(token));
+  return tokens.some((token) => token && tokenRegex(token).test(haystack));
 }
 
 /**
