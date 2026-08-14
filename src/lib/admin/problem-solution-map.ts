@@ -159,7 +159,14 @@ export const PROBLEM_RULES: ProblemRule[] = [
   },
   {
     problem: "Laporan bisnis masih manual",
-    tokens: ["laporan manual", "laporan penjualan", "rekap", "omzet", "pemasukan", "laporan bulanan"      "paling laku",
+    tokens: [
+      "laporan manual",
+      "laporan penjualan",
+      "rekap",
+      "omzet",
+      "pemasukan",
+      "laporan bulanan",
+      "paling laku",
       "terlaris",
       "tidak tahu penjualan",
       "performa penjualan",
