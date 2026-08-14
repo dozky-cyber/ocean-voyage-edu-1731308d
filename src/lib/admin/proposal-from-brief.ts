@@ -200,8 +200,20 @@ export function dedupeEnhancements(items: EnhancementItem[]): EnhancementItem[] 
   for (const item of items) {
     const key = normalize(item.name);
     const libId = consultantFeatureByText(item.name)?.id ?? null;
+    const words = new Set(key.split(" "));
     const clash = kept.find((other) => {
-      if (normalize(other.name) === key) return true;
+      const otherKey = normalize(other.name);
+      if (otherKey === key) return true;
+      // Nama yang saling memuat (mis. "Riwayat Project" vs "Riwayat Project
+      // Customer") adalah fitur yang sama di mata customer.
+      const otherWords = new Set(otherKey.split(" "));
+      const smaller = words.size <= otherWords.size ? words : otherWords;
+      const larger = smaller === words ? otherWords : words;
+      let shared = 0;
+      smaller.forEach((w) => {
+        if (larger.has(w)) shared += 1;
+      });
+      if (smaller.size && shared === smaller.size) return true;
       const otherId = consultantFeatureByText(other.name)?.id ?? null;
       if (libId && otherId && libId === otherId) return true;
       const textA = `${item.benefit} ${item.reason ?? ""} ${item.impact ?? ""}`;
