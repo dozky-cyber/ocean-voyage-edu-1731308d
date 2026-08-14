@@ -426,18 +426,13 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
 
   // PROPOSAL MIRROR ENGINE: kalau Final Order Brief ada, seluruh isi proposal
   // diturunkan dari engine yang sama dengan PDF Order Brief (1:1, no re-analysis).
-  const { resolvePackage } = await import("./admin/feature-library");
   const mirror = finalBrief
     ? (await import("./admin/proposal-from-brief")).buildProposalFromBrief({
         brief: finalBrief.brief,
         contactName: lead.name ?? finalBrief.brief.customerName,
-        basePrice: resolvePackage(
-          (await import("./admin/package-decision-sop"), finalBrief.brief.recommendation) ?? null,
-        ).basePrice,
       })
     : null;
   const packageName = mirror?.packageName ?? recommendPackage(lead);
-  const basePrice = resolvePackage(packageName).basePrice;
   const enhancements =
     mirror?.enhancements ??
     buildEnhancements({
@@ -453,9 +448,9 @@ export async function createProposalForLead(supabase: Client, leadId: string, us
       context,
     });
   const sections = mirror?.sections ?? buildProposalSections(lead);
-  const pricingItems = mirror
-    ? mirror.pricing.map((row) => ({ ...row, amount: basePrice }))
-    : buildPricingItems(lead);
+  const pricingItems = mirror?.pricing ?? buildPricingItems(lead);
+  const investmentNote = mirror?.investmentNote ?? brief.investment;
+
 
   const validUntil = new Date();
   validUntil.setDate(validUntil.getDate() + 30);
