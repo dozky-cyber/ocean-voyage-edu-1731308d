@@ -283,8 +283,14 @@ function timelineSection(doc: Doc, data: ProposalDocData) {
     createdAt: data.createdAt,
   });
   if (!block) return;
-  sectionTitle(doc, block.heading);
-  bodyBlock(doc, block.lines.join("\n"));
+  const stagesAt = block.lines.findIndex((line) => line.startsWith("Tahapan pengerjaan"));
+  const head = stagesAt >= 0 ? block.lines.slice(0, stagesAt) : block.lines;
+  const rest = stagesAt >= 0 ? block.lines.slice(stagesAt) : [];
+  doc.keep((d) => {
+    sectionTitle(d, block.heading);
+    if (head.length) bodyBlock(d, head.join("\n"));
+  });
+  if (rest.length) doc.keep((d) => bodyBlock(d, rest.join("\n")));
 }
 
 function pricingTable(doc: Doc, data: ProposalDocData) {
