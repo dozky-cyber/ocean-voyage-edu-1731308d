@@ -130,6 +130,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <JourneyProvider>
+      <ScrollTopOnLoad />
       <SmoothScrollProvider />
       <OceanScene />
       <SiteNav />
