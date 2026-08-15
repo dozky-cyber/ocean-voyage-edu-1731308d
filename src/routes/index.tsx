@@ -6,6 +6,7 @@ import { OceanScene } from "@/components/kerjaku/OceanScene";
 import { SiteNav } from "@/components/kerjaku/SiteNav";
 import { SectionJourneyTracker } from "@/components/kerjaku/SectionJourneyTracker";
 import { SmoothScrollProvider } from "@/components/kerjaku/SmoothScrollProvider";
+import { ScrollTopOnLoad } from "@/components/kerjaku/ScrollTopOnLoad";
 import { HeroStage } from "@/components/kerjaku/stages/HeroStage";
 import { PastelStage } from "@/components/kerjaku/stages/PastelStage";
 import { ShowcaseStage } from "@/components/kerjaku/stages/ShowcaseStage";
