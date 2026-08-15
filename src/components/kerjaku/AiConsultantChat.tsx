@@ -116,9 +116,12 @@ export function AiConsultantChat({ source, onClose, fill = false, compact = fals
     }
   }, [messages]);
 
+  // Only the floating overlay (opened by an explicit user action) may steal focus.
+  // The homepage section must never call focus(), otherwise the browser scrolls to it on load.
   useEffect(() => {
+    if (source !== "floating") return;
     if (!busy) inputRef.current?.focus();
-  }, [busy]);
+  }, [busy, source]);
 
   function send(text: string) {
     const value = text.trim();
