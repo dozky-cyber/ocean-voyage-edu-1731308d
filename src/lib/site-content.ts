@@ -214,7 +214,7 @@ export const projects: Record<ProjectMode, Project[]> = {
       ],
       status: "LIVE",
       icon: "activity",
-      url: "https://memory.kerjaku.space",
+      url: "https://demo-ro-memory.kerjaku.space",
     },
     {
       name: "QResto",
