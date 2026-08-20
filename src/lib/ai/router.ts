@@ -198,3 +198,8 @@ export function createAiModel(feature: AiFeature, model?: string) {
 export function aiPoolSnapshot() {
   return getGeminiPool().snapshot();
 }
+
+/** True when at least one Gemini key or the Lovable fallback is configured. */
+export function isAiConfigured(): boolean {
+  return getGeminiPool().configuredCount > 0 || (lovableFallbackEnabled() && !!lovableApiKey());
+}

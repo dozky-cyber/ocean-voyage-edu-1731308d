@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, stepCountIs, tool, type UIMessage } from "ai";
 import { z } from "zod";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 import {
   qualifyConversation,
   saveDraftConversation,
@@ -412,13 +412,10 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
         if (!messages) return new Response("Bad request", { status: 400 });
         if (messages.length > 60) return new Response("Conversation too long", { status: 400 });
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-
-        const gateway = createLovableAiGatewayProvider(apiKey);
+        if (!isAiConfigured()) return new Response("AI not configured", { status: 500 });
 
         const result = streamText({
-          model: gateway(ASSISTANT_MODEL),
+          model: createAiModel("CHATBOT"),
           system: `${SYSTEM}
 
 KONTEKS WAKTU SISTEM (WIB): ${new Intl.DateTimeFormat("id-ID", {

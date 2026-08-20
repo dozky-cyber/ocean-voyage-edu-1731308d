@@ -6,7 +6,7 @@
  */
 import { generateText } from "ai";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 import { buildBusinessSnapshot, buildMemoryContext } from "@/lib/assistant.server";
 import { escapeHtml, markdownToTelegramHtml, sendTelegramMessage } from "@/lib/telegram.server";
 
@@ -152,9 +152,8 @@ async function buildContext(supabase: AdminClient) {
 }
 
 function model() {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return null;
-  return createLovableAiGatewayProvider(apiKey)(ASSISTANT_MODEL);
+  if (!isAiConfigured()) return null;
+  return createAiModel("DAILY_BRIEF");
 }
 
 const BASE_PERSONA = [

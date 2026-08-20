@@ -9,7 +9,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { generateText } from "ai";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 import { isMemoryCategory } from "@/lib/assistant/memory";
 import {
   appendMessage,
@@ -87,7 +87,7 @@ async function getOrCreateThread(supabase: AdminClient, chatId: string, userId: 
 
 async function extractMemories(
   supabase: AdminClient,
-  model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>,
+  model: ReturnType<typeof createAiModel>,
   input: { question: string; answer: string; threadId: string; userId: string },
 ) {
   try {
@@ -260,9 +260,8 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       return;
     }
 
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) {
-      await sendTelegramMessage("⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).");
+    if (!isAiConfigured()) {
+      await sendTelegramMessage("⚠️ AI belum dikonfigurasi.");
       return;
     }
 
@@ -285,7 +284,7 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       "KANAL SAAT INI: Telegram. Jawab maksimal ~1200 karakter, gunakan bullet pendek, tanpa tabel, tanpa markdown heading.",
     ].join("\n");
 
-    const model = createLovableAiGatewayProvider(apiKey)(ASSISTANT_MODEL);
+    const model = createAiModel("TELEGRAM");
     const { text: answer } = await generateText({
       model,
       system,

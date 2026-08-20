@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, generateText, stepCountIs, type UIMessage } from "ai";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 
 type Body = { messages?: unknown; threadId?: unknown };
 
@@ -43,8 +43,7 @@ export const Route = createFileRoute("/api/assistant-chat")({
           return new Response("Thread not found", { status: 404 });
         }
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
+        if (!isAiConfigured()) return new Response("AI not configured", { status: 500 });
 
         const assistant = await import("@/lib/assistant.server");
         const [memoryContext, businessSnapshot] = await Promise.all([
@@ -73,8 +72,7 @@ export const Route = createFileRoute("/api/assistant-chat")({
             .catch((error: unknown) => console.error("[assistant] save user message", error));
         }
 
-        const gateway = createLovableAiGatewayProvider(apiKey);
-        const model = gateway(ASSISTANT_MODEL);
+        const model = createAiModel("AI_ASSISTANT");
 
         const result = streamText({
           model,
