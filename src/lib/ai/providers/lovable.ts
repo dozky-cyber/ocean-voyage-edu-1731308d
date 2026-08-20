@@ -1,4 +1,6 @@
 /** Lovable AI Gateway adapter — last-resort fallback provider. */
+import { endpointPath } from "./path";
+
 export const LOVABLE_BASE_URL = "https://ai.gateway.lovable.dev/v1";
 
 export function lovableApiKey(): string | null {
