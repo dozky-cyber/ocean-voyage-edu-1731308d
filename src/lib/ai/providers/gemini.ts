@@ -15,6 +15,5 @@ export function geminiRequest(url: string, apiKey: string, headers: Headers) {
   const next = new Headers(headers);
   next.delete("Lovable-API-Key");
   next.set("Authorization", `Bearer ${apiKey}`);
-  const path = new URL(url).pathname.replace(/^.*\/v1(beta)?/, "");
-  return { url: `${GEMINI_BASE_URL}${path || "/chat/completions"}`, headers: next };
+  return { url: `${GEMINI_BASE_URL}${endpointPath(url)}`, headers: next };
 }
