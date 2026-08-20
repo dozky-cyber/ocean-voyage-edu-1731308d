@@ -186,7 +186,7 @@ export async function generateDailyBrief(supabase: AdminClient): Promise<string>
   ].join("\n");
 
   if (!aiModel) {
-    return `${header}⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY), daily brief tidak bisa dibuat.`;
+    return `${header}⚠️ AI belum dikonfigurasi, daily brief tidak bisa dibuat.`;
   }
 
   const { text } = await generateText({
@@ -220,7 +220,7 @@ export async function generateDailyBrief(supabase: AdminClient): Promise<string>
 
 export async function generateTodayFocus(supabase: AdminClient): Promise<string> {
   const aiModel = model();
-  if (!aiModel) return "⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).";
+  if (!aiModel) return "⚠️ AI belum dikonfigurasi.";
   const context = await buildContext(supabase);
   const { text } = await generateText({
     model: aiModel,
@@ -232,7 +232,7 @@ export async function generateTodayFocus(supabase: AdminClient): Promise<string>
 
 export async function generateIdeas(supabase: AdminClient, topic?: string): Promise<string> {
   const aiModel = model();
-  if (!aiModel) return "⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).";
+  if (!aiModel) return "⚠️ AI belum dikonfigurasi.";
   const context = await buildContext(supabase);
   const { text } = await generateText({
     model: aiModel,
@@ -244,7 +244,7 @@ export async function generateIdeas(supabase: AdminClient, topic?: string): Prom
 
 export async function generateDailyReview(supabase: AdminClient): Promise<string> {
   const aiModel = model();
-  if (!aiModel) return "⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).";
+  if (!aiModel) return "⚠️ AI belum dikonfigurasi.";
   const [context, done] = await Promise.all([
     buildContext(supabase),
     listOwnerTasks(supabase, "done"),
