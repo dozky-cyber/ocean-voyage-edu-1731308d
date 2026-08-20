@@ -2,6 +2,8 @@
  * Gemini provider adapter (OpenAI-compatible endpoint).
  * Keys are read server-side only and never leave this module.
  */
+import { endpointPath } from "./path";
+
 export const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai";
 
 /** Maps a gateway model id ("google/gemini-3.6-flash") to a native Gemini model id. */
