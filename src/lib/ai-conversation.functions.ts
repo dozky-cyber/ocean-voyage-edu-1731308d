@@ -46,13 +46,37 @@ export const listAiConversations = createServerFn({ method: "GET" })
 export const setAiConversationStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid(), status: z.enum(["draft", "qualified_lead", "closed"]) }).parse(input),
+    z.object({ 
+      id: z.string().uuid(), 
+      sessionId: z.string().min(1, "Session ID is required"),
+      status: z.enum(["draft", "qualified_lead", "closed"]) 
+    }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    // ✅ FIX: Verify conversation exists with this session_id before updating
+    const { data: conversation, error: readError } = await context.supabase
+      .from("ai_conversations")
+      .select("id")
+      .eq("id", data.id)
+      .eq("session_id", data.sessionId)
+      .maybeSingle();
+    
+    if (readError) {
+      throw new Error("Failed to verify conversation ownership");
+    }
+    
+    if (!conversation) {
+      // ✅ FIX: Return error instead of silently failing (security + debugging)
+      throw new Error("Conversation not found or access denied");
+    }
+
+    // ✅ FIX: Enforce session_id filter in update to prevent cross-session writes
     const { error } = await context.supabase
       .from("ai_conversations")
       .update({ status: data.status })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("session_id", data.sessionId);
+    
     if (error) throw new Error(error.message);
     return { ok: true };
   });
