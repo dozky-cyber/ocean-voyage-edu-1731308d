@@ -9,7 +9,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 import { generateText } from "ai";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 import { isMemoryCategory } from "@/lib/assistant/memory";
 import {
   appendMessage,
@@ -48,9 +48,7 @@ export function isAuthorizedChat(chatId: number | string): boolean {
   return allowed.includes(String(chatId));
 }
 
-type AdminClient = Awaited<
-  typeof import("@/integrations/supabase/client.server")
->["supabaseAdmin"];
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 /** Workspace identity the Telegram conversation acts as (owner, else admin). */
 async function resolveWorkspaceUser(supabase: AdminClient): Promise<string | null> {
@@ -87,7 +85,7 @@ async function getOrCreateThread(supabase: AdminClient, chatId: string, userId: 
 
 async function extractMemories(
   supabase: AdminClient,
-  model: ReturnType<ReturnType<typeof createLovableAiGatewayProvider>>,
+  model: ReturnType<typeof createAiModel>,
   input: { question: string; answer: string; threadId: string; userId: string },
 ) {
   try {
@@ -101,7 +99,12 @@ async function extractMemories(
       prompt: `PERTANYAAN USER:\n${input.question}\n\nJAWABAN ASISTEN:\n${input.answer}`,
     });
     const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()) as {
-      memories?: Array<{ category?: string; title?: string; content?: string; importance?: number }>;
+      memories?: Array<{
+        category?: string;
+        title?: string;
+        content?: string;
+        importance?: number;
+      }>;
     };
     for (const item of (parsed.memories ?? []).slice(0, 3)) {
       if (!item.title || !item.content || !isMemoryCategory(item.category)) continue;
@@ -215,10 +218,10 @@ async function handleCommand(
   }
 }
 
-
 /** Processes one Telegram update end-to-end. Never throws. */
 export async function handleTelegramUpdate(update: unknown): Promise<void> {
-  const message = (update as { message?: unknown; edited_message?: unknown }).message ??
+  const message =
+    (update as { message?: unknown; edited_message?: unknown }).message ??
     (update as { edited_message?: unknown }).edited_message;
   const parsed = message as
     | { chat?: { id?: number }; text?: string; from?: { first_name?: string } }
@@ -260,9 +263,8 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       return;
     }
 
-    const apiKey = process.env["LOVABLE_API_KEY"];
-    if (!apiKey) {
-      await sendTelegramMessage("⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).");
+    if (!isAiConfigured()) {
+      await sendTelegramMessage("⚠️ AI belum dikonfigurasi.");
       return;
     }
 
@@ -272,9 +274,8 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       loadThreadMessages(supabaseAdmin, thread.id),
     ]);
 
-    const { ASSISTANT_ACTION_GUIDE, buildAssistantTools } = await import(
-      "@/lib/assistant-tools.server"
-    );
+    const { ASSISTANT_ACTION_GUIDE, buildAssistantTools } =
+      await import("@/lib/assistant-tools.server");
     const { stepCountIs } = await import("ai");
 
     const system = [
@@ -285,7 +286,7 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       "KANAL SAAT INI: Telegram. Jawab maksimal ~1200 karakter, gunakan bullet pendek, tanpa tabel, tanpa markdown heading.",
     ].join("\n");
 
-    const model = createLovableAiGatewayProvider(apiKey)(ASSISTANT_MODEL);
+    const model = createAiModel("TELEGRAM");
     const { text: answer } = await generateText({
       model,
       system,
@@ -300,10 +301,14 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
       ],
     });
 
-
     const reply = answer.trim() || "Maaf, saya belum bisa menjawab itu.";
 
-    await appendMessage(supabaseAdmin, { threadId: thread.id, role: "user", content: text, userId });
+    await appendMessage(supabaseAdmin, {
+      threadId: thread.id,
+      role: "user",
+      content: text,
+      userId,
+    });
     await appendMessage(supabaseAdmin, {
       threadId: thread.id,
       role: "assistant",
@@ -320,7 +325,9 @@ export async function handleTelegramUpdate(update: unknown): Promise<void> {
     });
   } catch (error) {
     console.error("[telegram-assistant] failed", error);
-    await sendTelegramMessage("⚠️ Terjadi kendala saat memproses pertanyaan. Coba lagi sebentar lagi.");
+    await sendTelegramMessage(
+      "⚠️ Terjadi kendala saat memproses pertanyaan. Coba lagi sebentar lagi.",
+    );
   }
 }
 

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, stepCountIs, tool, type UIMessage } from "ai";
 import { z } from "zod";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 import {
   qualifyConversation,
   saveDraftConversation,
@@ -356,8 +356,6 @@ FINAL BUSINESS LOGIC:
 - Bisnis kecil: prioritaskan solusi sederhana dengan dampak besar. Bisnis besar: baru pertimbangkan
   fitur operasional kompleks.`;
 
-
-
 const qualifySchema = z.object({
   businessCategory: z.string().describe("Jenis/bidang bisnis pengguna"),
   projectType: z.string().describe("Project yang ingin dibuat, contoh: Website Company Profile"),
@@ -382,11 +380,15 @@ const qualifySchema = z.object({
   timeline: z.string().describe("Target waktu, atau 'Belum ditentukan'"),
   users: z
     .string()
-    .describe("Penggunaan sistem: Personal / Team 2-5 user / Multi user (>10), atau 'Belum ditentukan'"),
+    .describe(
+      "Penggunaan sistem: Personal / Team 2-5 user / Multi user (>10), atau 'Belum ditentukan'",
+    ),
   summary: z.string().describe("Ringkasan kebutuhan project dalam 2-4 kalimat"),
   contactName: z.string().describe("Nama jika diberikan sukarela, jika tidak kosongkan"),
   contactEmail: z.string().describe("Email jika diberikan sukarela, jika tidak kosongkan"),
-  contactWhatsapp: z.string().describe("Nomor WhatsApp jika diberikan sukarela, jika tidak kosongkan"),
+  contactWhatsapp: z
+    .string()
+    .describe("Nomor WhatsApp jika diberikan sukarela, jika tidak kosongkan"),
 });
 
 function toTurns(messages: UIMessage[]): ConversationTurn[] {
@@ -407,18 +409,14 @@ export const Route = createFileRoute("/api/public/consultant-chat")({
       POST: async ({ request }) => {
         const body = (await request.json()) as Body;
         const messages = Array.isArray(body.messages) ? (body.messages as UIMessage[]) : null;
-        const sessionId =
-          typeof body.sessionId === "string" ? body.sessionId.slice(0, 64) : "";
+        const sessionId = typeof body.sessionId === "string" ? body.sessionId.slice(0, 64) : "";
         if (!messages) return new Response("Bad request", { status: 400 });
         if (messages.length > 60) return new Response("Conversation too long", { status: 400 });
 
-        const apiKey = process.env["LOVABLE_API_KEY"];
-        if (!apiKey) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
-
-        const gateway = createLovableAiGatewayProvider(apiKey);
+        if (!isAiConfigured()) return new Response("AI not configured", { status: 500 });
 
         const result = streamText({
-          model: gateway(ASSISTANT_MODEL),
+          model: createAiModel("CHATBOT"),
           system: `${SYSTEM}
 
 KONTEKS WAKTU SISTEM (WIB): ${new Intl.DateTimeFormat("id-ID", {
@@ -439,7 +437,6 @@ KONTEKS WAKTU SISTEM (WIB): ${new Intl.DateTimeFormat("id-ID", {
                 await qualifyConversation(sessionId, input, turns);
                 return { ...input, score };
               },
-
             }),
           },
           onFinish: async ({ text }) => {

@@ -6,16 +6,14 @@
  */
 import { generateText } from "ai";
 
-import { ASSISTANT_MODEL, createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { createAiModel, isAiConfigured } from "@/lib/ai-gateway.server";
 import { buildBusinessSnapshot, buildMemoryContext } from "@/lib/assistant.server";
 import { escapeHtml, markdownToTelegramHtml, sendTelegramMessage } from "@/lib/telegram.server";
 
 export const BRIEF_TIMEZONE = "Asia/Jakarta";
 export const BRIEF_SEND_TIME_WIB = "08:30";
 
-type AdminClient = Awaited<
-  typeof import("@/integrations/supabase/client.server")
->["supabaseAdmin"];
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 /* ------------------------------- time helpers ------------------------------ */
 
@@ -152,9 +150,8 @@ async function buildContext(supabase: AdminClient) {
 }
 
 function model() {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) return null;
-  return createLovableAiGatewayProvider(apiKey)(ASSISTANT_MODEL);
+  if (!isAiConfigured()) return null;
+  return createAiModel("DAILY_BRIEF");
 }
 
 const BASE_PERSONA = [
@@ -167,7 +164,7 @@ const BASE_PERSONA = [
   "Jangan mengarang angka, nama, atau status. Sebut nama lead/klien/project nyata dari data.",
   "Jika tidak ada tugas mendesak, JANGAN kirim laporan kosong — beri saran aktivitas produktif (konten, branding, developer, marketing).",
   "",
-  "Format jawaban: teks polos dengan **tebal** untuk judul bagian dan bullet \"- \". DILARANG memakai tag HTML, tabel, heading #, atau code block. Maksimal ~2800 karakter.",
+  'Format jawaban: teks polos dengan **tebal** untuk judul bagian dan bullet "- ". DILARANG memakai tag HTML, tabel, heading #, atau code block. Maksimal ~2800 karakter.',
 ].join("\n");
 
 /* ------------------------------ brief generator ---------------------------- */
@@ -187,7 +184,7 @@ export async function generateDailyBrief(supabase: AdminClient): Promise<string>
   ].join("\n");
 
   if (!aiModel) {
-    return `${header}⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY), daily brief tidak bisa dibuat.`;
+    return `${header}⚠️ AI belum dikonfigurasi, daily brief tidak bisa dibuat.`;
   }
 
   const { text } = await generateText({
@@ -221,7 +218,7 @@ export async function generateDailyBrief(supabase: AdminClient): Promise<string>
 
 export async function generateTodayFocus(supabase: AdminClient): Promise<string> {
   const aiModel = model();
-  if (!aiModel) return "⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).";
+  if (!aiModel) return "⚠️ AI belum dikonfigurasi.";
   const context = await buildContext(supabase);
   const { text } = await generateText({
     model: aiModel,
@@ -233,7 +230,7 @@ export async function generateTodayFocus(supabase: AdminClient): Promise<string>
 
 export async function generateIdeas(supabase: AdminClient, topic?: string): Promise<string> {
   const aiModel = model();
-  if (!aiModel) return "⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).";
+  if (!aiModel) return "⚠️ AI belum dikonfigurasi.";
   const context = await buildContext(supabase);
   const { text } = await generateText({
     model: aiModel,
@@ -245,7 +242,7 @@ export async function generateIdeas(supabase: AdminClient, topic?: string): Prom
 
 export async function generateDailyReview(supabase: AdminClient): Promise<string> {
   const aiModel = model();
-  if (!aiModel) return "⚠️ AI belum dikonfigurasi (LOVABLE_API_KEY).";
+  if (!aiModel) return "⚠️ AI belum dikonfigurasi.";
   const [context, done] = await Promise.all([
     buildContext(supabase),
     listOwnerTasks(supabase, "done"),
