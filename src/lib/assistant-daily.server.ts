@@ -13,9 +13,7 @@ import { escapeHtml, markdownToTelegramHtml, sendTelegramMessage } from "@/lib/t
 export const BRIEF_TIMEZONE = "Asia/Jakarta";
 export const BRIEF_SEND_TIME_WIB = "08:30";
 
-type AdminClient = Awaited<
-  typeof import("@/integrations/supabase/client.server")
->["supabaseAdmin"];
+type AdminClient = Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"];
 
 /* ------------------------------- time helpers ------------------------------ */
 
@@ -166,7 +164,7 @@ const BASE_PERSONA = [
   "Jangan mengarang angka, nama, atau status. Sebut nama lead/klien/project nyata dari data.",
   "Jika tidak ada tugas mendesak, JANGAN kirim laporan kosong — beri saran aktivitas produktif (konten, branding, developer, marketing).",
   "",
-  "Format jawaban: teks polos dengan **tebal** untuk judul bagian dan bullet \"- \". DILARANG memakai tag HTML, tabel, heading #, atau code block. Maksimal ~2800 karakter.",
+  'Format jawaban: teks polos dengan **tebal** untuk judul bagian dan bullet "- ". DILARANG memakai tag HTML, tabel, heading #, atau code block. Maksimal ~2800 karakter.',
 ].join("\n");
 
 /* ------------------------------ brief generator ---------------------------- */
