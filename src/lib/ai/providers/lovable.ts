@@ -1,4 +1,6 @@
 /** Lovable AI Gateway adapter — last-resort fallback provider. */
+import { endpointPath } from "./path";
+
 export const LOVABLE_BASE_URL = "https://ai.gateway.lovable.dev/v1";
 
 export function lovableApiKey(): string | null {
@@ -22,6 +24,5 @@ export function lovableRequest(url: string, apiKey: string, headers: Headers) {
   next.delete("Authorization");
   next.set("Lovable-API-Key", apiKey);
   next.set("X-Lovable-AIG-SDK", "vercel-ai-sdk");
-  const path = new URL(url).pathname.replace(/^.*\/v1(beta)?/, "");
-  return { url: `${LOVABLE_BASE_URL}${path || "/chat/completions"}`, headers: next };
+  return { url: `${LOVABLE_BASE_URL}${endpointPath(url)}`, headers: next };
 }
