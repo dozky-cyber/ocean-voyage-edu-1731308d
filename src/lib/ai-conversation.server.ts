@@ -51,20 +51,34 @@ export function qualificationOf(score: number) {
   return score >= 70 ? "Hot Lead" : score >= 40 ? "Warm Lead" : "Cold Lead";
 }
 
+/**
+ * Validate sessionId format and presence.
+ * Prevents empty/null session IDs from causing isolation bypass.
+ */
+function validateSessionId(sessionId: string | null | undefined): sessionId is string {
+  return typeof sessionId === "string" && sessionId.trim().length > 0;
+}
+
 /** Insert or update the draft conversation for a session. */
 export async function saveDraftConversation(sessionId: string, turns: ConversationTurn[]) {
-  if (!sessionId) return;
+  if (!validateSessionId(sessionId)) {
+    console.warn("[ai-conversation] invalid sessionId");
+    return;
+  }
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const trimmed = turns.slice(-40).map((turn) => ({
     role: turn.role,
     text: turn.text.slice(0, 4000),
   }));
 
+  // ✅ FIX: Enforce session_id filter on read
   const { data: existing, error: readError } = await supabaseAdmin
     .from("ai_conversations")
     .select("id, status")
     .eq("session_id", sessionId)
     .maybeSingle();
+  
   if (readError) {
     console.error("[ai-conversation] read failed", readError.message);
     return;
@@ -81,10 +95,13 @@ export async function saveDraftConversation(sessionId: string, turns: Conversati
     return;
   }
 
+  // ✅ FIX: Enforce session_id in update filter to prevent cross-session writes
   const { error } = await supabaseAdmin
     .from("ai_conversations")
     .update({ messages: trimmed, message_count: trimmed.length })
-    .eq("id", existing.id);
+    .eq("id", existing.id)
+    .eq("session_id", sessionId);
+  
   if (error) console.error("[ai-conversation] update failed", error.message);
 }
 
@@ -97,18 +114,31 @@ export async function qualifyConversation(
   input: QualificationInput,
   turns: ConversationTurn[],
 ) {
-  if (!sessionId) return { ok: false as const };
+  if (!validateSessionId(sessionId)) {
+    console.warn("[ai-conversation] invalid sessionId");
+    return { ok: false as const };
+  }
+
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const score = scoreConversation(input);
   const qualification = qualificationOf(score);
 
   await saveDraftConversation(sessionId, turns);
 
+  // ✅ FIX: Enforce session_id filter to load only this session's conversation
   const { data: conversation } = await supabaseAdmin
     .from("ai_conversations")
     .select("id, lead_id")
     .eq("session_id", sessionId)
     .maybeSingle();
+
+  // ✅ FIX: Abort if conversation doesn't exist for this session
+  if (!conversation) {
+    console.error("[ai-conversation] conversation not found for session", {
+      sessionId,
+    });
+    return { ok: false as const };
+  }
 
   const leadPayload = {
     name: input.contactName?.trim() || `Prospek AI · ${input.businessCategory || "Umum"}`,
@@ -168,6 +198,7 @@ export async function qualifyConversation(
   let requirementVersion: number | null = null;
 
   if (conversation) {
+    // ✅ FIX: Enforce session_id in update filter to prevent orphaned writes to other sessions
     const { error } = await supabaseAdmin
       .from("ai_conversations")
       .update({
@@ -190,7 +221,9 @@ export async function qualifyConversation(
         qualified_at: new Date().toISOString(),
         lead_id: leadId,
       })
-      .eq("id", conversation.id);
+      .eq("id", conversation.id)
+      .eq("session_id", sessionId);
+    
     if (error) console.error("[ai-conversation] qualify failed", error.message);
 
     const { saveRequirementVersion } = await import("@/lib/requirements.server");
