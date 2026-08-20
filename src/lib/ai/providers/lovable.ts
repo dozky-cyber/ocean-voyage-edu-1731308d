@@ -24,6 +24,5 @@ export function lovableRequest(url: string, apiKey: string, headers: Headers) {
   next.delete("Authorization");
   next.set("Lovable-API-Key", apiKey);
   next.set("X-Lovable-AIG-SDK", "vercel-ai-sdk");
-  const path = new URL(url).pathname.replace(/^.*\/v1(beta)?/, "");
-  return { url: `${LOVABLE_BASE_URL}${path || "/chat/completions"}`, headers: next };
+  return { url: `${LOVABLE_BASE_URL}${endpointPath(url)}`, headers: next };
 }
